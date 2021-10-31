@@ -374,7 +374,6 @@ public:
     weak_ptr& operator=(weak_ptr&&) noexcept = default;
 };
 
-
 }
 
 #endif
