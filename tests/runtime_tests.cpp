@@ -2,7 +2,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("default constructor", "[construction]") {
+TEST_CASE("owner default constructor", "[owner_construction]") {
     {
         test_ptr ptr{};
         REQUIRE(instances == 0);
@@ -13,7 +13,7 @@ TEST_CASE("default constructor", "[construction]") {
     REQUIRE(instances == 0);
 }
 
-TEST_CASE("default constructor with deleter", "[construction]") {
+TEST_CASE("owner default constructor with deleter", "[owner_construction]") {
     {
         test_ptr_with_deleter ptr{};
         REQUIRE(instances == 0);
@@ -27,7 +27,7 @@ TEST_CASE("default constructor with deleter", "[construction]") {
     REQUIRE(instances_deleter == 0);
 }
 
-TEST_CASE("nullptr constructor", "[construction]") {
+TEST_CASE("owner nullptr constructor", "[owner_construction]") {
     {
         test_ptr ptr{nullptr};
         REQUIRE(instances == 0);
@@ -38,7 +38,7 @@ TEST_CASE("nullptr constructor", "[construction]") {
     REQUIRE(instances == 0);
 }
 
-TEST_CASE("nullptr constructor with deleter", "[construction]") {
+TEST_CASE("owner nullptr constructor with deleter", "[owner_construction]") {
     {
         test_ptr_with_deleter ptr{nullptr, test_deleter{42}};
         REQUIRE(instances == 0);
@@ -52,7 +52,7 @@ TEST_CASE("nullptr constructor with deleter", "[construction]") {
     REQUIRE(instances_deleter == 0);
 }
 
-TEST_CASE("move constructor", "[construction]") {
+TEST_CASE("owner move constructor", "[owner_construction]") {
     {
         test_ptr ptr_orig(new test_object);
         {
@@ -68,7 +68,7 @@ TEST_CASE("move constructor", "[construction]") {
     REQUIRE(instances == 0);
 }
 
-TEST_CASE("move constructor with deleter", "[construction]") {
+TEST_CASE("owner move constructor with deleter", "[owner_construction]") {
     {
         test_ptr_with_deleter ptr_orig(new test_object, test_deleter{42});
         {
@@ -88,7 +88,7 @@ TEST_CASE("move constructor with deleter", "[construction]") {
     REQUIRE(instances_deleter == 0);
 }
 
-TEST_CASE("acquiring constructor", "[construction]") {
+TEST_CASE("owner acquiring constructor", "[owner_construction]") {
     {
         test_ptr ptr{new test_object};
         REQUIRE(instances == 1);
@@ -99,7 +99,7 @@ TEST_CASE("acquiring constructor", "[construction]") {
     REQUIRE(instances == 0);
 }
 
-TEST_CASE("acquiring constructor with deleter", "[construction]") {
+TEST_CASE("owner acquiring constructor with deleter", "[owner_construction]") {
     {
         test_ptr_with_deleter ptr{new test_object, test_deleter{42}};
         REQUIRE(instances == 1);
@@ -113,7 +113,7 @@ TEST_CASE("acquiring constructor with deleter", "[construction]") {
     REQUIRE(instances_deleter == 0);
 }
 
-TEST_CASE("implicit conversion constructor", "[construction]") {
+TEST_CASE("owner implicit conversion constructor", "[owner_construction]") {
     {
         test_ptr_derived ptr_orig{new test_object_derived};
         {
@@ -132,7 +132,7 @@ TEST_CASE("implicit conversion constructor", "[construction]") {
     REQUIRE(instances_derived == 0);
 }
 
-TEST_CASE("implicit conversion constructor with deleter", "[construction]") {
+TEST_CASE("owner implicit conversion constructor with deleter", "[owner_construction]") {
     {
         test_ptr_derived_with_deleter ptr_orig{new test_object_derived, test_deleter{42}};
         {
@@ -155,7 +155,7 @@ TEST_CASE("implicit conversion constructor with deleter", "[construction]") {
     REQUIRE(instances_deleter == 0);
 }
 
-TEST_CASE("explicit conversion constructor", "[construction]") {
+TEST_CASE("owner explicit conversion constructor", "[owner_construction]") {
     {
         test_ptr ptr_orig{new test_object_derived};
         {
@@ -175,7 +175,7 @@ TEST_CASE("explicit conversion constructor", "[construction]") {
     REQUIRE(instances_derived == 0);
 }
 
-TEST_CASE("explicit conversion constructor with deleter", "[construction]") {
+TEST_CASE("owner explicit conversion constructor with deleter", "[owner_construction]") {
     {
         test_ptr_with_deleter ptr_orig{new test_object_derived, test_deleter{42}};
         {
@@ -199,7 +199,7 @@ TEST_CASE("explicit conversion constructor with deleter", "[construction]") {
     REQUIRE(instances_deleter == 0);
 }
 
-TEST_CASE("move assignment operator", "[assignment]") {
+TEST_CASE("owner move assignment operator", "[owner_assignment]") {
     {
         test_ptr ptr_orig(new test_object);
         {
@@ -216,7 +216,7 @@ TEST_CASE("move assignment operator", "[assignment]") {
     REQUIRE(instances == 0);
 }
 
-TEST_CASE("move assignment operator with deleter", "[assignment]") {
+TEST_CASE("owner move assignment operator with deleter", "[owner_assignment]") {
     {
         test_ptr_with_deleter ptr_orig(new test_object, test_deleter{42});
         {
@@ -237,7 +237,7 @@ TEST_CASE("move assignment operator with deleter", "[assignment]") {
     REQUIRE(instances_deleter == 0);
 }
 
-TEST_CASE("reset to null", "[utility]") {
+TEST_CASE("owner reset to null", "[owner_utility]") {
     {
         test_ptr ptr(new test_object);
         ptr.reset();
@@ -249,7 +249,7 @@ TEST_CASE("reset to null", "[utility]") {
     REQUIRE(instances == 0);
 }
 
-TEST_CASE("reset to null with deleter", "[utility]") {
+TEST_CASE("owner reset to null with deleter", "[owner_utility]") {
     {
         test_ptr_with_deleter ptr(new test_object, test_deleter{42});
         ptr.reset();
@@ -264,7 +264,7 @@ TEST_CASE("reset to null with deleter", "[utility]") {
     REQUIRE(instances_deleter == 0);
 }
 
-TEST_CASE("reset to new", "[utility]") {
+TEST_CASE("owner reset to new", "[owner_utility]") {
     {
         test_ptr ptr(new test_object);
         ptr.reset(new test_object);
@@ -276,7 +276,7 @@ TEST_CASE("reset to new", "[utility]") {
     REQUIRE(instances == 0);
 }
 
-TEST_CASE("reset to new with deleter", "[utility]") {
+TEST_CASE("owner reset to new with deleter", "[owner_utility]") {
     {
         test_ptr_with_deleter ptr(new test_object, test_deleter{42});
         ptr.reset(new test_object);
@@ -291,7 +291,7 @@ TEST_CASE("reset to new with deleter", "[utility]") {
     REQUIRE(instances_deleter == 0);
 }
 
-TEST_CASE("reset to new with new deleter", "[utility]") {
+TEST_CASE("owner reset to new with new deleter", "[owner_utility]") {
     {
         test_ptr_with_deleter ptr(new test_object, test_deleter{42});
         ptr.reset(new test_object, test_deleter{43});
@@ -306,7 +306,7 @@ TEST_CASE("reset to new with new deleter", "[utility]") {
     REQUIRE(instances_deleter == 0);
 }
 
-TEST_CASE("swap no instance", "[utility]") {
+TEST_CASE("owner swap no instance", "[owner_utility]") {
     {
         test_ptr ptr_orig;
         test_ptr ptr;
@@ -319,7 +319,7 @@ TEST_CASE("swap no instance", "[utility]") {
     REQUIRE(instances == 0);
 }
 
-TEST_CASE("swap no instance with deleter", "[utility]") {
+TEST_CASE("owner swap no instance with deleter", "[owner_utility]") {
     {
         test_ptr_with_deleter ptr_orig(nullptr, test_deleter{42});
         test_ptr_with_deleter ptr(nullptr, test_deleter{43});
@@ -338,7 +338,7 @@ TEST_CASE("swap no instance with deleter", "[utility]") {
     REQUIRE(instances_deleter == 0);
 }
 
-TEST_CASE("swap one instance", "[utility]") {
+TEST_CASE("owner swap one instance", "[owner_utility]") {
     {
         test_ptr ptr_orig(new test_object);
         test_ptr ptr;
@@ -351,7 +351,7 @@ TEST_CASE("swap one instance", "[utility]") {
     REQUIRE(instances == 0);
 }
 
-TEST_CASE("swap one instance with deleter", "[utility]") {
+TEST_CASE("owner swap one instance with deleter", "[owner_utility]") {
     {
         test_ptr_with_deleter ptr_orig(new test_object, test_deleter{42});
         test_ptr_with_deleter ptr(nullptr, test_deleter{43});
@@ -370,7 +370,7 @@ TEST_CASE("swap one instance with deleter", "[utility]") {
     REQUIRE(instances_deleter == 0);
 }
 
-TEST_CASE("swap two instances", "[utility]") {
+TEST_CASE("owner swap two instances", "[owner_utility]") {
     {
         test_ptr ptr_orig(new test_object);
         test_object* ptr_orig_raw = ptr_orig.get();
@@ -385,7 +385,7 @@ TEST_CASE("swap two instances", "[utility]") {
     REQUIRE(instances == 0);
 }
 
-TEST_CASE("swap two instances with deleter", "[utility]") {
+TEST_CASE("owner swap two instances with deleter", "[owner_utility]") {
     {
         test_ptr_with_deleter ptr_orig(new test_object, test_deleter{42});
         test_object* ptr_orig_raw = ptr_orig.get();
