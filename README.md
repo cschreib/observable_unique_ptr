@@ -6,6 +6,8 @@ This is a small header-only library, providing a unique-ownership smart pointer 
 
 This is useful for cases where the shared-ownership of `std::shared_ptr` is not desirable, e.g., when lifetime must be carefully controlled and not be allowed to extend, yet non-owning "weak" references to the object may exist after the object has been deleted.
 
+Note: Because of the unique ownership model, weak pointers locking cannot extend the lifetime of the pointed object, hence `observable_unique_ptr` provides less thread-safety compared to `std::shared_ptr`. This is also true of `std::unique_ptr`, and is a fundamental limitation of unique ownership. Do not use this library if the lifetime of your objects is not well understood.
+
 
 ## Usage
 
@@ -54,12 +56,14 @@ int main() {
 }
 ```
 
-## Limitation
 
- - Because of the unique ownership, weak pointers locking cannot extend the lifetime of the pointed object, hence `observable_unique_ptr` provides less thread-safety compared to `std::shared_ptr`.
+## Limitations
+
+The follownig limitations are imposed by the current implementation (reusing the parts from `std::shared_ptr` and `std::weak_ptr`), or features that were not implemented simply because of lack of motivation. A higher quality implementation of this API could get rid of most (if not all) of them.
+
  - `observable_unique_ptr` does not support pointers to arrays, but `std::unique_ptr` and `std::shared_ptr` both do.
  - `observable_unique_ptr` does not support custom allocators, but `std::shared_ptr` does.
  - `observable_unique_ptr` does not have a `release()` function to let go of the ownership, which `std::unique_ptr` has.
  - `observable_unique_ptr` allows moving from other `observable_unique_ptr` only if the deleter type is exactly the same, while `std::unique_ptr` allows moving from a convertible deleter.
- - `observable_unique_ptr` may or may not own a deleter instance; if in doubt, check `has_deleter()` before calling `get_deleter()`, or use `try_get_deleter()`.
- - a moved-from `observable_unique_ptr` will not own a deleter instance.
+ - Contrary to `std::unique_ptr`, which stores the deleter in-place next to the pointer to the owned object, an `observable_unique_ptr` follows the model from `std::shared_ptr` where the deleter is type-erased and stored on the heap. Therefore, an `observable_unique_ptr` may or may not own a deleter instance; if in doubt, check `has_deleter()` before calling `get_deleter()`, or use `try_get_deleter()`.
+ - A moved-from `observable_unique_ptr` will not own a deleter instance.
