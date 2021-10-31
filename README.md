@@ -21,6 +21,10 @@ From there, include the single header `<oup/observable_unique_ptr.hpp>`, and dir
 ```c++
 #include <oup/observable_unique_ptr.hpp>
 
+#include <string>
+#include <iostream>
+#include <cassert>
+
 int main() {
     // Weak pointer that will outlive the object
     oup::weak_ptr<std::string> wptr;
@@ -41,10 +45,10 @@ int main() {
         std::cout << *s << std::endl;
 
         // The unique pointer cannot be copied
-        oup::observable_unique_ptr<std::string> tmp_copied = ptr; // error!
+        auto tmp_copied = ptr; // error!
 
         // ... but it can be moved
-        oup::observable_unique_ptr<std::string> tmp_moved = std::move(ptr); // OK
+        auto tmp_moved = std::move(ptr); // OK
     }
 
     // The unique pointer has gone out of scope, the object is deleted,
