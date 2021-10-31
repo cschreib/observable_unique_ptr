@@ -1,0 +1,47 @@
+include(FetchContent)
+
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.0.0-preview3
+)
+
+FetchContent_MakeAvailable(Catch2)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${Catch2_SOURCE_DIR}/extras")
+
+add_executable(oup_tests ${PROJECT_SOURCE_DIR}/tests/runtime_tests.cpp)
+target_link_libraries(oup_tests PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(oup_tests PRIVATE oup::oup)
+
+include(CTest)
+include(Catch)
+catch_discover_tests(oup_tests)
+
+# Compile-time error tests
+set(CMAKE_TRY_COMPILE_TARGET_TYPE EXECUTABLE)
+message(STATUS "Running compile-time tests...")
+
+function(run_compile_test TEST_NAME TEST_FILE EXPECTED)
+  try_compile(COMPILE_TEST_RESULT
+    ${PROJECT_SOURCE_DIR}/tests
+    ${PROJECT_SOURCE_DIR}/tests/${TEST_FILE}
+    CMAKE_FLAGS
+      "-DINCLUDE_DIRECTORIES=${PROJECT_SOURCE_DIR}/include"
+      "-DCMAKE_CXX_STANDARD=17")
+
+  if (COMPILE_TEST_RESULT STREQUAL EXPECTED)
+    message(STATUS "Test ${TEST_NAME} passed.")
+  else()
+    message(SEND_ERROR "FAILED test: ${TEST_NAME}, expected ${EXPECTED} and got ${COMPILE_TEST_RESULT}")
+  endif()
+endfunction()
+
+run_compile_test("does_compilation_works" compile_test_good.cpp TRUE)
+run_compile_test("is_copy_constructor_allowed" compile_test_copy_const.cpp FALSE)
+run_compile_test("is_copy_assignment_allowed" compile_test_copy_assign.cpp FALSE)
+run_compile_test("is_implicit_constructor_base_to_derived_allowed_acquire" compile_test_implicit_const_base_to_derived1.cpp FALSE)
+run_compile_test("is_implicit_constructor_base_to_derived_allowed_move" compile_test_implicit_const_base_to_derived2.cpp FALSE)
+run_compile_test("is_implicit_constructor_base_to_derived_allowed_move_with_deleter" compile_test_implicit_const_base_to_derived3.cpp FALSE)
+
+message(STATUS "Running compile-time tests ended.")
