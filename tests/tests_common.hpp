@@ -62,3 +62,6 @@ using test_ptr_with_deleter = oup::observable_unique_ptr<test_object,test_delete
 using test_ptr_derived_with_deleter = oup::observable_unique_ptr<test_object_derived,test_deleter>;
 using test_ptr_thrower = oup::observable_unique_ptr<test_object_thrower>;
 using test_ptr_thrower_with_deleter = oup::observable_unique_ptr<test_object_thrower,test_deleter>;
+
+using test_wptr = oup::weak_ptr<test_object>;
+using test_wptr_derived = oup::weak_ptr<test_object_derived>;

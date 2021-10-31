@@ -288,25 +288,30 @@ bool operator!= (const observable_unique_ptr<T,Deleter>& first,
 */
 template<typename T>
 class weak_ptr : private std::weak_ptr<T> {
+private:
+    // Friendship is required for conversions.
+    template<typename U>
+    friend class weak_ptr;
+
 public:
     // Import members from std::shared_ptr
     using typename std::weak_ptr<T>::element_type;
 
     using std::weak_ptr<T>::reset;
-    using std::weak_ptr<T>::swap;
+    using std::weak_ptr<T>::expired;
 
     /// Default constructor (null pointer).
     weak_ptr() = default;
 
     /// Create a weak pointer from an owning pointer.
-    weak_ptr(const observable_unique_ptr<T>& owner) : std::weak_ptr<T>(owner) {}
+    weak_ptr(const observable_unique_ptr<T>& owner) noexcept : std::weak_ptr<T>(owner) {}
 
     /// Copy an existing weak_ptr instance
     /** \param value The existing weak pointer to copy
     */
     template<typename U>
     weak_ptr(const weak_ptr<U>& value) noexcept :
-        std::weak_ptr<T>(static_cast<std::weak_ptr<U>&>(value)) {}
+        std::weak_ptr<T>(static_cast<const std::weak_ptr<U>&>(value)) {}
 
     /// Move from an existing weak_ptr instance
     /** \param value The existing weak pointer to move from
@@ -318,7 +323,7 @@ public:
         std::weak_ptr<T>(std::move(static_cast<std::weak_ptr<U>&>(value))) {}
 
     /// Point to another owning pointer.
-    weak_ptr& operator=(const observable_unique_ptr<T>& owner) {
+    weak_ptr& operator=(const observable_unique_ptr<T>& owner) noexcept {
         std::weak_ptr<T>::operator=(owner);
         return *this;
     }
@@ -354,12 +359,19 @@ public:
         return std::weak_ptr<T>::lock().get();
     }
 
+    /// Swap the content of this pointer with that of another pointer.
+    /** \param other The other pointer to swap with
+    */
+    void swap(weak_ptr& other) noexcept {
+        std::weak_ptr<T>::swap(other);
+    }
+
     // Copiable
-    weak_ptr(const weak_ptr&) = default;
-    weak_ptr& operator=(const weak_ptr&) = default;
+    weak_ptr(const weak_ptr&) noexcept = default;
+    weak_ptr& operator=(const weak_ptr&) noexcept = default;
     // Movable
-    weak_ptr(weak_ptr&&) = default;
-    weak_ptr& operator=(weak_ptr&&) = default;
+    weak_ptr(weak_ptr&&) noexcept = default;
+    weak_ptr& operator=(weak_ptr&&) noexcept = default;
 };
 
 
