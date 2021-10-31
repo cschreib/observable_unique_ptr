@@ -13,6 +13,9 @@ struct default_deleter {
     void operator() (std::nullptr_t) {}
 };
 
+template<typename T>
+class weak_ptr;
+
 /// std::unique_ptr that can be observed by std::weak_ptr
 /** This smart pointer mimics the interface of std::unique_ptr, in that
 *   it is movable but not copiable. The smart pointer holds exclusive
@@ -26,9 +29,12 @@ struct default_deleter {
 *   will optimise as a single heap allocation with the pointed object (as
 *   std::make_shared() does for std::shared_ptr).
 *
-*   Other notable differences (either limitations imposed by the current
+*   Other notable points (either limitations imposed by the current
 *   implementation, or features not implemented simply because of lack of
 *   motivation):
+*    - because of the unique ownership, weak pointers locking cannot extend
+*      the lifetime of the pointed object, hence observable_unique_ptr provides
+*      less thread-safety compared to std::shared_ptr.
 *    - observable_unique_ptr does not support arrays.
 *    - observable_unique_ptr does not allow custom allocators.
 *    - observable_unique_ptr does not have a release() function to let go of
@@ -55,10 +61,14 @@ private:
     template<typename U, typename D>
     friend class observable_unique_ptr;
 
+    // Friendship is required for access to std::shared_ptr base
+    template<typename U>
+    friend class weak_ptr;
+
 public:
     // Import members from std::shared_ptr
     using typename std::shared_ptr<T>::element_type;
-    using typename std::shared_ptr<T>::weak_type;
+    using weak_type = weak_ptr<T>;
 
     using std::shared_ptr<T>::get;
     using std::shared_ptr<T>::operator*;
@@ -272,6 +282,86 @@ bool operator!= (const observable_unique_ptr<T,Deleter>& first,
     const observable_unique_ptr<U,Deleter>& second) noexcept {
     return first.get() != second.get();
 }
+
+/// std::weak_ptr that observes an oup::observable_unique_ptr
+/** \see observable_unique_ptr
+*/
+template<typename T>
+class weak_ptr : private std::weak_ptr<T> {
+public:
+    // Import members from std::shared_ptr
+    using typename std::weak_ptr<T>::element_type;
+
+    using std::weak_ptr<T>::reset;
+    using std::weak_ptr<T>::swap;
+
+    /// Default constructor (null pointer).
+    weak_ptr() = default;
+
+    /// Create a weak pointer from an owning pointer.
+    weak_ptr(const observable_unique_ptr<T>& owner) : std::weak_ptr<T>(owner) {}
+
+    /// Copy an existing weak_ptr instance
+    /** \param value The existing weak pointer to copy
+    */
+    template<typename U>
+    weak_ptr(const weak_ptr<U>& value) noexcept :
+        std::weak_ptr<T>(static_cast<std::weak_ptr<U>&>(value)) {}
+
+    /// Move from an existing weak_ptr instance
+    /** \param value The existing weak pointer to move from
+    *   \note After this observable_unique_ptr is created, the source
+    *         pointer is set to null.
+    */
+    template<typename U>
+    weak_ptr(weak_ptr<U>&& value) noexcept :
+        std::weak_ptr<T>(std::move(static_cast<std::weak_ptr<U>&>(value))) {}
+
+    /// Point to another owning pointer.
+    weak_ptr& operator=(const observable_unique_ptr<T>& owner) {
+        std::weak_ptr<T>::operator=(owner);
+        return *this;
+    }
+
+    /// Copy an existing weak_ptr instance
+    /** \param value The existing weak pointer to copy
+    */
+    template<typename U>
+    weak_ptr& operator=(const weak_ptr<U>& value) noexcept {
+        std::weak_ptr<T>::operator=(static_cast<std::weak_ptr<U>&>(value));
+        return *this;
+    }
+
+    /// Move from an existing weak_ptr instance
+    /** \param value The existing weak pointer to move from
+    *   \note After the assignment is complete, the source
+    *         pointer is set to null and looses ownership.
+    */
+    template<typename U>
+    weak_ptr& operator=(weak_ptr<U>&& value) noexcept {
+        std::weak_ptr<T>::operator=(std::move(static_cast<std::weak_ptr<U>&>(value)));
+        return *this;
+    }
+
+    /// Get a non-owning raw pointer to the pointed object, or nullptr if deleted.
+    /** \return 'nullptr' if expired() is 'true', or the pointed object otherwise
+    *   \note Contrary to std::weak_ptr::lock(), this does not extend the lifetime
+    *         of the pointed object. Therefore, when calling this function, you must
+    *         make sure that the owning observable_unique_ptr will not be reset until
+    *         you are done using the raw pointer.
+    */
+    T* lock() const noexcept {
+        return std::weak_ptr<T>::lock().get();
+    }
+
+    // Copiable
+    weak_ptr(const weak_ptr&) = default;
+    weak_ptr& operator=(const weak_ptr&) = default;
+    // Movable
+    weak_ptr(weak_ptr&&) = default;
+    weak_ptr& operator=(weak_ptr&&) = default;
+};
+
 
 }
 
