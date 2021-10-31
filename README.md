@@ -61,5 +61,5 @@ int main() {
  - `observable_unique_ptr` does not support custom allocators, but `std::shared_ptr` does.
  - `observable_unique_ptr` does not have a `release()` function to let go of the ownership, which `std::unique_ptr` has.
  - `observable_unique_ptr` allows moving from other `observable_unique_ptr` only if the deleter type is exactly the same, while `std::unique_ptr` allows moving from a convertible deleter.
- - `observable_unique_ptr` may or may not own a deleter instance; if in doubt, check `has_deleter()`` before calling `get_deleter()`, or use `try_get_deleter()`.
+ - `observable_unique_ptr` may or may not own a deleter instance; if in doubt, check `has_deleter()` before calling `get_deleter()`, or use `try_get_deleter()`.
  - a moved-from `observable_unique_ptr` will not own a deleter instance.
