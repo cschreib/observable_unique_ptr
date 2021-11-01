@@ -71,3 +71,8 @@ The follownig limitations are imposed by the current implementation (reusing the
  - `observable_unique_ptr` allows moving from other `observable_unique_ptr` only if the deleter type is exactly the same, while `std::unique_ptr` allows moving from a convertible deleter.
  - Contrary to `std::unique_ptr`, which stores the deleter in-place next to the pointer to the owned object, an `observable_unique_ptr` follows the model from `std::shared_ptr` where the deleter is type-erased and stored on the heap. Therefore, an `observable_unique_ptr` may or may not own a deleter instance; if in doubt, check `has_deleter()` before calling `get_deleter()`, or use `try_get_deleter()`.
  - A moved-from `observable_unique_ptr` will not own a deleter instance.
+
+
+## Notes
+
+An alternative implementation of an "observable unique pointer" can be found [here](https://www.codeproject.com/articles/1011134/smart-observers-to-use-with-unique-ptr). It does not compile out of the box with gcc unfortunately, but it does contain more features (like creating an observer pointer from a raw `this`) and a lower-overhead implementation (not based on `std::shared_ptr`/`std::weak_ptr`). Have a look to check if this better suits your needs.
