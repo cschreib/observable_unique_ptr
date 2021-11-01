@@ -46,7 +46,7 @@ jobs:
     - name: Install
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake --install . --config ${BUILD_TYPE}
+      run: sudo cmake --install . --config ${BUILD_TYPE}
 
     - name: Test
       shell: bash
