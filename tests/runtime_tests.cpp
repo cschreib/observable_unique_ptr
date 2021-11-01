@@ -417,6 +417,14 @@ TEST_CASE("make observable", "[make_observable_unique]") {
     REQUIRE(instances == 0);
 }
 
+TEST_CASE("make observable throw in constructor", "[make_observable_unique]") {
+    REQUIRE_THROWS_AS(
+        oup::make_observable_unique<test_object_thrower>(),
+        throw_constructor);
+
+    REQUIRE(instances_thrower == 0);
+}
+
 TEST_CASE("observer default constructor", "[observer_construction]") {
     {
         test_wptr ptr{};
