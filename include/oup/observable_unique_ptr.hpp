@@ -8,9 +8,9 @@ namespace oup {
 /// Simple deleter, suitable for objects allocated with new.
 struct default_deleter {
     template<typename T>
-    void operator() (T* ptr) { delete ptr; }
+    void operator() (T* ptr) noexcept { delete ptr; }
 
-    void operator() (std::nullptr_t) {}
+    void operator() (std::nullptr_t) noexcept {}
 };
 
 template<typename T>
