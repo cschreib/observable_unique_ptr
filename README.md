@@ -1,5 +1,8 @@
 # observable_unique_ptr<T, Deleter>
 
+![Build Status](https://github.com/cschreib/observable_unique_ptr/actions/workflows/cmake.yml/badge.svg) ![Build Status](https://github.com/cschreib/observable_unique_ptr/actions/workflows/doc.yml/badge.svg)
+
+
 ## Introduction
 
 This is a small header-only library, providing a unique-ownership smart pointer that can be observed with weak pointers. It is a mixture of `std::unique_ptr` and `std::shared_ptr`: it borrows the unique-ownership semantic of `std::unique_ptr` (movable, non-copiable), but allows creating `std::weak_ptr` instances to monitor the lifetime of the pointed object.
