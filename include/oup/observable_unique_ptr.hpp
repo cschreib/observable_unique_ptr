@@ -215,7 +215,7 @@ public:
     }
 
     /// Replaces the managed object.
-    /** \param p A nullptr_t instance
+    /** \param ptr A nullptr_t instance
     */
     void reset(T* ptr) noexcept {
         if constexpr (std::is_same_v<Deleter, oup::default_deleter>) {
