@@ -593,6 +593,18 @@ TEST_CASE("observer acquiring constructor", "[observer_construction]") {
     REQUIRE(instances == 0);
 }
 
+TEST_CASE("observer acquiring constructor derived", "[observer_construction]") {
+    {
+        test_ptr_derived ptr_owner{new test_object_derived};
+        test_optr ptr{ptr_owner};
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.lock() != nullptr);
+        REQUIRE(ptr.expired() == false);
+    }
+
+    REQUIRE(instances == 0);
+}
+
 TEST_CASE("observer implicit copy conversion constructor", "[observer_construction]") {
     {
         test_ptr_derived ptr_owner{new test_object_derived};
