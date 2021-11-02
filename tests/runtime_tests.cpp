@@ -523,6 +523,12 @@ TEST_CASE("owner swap two instances with deleter", "[owner_utility]") {
     REQUIRE(instances_deleter == 0);
 }
 
+TEST_CASE("owner dereference", "[owner_utility]") {
+    test_ptr ptr(new test_object);
+    REQUIRE(ptr->state_ == 1337);
+    REQUIRE((*ptr).state_ == 1337);
+}
+
 TEST_CASE("make observable", "[make_observable_unique]") {
     {
         test_ptr ptr = oup::make_observable_unique<test_object>();
@@ -741,6 +747,13 @@ TEST_CASE("observer swap two different instances", "[observer_utility]") {
     }
 
     REQUIRE(instances == 0);
+}
+
+TEST_CASE("observer dereference", "[observer_utility]") {
+    test_ptr ptr_owner(new test_object);
+    test_optr ptr(ptr_owner);
+    REQUIRE(ptr->state_ == 1337);
+    REQUIRE((*ptr).state_ == 1337);
 }
 
 TEST_CASE("observer comparison valid ptr vs nullptr", "[observer_comparison]") {

@@ -8,6 +8,8 @@ int instances_thrower = 0;
 int instances_deleter = 0;
 
 struct test_object {
+    int state_ = 1337;
+
     test_object() noexcept { ++instances; }
     virtual ~test_object() noexcept { --instances; }
 

@@ -363,6 +363,25 @@ public:
         return std::weak_ptr<T>::lock().get();
     }
 
+    /// Get a reference to the pointed object (undefined behavior if deleted).
+    /** \return A reference to the pointed object
+    *   \note Using this function if expired() is 'true' will leave to undefined behavior.
+    */
+    T& operator*() const noexcept {
+        return *std::weak_ptr<T>::lock().get();
+    }
+
+    /// Get a non-owning raw pointer to the pointed object, or nullptr if deleted.
+    /** \return 'nullptr' if expired() is 'true', or the pointed object otherwise
+    *   \note Contrary to std::weak_ptr::lock(), this does not extend the lifetime
+    *         of the pointed object. Therefore, when calling this function, you must
+    *         make sure that the owning observable_unique_ptr will not be reset until
+    *         you are done using the raw pointer.
+    */
+    T* operator->() const noexcept {
+        return std::weak_ptr<T>::lock().get();
+    }
+
     /// Swap the content of this pointer with that of another pointer.
     /** \param other The other pointer to swap with
     */
