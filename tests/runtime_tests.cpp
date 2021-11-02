@@ -785,3 +785,25 @@ TEST_CASE("observer comparison valid ptr vs valid ptr different owner", "[observ
     REQUIRE(ptr2 != ptr1);
     REQUIRE(!(ptr2 == ptr1));
 }
+
+TEST_CASE("observer comparison valid ptr vs valid ptr same owner derived", "[observer_comparison]") {
+    test_ptr_derived ptr_owner(new test_object_derived);
+    test_optr ptr1(ptr_owner);
+    test_optr_derived ptr2(ptr_owner);
+    REQUIRE(ptr1 == ptr2);
+    REQUIRE(!(ptr1 != ptr2));
+    REQUIRE(ptr2 == ptr1);
+    REQUIRE(!(ptr2 != ptr1));
+}
+
+TEST_CASE("observer comparison valid ptr vs valid ptr different owner derived", "[observer_comparison]") {
+    test_ptr ptr_owner1(new test_object);
+    test_ptr_derived ptr_owner2(new test_object_derived);
+    test_optr ptr1(ptr_owner1);
+    test_optr_derived ptr2(ptr_owner2);
+    REQUIRE(ptr1 != ptr2);
+    REQUIRE(!(ptr1 == ptr2));
+    REQUIRE(ptr2 != ptr1);
+    REQUIRE(!(ptr2 == ptr1));
+}
+
