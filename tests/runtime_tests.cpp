@@ -730,3 +730,58 @@ TEST_CASE("observer swap two different instances", "[observer_utility]") {
 
     REQUIRE(instances == 0);
 }
+
+TEST_CASE("observer comparison valid ptr vs nullptr", "[observer_comparison]") {
+    test_ptr ptr_owner(new test_object);
+    test_wptr ptr(ptr_owner);
+    REQUIRE(ptr != nullptr);
+    REQUIRE(!(ptr == nullptr));
+    REQUIRE(nullptr != ptr);
+    REQUIRE(!(nullptr == ptr));
+}
+
+TEST_CASE("observer comparison invalid ptr vs nullptr", "[observer_comparison]") {
+    test_wptr ptr;
+    REQUIRE(ptr == nullptr);
+    REQUIRE(!(ptr != nullptr));
+    REQUIRE(nullptr == ptr);
+    REQUIRE(!(nullptr != ptr));
+}
+
+TEST_CASE("observer comparison invalid ptr vs invalid ptr", "[observer_comparison]") {
+    test_wptr ptr1;
+    test_wptr ptr2;
+    REQUIRE(ptr1 == ptr2);
+    REQUIRE(!(ptr1 != ptr2));
+}
+
+TEST_CASE("observer comparison invalid ptr vs valid ptr", "[observer_comparison]") {
+    test_ptr ptr_owner(new test_object);
+    test_wptr ptr1;
+    test_wptr ptr2(ptr_owner);
+    REQUIRE(ptr1 != ptr2);
+    REQUIRE(!(ptr1 == ptr2));
+    REQUIRE(ptr2 != ptr1);
+    REQUIRE(!(ptr2 == ptr1));
+}
+
+TEST_CASE("observer comparison valid ptr vs valid ptr same owner", "[observer_comparison]") {
+    test_ptr ptr_owner(new test_object);
+    test_wptr ptr1(ptr_owner);
+    test_wptr ptr2(ptr_owner);
+    REQUIRE(ptr1 == ptr2);
+    REQUIRE(!(ptr1 != ptr2));
+    REQUIRE(ptr2 == ptr1);
+    REQUIRE(!(ptr2 != ptr1));
+}
+
+TEST_CASE("observer comparison valid ptr vs valid ptr different owner", "[observer_comparison]") {
+    test_ptr ptr_owner1(new test_object);
+    test_ptr ptr_owner2(new test_object);
+    test_wptr ptr1(ptr_owner1);
+    test_wptr ptr2(ptr_owner2);
+    REQUIRE(ptr1 != ptr2);
+    REQUIRE(!(ptr1 == ptr2));
+    REQUIRE(ptr2 != ptr1);
+    REQUIRE(!(ptr2 == ptr1));
+}

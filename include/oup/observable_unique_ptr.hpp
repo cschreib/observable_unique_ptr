@@ -374,6 +374,37 @@ public:
     weak_ptr& operator=(weak_ptr&&) noexcept = default;
 };
 
+
+template<typename T>
+bool operator== (const weak_ptr<T>& value, std::nullptr_t) noexcept {
+    return value.expired();
+}
+
+template<typename T>
+bool operator== (std::nullptr_t, const weak_ptr<T>& value) noexcept {
+    return value.expired();
+}
+
+template<typename T>
+bool operator!= (const weak_ptr<T>& value, std::nullptr_t) noexcept {
+    return !value.expired();
+}
+
+template<typename T>
+bool operator!= (std::nullptr_t, const weak_ptr<T>& value) noexcept {
+    return !value.expired();
+}
+
+template<typename T, typename U>
+bool operator== (const weak_ptr<T>& first, const weak_ptr<U>& second) noexcept {
+    return first.lock() == second.lock();
+}
+
+template<typename T, typename U>
+bool operator!= (const weak_ptr<T>& first, const weak_ptr<U>& second) noexcept {
+    return first.lock() != second.lock();
+}
+
 }
 
 #endif
