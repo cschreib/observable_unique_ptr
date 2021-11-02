@@ -382,6 +382,13 @@ public:
         return std::weak_ptr<T>::lock().get();
     }
 
+    /// Check if this pointer points to a valid object.
+    /** \return 'true' if the pointed object is valid, 'false' otherwise
+    */
+    explicit operator bool() noexcept {
+        return !expired();
+    }
+
     /// Swap the content of this pointer with that of another pointer.
     /** \param other The other pointer to swap with
     */
