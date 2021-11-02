@@ -303,8 +303,12 @@ public:
     /// Default constructor (null pointer).
     observer_ptr() = default;
 
+    /// Default constructor (null pointer).
+    observer_ptr(std::nullptr_t) {}
+
     /// Create a weak pointer from an owning pointer.
-    observer_ptr(const observable_unique_ptr<T>& owner) noexcept : std::weak_ptr<T>(owner) {}
+    template<typename U>
+    observer_ptr(const observable_unique_ptr<U>& owner) noexcept : std::weak_ptr<T>(owner) {}
 
     /// Copy an existing observer_ptr instance
     /** \param value The existing weak pointer to copy
