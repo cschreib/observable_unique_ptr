@@ -546,7 +546,7 @@ TEST_CASE("observer default constructor", "[observer_construction]") {
     {
         test_optr ptr{};
         REQUIRE(instances == 0);
-        REQUIRE(ptr.lock() == nullptr);
+        REQUIRE(ptr.get() == nullptr);
         REQUIRE(ptr.expired() == true);
     }
 
@@ -557,7 +557,7 @@ TEST_CASE("observer nullptr constructor", "[observer_construction]") {
     {
         test_optr ptr{nullptr};
         REQUIRE(instances == 0);
-        REQUIRE(ptr.lock() == nullptr);
+        REQUIRE(ptr.get() == nullptr);
         REQUIRE(ptr.expired() == true);
     }
 
@@ -571,7 +571,7 @@ TEST_CASE("observer move constructor", "[observer_construction]") {
         {
             test_optr ptr(std::move(ptr_orig));
             REQUIRE(instances == 1);
-            REQUIRE(ptr.lock() != nullptr);
+            REQUIRE(ptr.get() != nullptr);
             REQUIRE(ptr.expired() == false);
         }
 
@@ -586,7 +586,7 @@ TEST_CASE("observer acquiring constructor", "[observer_construction]") {
         test_ptr ptr_owner{new test_object};
         test_optr ptr{ptr_owner};
         REQUIRE(instances == 1);
-        REQUIRE(ptr.lock() != nullptr);
+        REQUIRE(ptr.get() != nullptr);
         REQUIRE(ptr.expired() == false);
     }
 
@@ -598,7 +598,7 @@ TEST_CASE("observer acquiring constructor derived", "[observer_construction]") {
         test_ptr_derived ptr_owner{new test_object_derived};
         test_optr ptr{ptr_owner};
         REQUIRE(instances == 1);
-        REQUIRE(ptr.lock() != nullptr);
+        REQUIRE(ptr.get() != nullptr);
         REQUIRE(ptr.expired() == false);
     }
 
@@ -613,13 +613,13 @@ TEST_CASE("observer implicit copy conversion constructor", "[observer_constructi
             test_optr ptr(ptr_orig);
             REQUIRE(instances == 1);
             REQUIRE(instances_derived == 1);
-            REQUIRE(ptr.lock() != nullptr);
+            REQUIRE(ptr.get() != nullptr);
             REQUIRE(ptr.expired() == false);
         }
 
         REQUIRE(instances == 1);
         REQUIRE(instances_derived == 1);
-        REQUIRE(ptr_orig.lock() != nullptr);
+        REQUIRE(ptr_orig.get() != nullptr);
         REQUIRE(ptr_orig.expired() == false);
     }
 
@@ -635,13 +635,13 @@ TEST_CASE("observer implicit move conversion constructor", "[observer_constructi
             test_optr ptr(std::move(ptr_orig));
             REQUIRE(instances == 1);
             REQUIRE(instances_derived == 1);
-            REQUIRE(ptr.lock() != nullptr);
+            REQUIRE(ptr.get() != nullptr);
             REQUIRE(ptr.expired() == false);
         }
 
         REQUIRE(instances == 1);
         REQUIRE(instances_derived == 1);
-        REQUIRE(ptr_orig.lock() == nullptr);
+        REQUIRE(ptr_orig.get() == nullptr);
         REQUIRE(ptr_orig.expired() == true);
     }
 
@@ -656,12 +656,12 @@ TEST_CASE("observer expiring", "[observer_utility]") {
         test_ptr ptr_owner{new test_object};
         ptr = ptr_owner;
         REQUIRE(instances == 1);
-        REQUIRE(ptr.lock() != nullptr);
+        REQUIRE(ptr.get() != nullptr);
         REQUIRE(ptr.expired() == false);
     }
 
     REQUIRE(instances == 0);
-    REQUIRE(ptr.lock() == nullptr);
+    REQUIRE(ptr.get() == nullptr);
     REQUIRE(ptr.expired() == true);
 }
 
@@ -671,7 +671,7 @@ TEST_CASE("observer reset to null", "[observer_utility]") {
         test_optr ptr(ptr_owner);
         ptr.reset();
         REQUIRE(instances == 1);
-        REQUIRE(ptr.lock() == nullptr);
+        REQUIRE(ptr.get() == nullptr);
         REQUIRE(ptr.expired() == true);
     }
 
@@ -685,8 +685,8 @@ TEST_CASE("observer swap no instance", "[observer_utility]") {
         test_optr ptr;
         ptr.swap(ptr_orig);
         REQUIRE(instances == 0);
-        REQUIRE(ptr_orig.lock() == nullptr);
-        REQUIRE(ptr.lock() == nullptr);
+        REQUIRE(ptr_orig.get() == nullptr);
+        REQUIRE(ptr.get() == nullptr);
         REQUIRE(ptr_orig.expired() == true);
         REQUIRE(ptr.expired() == true);
     }
@@ -701,8 +701,8 @@ TEST_CASE("observer swap one instance", "[observer_utility]") {
         test_optr ptr;
         ptr.swap(ptr_orig);
         REQUIRE(instances == 1);
-        REQUIRE(ptr_orig.lock() == nullptr);
-        REQUIRE(ptr.lock() != nullptr);
+        REQUIRE(ptr_orig.get() == nullptr);
+        REQUIRE(ptr.get() != nullptr);
         REQUIRE(ptr_orig.expired() == true);
         REQUIRE(ptr.expired() == false);
     }
@@ -717,8 +717,8 @@ TEST_CASE("observer swap two same instance", "[observer_utility]") {
         test_optr ptr(ptr_owner);
         ptr.swap(ptr_orig);
         REQUIRE(instances == 1);
-        REQUIRE(ptr_orig.lock() == ptr_owner.get());
-        REQUIRE(ptr.lock() == ptr_owner.get());
+        REQUIRE(ptr_orig.get() == ptr_owner.get());
+        REQUIRE(ptr.get() == ptr_owner.get());
         REQUIRE(ptr_orig.expired() == false);
         REQUIRE(ptr.expired() == false);
     }
@@ -734,8 +734,8 @@ TEST_CASE("observer swap two different instances", "[observer_utility]") {
         test_optr ptr(ptr_owner2);
         ptr.swap(ptr_orig);
         REQUIRE(instances == 2);
-        REQUIRE(ptr_orig.lock() == ptr_owner2.get());
-        REQUIRE(ptr.lock() == ptr_owner1.get());
+        REQUIRE(ptr_orig.get() == ptr_owner2.get());
+        REQUIRE(ptr.get() == ptr_owner1.get());
         REQUIRE(ptr_orig.expired() == false);
         REQUIRE(ptr.expired() == false);
     }

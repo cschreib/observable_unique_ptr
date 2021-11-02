@@ -359,7 +359,7 @@ public:
     *         make sure that the owning observable_unique_ptr will not be reset until
     *         you are done using the raw pointer.
     */
-    T* lock() const noexcept {
+    T* get() const noexcept {
         return std::weak_ptr<T>::lock().get();
     }
 
@@ -401,12 +401,12 @@ bool operator!= (std::nullptr_t, const observer_ptr<T>& value) noexcept {
 
 template<typename T, typename U>
 bool operator== (const observer_ptr<T>& first, const observer_ptr<U>& second) noexcept {
-    return first.lock() == second.lock();
+    return first.get() == second.get();
 }
 
 template<typename T, typename U>
 bool operator!= (const observer_ptr<T>& first, const observer_ptr<U>& second) noexcept {
-    return first.lock() != second.lock();
+    return first.get() != second.get();
 }
 
 }
