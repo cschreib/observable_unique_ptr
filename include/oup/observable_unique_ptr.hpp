@@ -66,13 +66,31 @@ private:
     friend class observer_ptr;
 
 public:
-    // Import members from std::shared_ptr
+    /// Type of the pointed object
     using typename std::shared_ptr<T>::element_type;
-    using weak_type = observer_ptr<T>;
 
+    /// Type of the matching observer pointer
+    using observer_type = observer_ptr<T>;
+
+    /// Get a non-owning raw pointer to the pointed object, or nullptr if none.
+    /** \return 'nullptr' if no object is owned, or the pointed object otherwise
+    */
     using std::shared_ptr<T>::get;
+
+    /// Get a reference to the pointed object (undefined behavior if nullptr).
+    /** \return A reference to the pointed object
+    *   \note Using this function if this pointer is null will leave to undefined behavior.
+    */
     using std::shared_ptr<T>::operator*;
+
+    /// Get a non-owning raw pointer to the pointed object, or nullptr if none.
+    /** \return 'nullptr' if no object is owned, or the pointed object otherwise
+    */
     using std::shared_ptr<T>::operator->;
+
+    /// Check if this pointer points to a valid object.
+    /** \return 'true' if the pointed object is valid, 'false' otherwise
+    */
     using std::shared_ptr<T>::operator bool;
 
     // Define member types for compatibility with std::unique_ptr
@@ -294,10 +312,15 @@ private:
     friend class observer_ptr;
 
 public:
-    // Import members from std::shared_ptr
+    /// Type of the pointed object
     using typename std::weak_ptr<T>::element_type;
 
+    /// Set this pointer to null.
     using std::weak_ptr<T>::reset;
+
+    /// Check if this pointer points to a valid object.
+    /** \return 'true' if the pointed object is valid, 'false' otherwise
+    */
     using std::weak_ptr<T>::expired;
 
     /// Default constructor (null pointer).
