@@ -529,6 +529,16 @@ TEST_CASE("owner dereference", "[owner_utility]") {
     REQUIRE((*ptr).state_ == 1337);
 }
 
+TEST_CASE("owner operator bool valid", "[owner_utility]") {
+    test_ptr ptr(new test_object);
+    if (ptr) {} else FAIL("if (ptr) should have been true");
+}
+
+TEST_CASE("owner operator bool invalid", "[owner_utility]") {
+    test_ptr ptr;
+    if (ptr) FAIL("if (ptr) should not have been true");
+}
+
 TEST_CASE("make observable", "[make_observable_unique]") {
     {
         test_ptr ptr = oup::make_observable_unique<test_object>();
@@ -754,6 +764,17 @@ TEST_CASE("observer dereference", "[observer_utility]") {
     test_optr ptr(ptr_owner);
     REQUIRE(ptr->state_ == 1337);
     REQUIRE((*ptr).state_ == 1337);
+}
+
+TEST_CASE("observer operator bool valid", "[observer_utility]") {
+    test_ptr ptr_owner(new test_object);
+    test_optr ptr(ptr_owner);
+    if (ptr) {} else FAIL("if (ptr) should have been true");
+}
+
+TEST_CASE("observer operator bool invalid", "[observer_utility]") {
+    test_optr ptr;
+    if (ptr) FAIL("if (ptr) should not have been true");
 }
 
 TEST_CASE("observer comparison valid ptr vs nullptr", "[observer_comparison]") {
