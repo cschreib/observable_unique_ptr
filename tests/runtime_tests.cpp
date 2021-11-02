@@ -237,6 +237,123 @@ TEST_CASE("owner move assignment operator with deleter", "[owner_assignment]") {
     REQUIRE(instances_deleter == 0);
 }
 
+TEST_CASE("owner comparison valid ptr vs nullptr", "[owner_comparison]") {
+    test_ptr ptr(new test_object);
+    REQUIRE(ptr != nullptr);
+    REQUIRE(!(ptr == nullptr));
+    REQUIRE(nullptr != ptr);
+    REQUIRE(!(nullptr == ptr));
+}
+
+TEST_CASE("owner comparison valid ptr vs nullptr with deleter", "[owner_comparison]") {
+    test_ptr_with_deleter ptr(new test_object, test_deleter{42});
+    REQUIRE(ptr != nullptr);
+    REQUIRE(!(ptr == nullptr));
+    REQUIRE(nullptr != ptr);
+    REQUIRE(!(nullptr == ptr));
+}
+
+TEST_CASE("owner comparison invalid ptr vs nullptr", "[owner_comparison]") {
+    test_ptr ptr;
+    REQUIRE(ptr == nullptr);
+    REQUIRE(!(ptr != nullptr));
+    REQUIRE(nullptr == ptr);
+    REQUIRE(!(nullptr != ptr));
+}
+
+TEST_CASE("owner comparison invalid ptr vs nullptr with deleter", "[owner_comparison]") {
+    test_ptr_with_deleter ptr;
+    REQUIRE(ptr == nullptr);
+    REQUIRE(!(ptr != nullptr));
+    REQUIRE(nullptr == ptr);
+    REQUIRE(!(nullptr != ptr));
+}
+
+TEST_CASE("owner comparison invalid ptr vs nullptr with deleter explicit", "[owner_comparison]") {
+    test_ptr_with_deleter ptr(nullptr, test_deleter{42});
+    REQUIRE(ptr == nullptr);
+    REQUIRE(!(ptr != nullptr));
+    REQUIRE(nullptr == ptr);
+    REQUIRE(!(nullptr != ptr));
+}
+
+TEST_CASE("owner comparison invalid ptr vs invalid ptr", "[owner_comparison]") {
+    test_ptr ptr1;
+    test_ptr ptr2;
+    REQUIRE(ptr1 == ptr2);
+    REQUIRE(!(ptr1 != ptr2));
+}
+
+TEST_CASE("owner comparison invalid ptr vs invalid ptr with deleter", "[owner_comparison]") {
+    test_ptr_with_deleter ptr1;
+    test_ptr_with_deleter ptr2;
+    REQUIRE(ptr1 == ptr2);
+    REQUIRE(!(ptr1 != ptr2));
+}
+
+TEST_CASE("owner comparison invalid ptr vs invalid ptr with deleter explicit", "[owner_comparison]") {
+    test_ptr_with_deleter ptr1;
+    test_ptr_with_deleter ptr2(nullptr, test_deleter{42});
+    REQUIRE(ptr1 == ptr2);
+    REQUIRE(ptr2 == ptr1);
+    REQUIRE(!(ptr2 != ptr1));
+    REQUIRE(!(ptr2 != ptr1));
+}
+
+TEST_CASE("owner comparison invalid ptr vs invalid ptr with both deleter explicit", "[owner_comparison]") {
+    test_ptr_with_deleter ptr1(nullptr, test_deleter{43});
+    test_ptr_with_deleter ptr2(nullptr, test_deleter{42});
+    REQUIRE(ptr1 == ptr2);
+    REQUIRE(ptr2 == ptr1);
+    REQUIRE(!(ptr2 != ptr1));
+    REQUIRE(!(ptr2 != ptr1));
+}
+
+TEST_CASE("owner comparison invalid ptr vs valid ptr", "[owner_comparison]") {
+    test_ptr ptr1;
+    test_ptr ptr2(new test_object);
+    REQUIRE(ptr1 != ptr2);
+    REQUIRE(!(ptr1 == ptr2));
+    REQUIRE(ptr2 != ptr1);
+    REQUIRE(!(ptr2 == ptr1));
+}
+
+TEST_CASE("owner comparison invalid ptr vs valid ptr with deleter", "[owner_comparison]") {
+    test_ptr_with_deleter ptr1;
+    test_ptr_with_deleter ptr2(new test_object, test_deleter{42});
+    REQUIRE(ptr1 != ptr2);
+    REQUIRE(!(ptr1 == ptr2));
+    REQUIRE(ptr2 != ptr1);
+    REQUIRE(!(ptr2 == ptr1));
+}
+
+TEST_CASE("owner comparison invalid ptr vs valid ptr with deleter explicit", "[owner_comparison]") {
+    test_ptr_with_deleter ptr1(nullptr, test_deleter{43});
+    test_ptr_with_deleter ptr2(new test_object, test_deleter{42});
+    REQUIRE(ptr1 != ptr2);
+    REQUIRE(!(ptr1 == ptr2));
+    REQUIRE(ptr2 != ptr1);
+    REQUIRE(!(ptr2 == ptr1));
+}
+
+TEST_CASE("owner comparison valid ptr vs valid ptr", "[owner_comparison]") {
+    test_ptr ptr1(new test_object);
+    test_ptr ptr2(new test_object);
+    REQUIRE(ptr1 != ptr2);
+    REQUIRE(!(ptr1 == ptr2));
+    REQUIRE(ptr2 != ptr1);
+    REQUIRE(!(ptr2 == ptr1));
+}
+
+TEST_CASE("owner comparison valid ptr vs valid ptr with deleter", "[owner_comparison]") {
+    test_ptr_with_deleter ptr1(new test_object, test_deleter{43});
+    test_ptr_with_deleter ptr2(new test_object, test_deleter{42});
+    REQUIRE(ptr1 != ptr2);
+    REQUIRE(!(ptr1 == ptr2));
+    REQUIRE(ptr2 != ptr1);
+    REQUIRE(!(ptr2 == ptr1));
+}
+
 TEST_CASE("owner reset to null", "[owner_utility]") {
     {
         test_ptr ptr(new test_object);
