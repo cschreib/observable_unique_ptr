@@ -273,7 +273,7 @@ bool operator!= (std::nullptr_t, const observable_unique_ptr<T,Deleter>& value) 
 
 template<typename T, typename U, typename Deleter>
 bool operator== (const observable_unique_ptr<T,Deleter>& first,
-    const observable_unique_ptr<U,Deleter> second) noexcept {
+    const observable_unique_ptr<U,Deleter>& second) noexcept {
     return first.get() == second.get();
 }
 
