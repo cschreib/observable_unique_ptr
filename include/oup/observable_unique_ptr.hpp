@@ -14,25 +14,25 @@ struct default_deleter {
 };
 
 template<typename T>
-class weak_ptr;
+class observer_ptr;
 
-/// std::unique_ptr that can be observed by std::weak_ptr
+/// Unique-ownership smart pointer, can be observed by observer_ptr
 /** This smart pointer mimics the interface of std::unique_ptr, in that
 *   it is movable but not copiable. The smart pointer holds exclusive
 *   (unique) ownership of the pointed object.
 *
 *   The main difference with std::unique_ptr is that it allows creating
-*   std::weak_ptr instances to observe the lifetime of the pointed object,
-*   as one would do with std::shared_ptr. The price to pay, compared to a
-*   standard std::unique_ptr, is the additional heap allocation of the
-*   reference-counting control block, which utils::make_observable_unique()
+*   observer_ptr instances to observe the lifetime of the pointed object,
+*   as one would do with std::shared_ptr and std::weak_ptr. The price to pay,
+*   compared to a standard std::unique_ptr, is the additional heap allocation
+*   of the reference-counting control block, which make_observable_unique()
 *   will optimise as a single heap allocation with the pointed object (as
 *   std::make_shared() does for std::shared_ptr).
 *
 *   Other notable points (either limitations imposed by the current
 *   implementation, or features not implemented simply because of lack of
 *   motivation):
-*    - because of the unique ownership, weak pointers locking cannot extend
+*    - because of the unique ownership, observer_ptr cannot extend
 *      the lifetime of the pointed object, hence observable_unique_ptr provides
 *      less thread-safety compared to std::shared_ptr.
 *    - observable_unique_ptr does not support arrays.
@@ -63,12 +63,12 @@ private:
 
     // Friendship is required for access to std::shared_ptr base
     template<typename U>
-    friend class weak_ptr;
+    friend class observer_ptr;
 
 public:
     // Import members from std::shared_ptr
     using typename std::shared_ptr<T>::element_type;
-    using weak_type = weak_ptr<T>;
+    using weak_type = observer_ptr<T>;
 
     using std::shared_ptr<T>::get;
     using std::shared_ptr<T>::operator*;
@@ -283,15 +283,15 @@ bool operator!= (const observable_unique_ptr<T,Deleter>& first,
     return first.get() != second.get();
 }
 
-/// std::weak_ptr that observes an oup::observable_unique_ptr
+/// Non-owning smart pointer that observes an observable_unique_ptr.
 /** \see observable_unique_ptr
 */
 template<typename T>
-class weak_ptr : private std::weak_ptr<T> {
+class observer_ptr : private std::weak_ptr<T> {
 private:
     // Friendship is required for conversions.
     template<typename U>
-    friend class weak_ptr;
+    friend class observer_ptr;
 
 public:
     // Import members from std::shared_ptr
@@ -301,49 +301,49 @@ public:
     using std::weak_ptr<T>::expired;
 
     /// Default constructor (null pointer).
-    weak_ptr() = default;
+    observer_ptr() = default;
 
     /// Create a weak pointer from an owning pointer.
-    weak_ptr(const observable_unique_ptr<T>& owner) noexcept : std::weak_ptr<T>(owner) {}
+    observer_ptr(const observable_unique_ptr<T>& owner) noexcept : std::weak_ptr<T>(owner) {}
 
-    /// Copy an existing weak_ptr instance
+    /// Copy an existing observer_ptr instance
     /** \param value The existing weak pointer to copy
     */
     template<typename U>
-    weak_ptr(const weak_ptr<U>& value) noexcept :
+    observer_ptr(const observer_ptr<U>& value) noexcept :
         std::weak_ptr<T>(static_cast<const std::weak_ptr<U>&>(value)) {}
 
-    /// Move from an existing weak_ptr instance
+    /// Move from an existing observer_ptr instance
     /** \param value The existing weak pointer to move from
     *   \note After this observable_unique_ptr is created, the source
     *         pointer is set to null.
     */
     template<typename U>
-    weak_ptr(weak_ptr<U>&& value) noexcept :
+    observer_ptr(observer_ptr<U>&& value) noexcept :
         std::weak_ptr<T>(std::move(static_cast<std::weak_ptr<U>&>(value))) {}
 
     /// Point to another owning pointer.
-    weak_ptr& operator=(const observable_unique_ptr<T>& owner) noexcept {
+    observer_ptr& operator=(const observable_unique_ptr<T>& owner) noexcept {
         std::weak_ptr<T>::operator=(owner);
         return *this;
     }
 
-    /// Copy an existing weak_ptr instance
+    /// Copy an existing observer_ptr instance
     /** \param value The existing weak pointer to copy
     */
     template<typename U>
-    weak_ptr& operator=(const weak_ptr<U>& value) noexcept {
+    observer_ptr& operator=(const observer_ptr<U>& value) noexcept {
         std::weak_ptr<T>::operator=(static_cast<std::weak_ptr<U>&>(value));
         return *this;
     }
 
-    /// Move from an existing weak_ptr instance
+    /// Move from an existing observer_ptr instance
     /** \param value The existing weak pointer to move from
     *   \note After the assignment is complete, the source
     *         pointer is set to null and looses ownership.
     */
     template<typename U>
-    weak_ptr& operator=(weak_ptr<U>&& value) noexcept {
+    observer_ptr& operator=(observer_ptr<U>&& value) noexcept {
         std::weak_ptr<T>::operator=(std::move(static_cast<std::weak_ptr<U>&>(value)));
         return *this;
     }
@@ -362,46 +362,46 @@ public:
     /// Swap the content of this pointer with that of another pointer.
     /** \param other The other pointer to swap with
     */
-    void swap(weak_ptr& other) noexcept {
+    void swap(observer_ptr& other) noexcept {
         std::weak_ptr<T>::swap(other);
     }
 
     // Copiable
-    weak_ptr(const weak_ptr&) noexcept = default;
-    weak_ptr& operator=(const weak_ptr&) noexcept = default;
+    observer_ptr(const observer_ptr&) noexcept = default;
+    observer_ptr& operator=(const observer_ptr&) noexcept = default;
     // Movable
-    weak_ptr(weak_ptr&&) noexcept = default;
-    weak_ptr& operator=(weak_ptr&&) noexcept = default;
+    observer_ptr(observer_ptr&&) noexcept = default;
+    observer_ptr& operator=(observer_ptr&&) noexcept = default;
 };
 
 
 template<typename T>
-bool operator== (const weak_ptr<T>& value, std::nullptr_t) noexcept {
+bool operator== (const observer_ptr<T>& value, std::nullptr_t) noexcept {
     return value.expired();
 }
 
 template<typename T>
-bool operator== (std::nullptr_t, const weak_ptr<T>& value) noexcept {
+bool operator== (std::nullptr_t, const observer_ptr<T>& value) noexcept {
     return value.expired();
 }
 
 template<typename T>
-bool operator!= (const weak_ptr<T>& value, std::nullptr_t) noexcept {
+bool operator!= (const observer_ptr<T>& value, std::nullptr_t) noexcept {
     return !value.expired();
 }
 
 template<typename T>
-bool operator!= (std::nullptr_t, const weak_ptr<T>& value) noexcept {
+bool operator!= (std::nullptr_t, const observer_ptr<T>& value) noexcept {
     return !value.expired();
 }
 
 template<typename T, typename U>
-bool operator== (const weak_ptr<T>& first, const weak_ptr<U>& second) noexcept {
+bool operator== (const observer_ptr<T>& first, const observer_ptr<U>& second) noexcept {
     return first.lock() == second.lock();
 }
 
 template<typename T, typename U>
-bool operator!= (const weak_ptr<T>& first, const weak_ptr<U>& second) noexcept {
+bool operator!= (const observer_ptr<T>& first, const observer_ptr<U>& second) noexcept {
     return first.lock() != second.lock();
 }
 
