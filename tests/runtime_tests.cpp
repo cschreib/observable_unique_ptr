@@ -10,6 +10,8 @@ std::size_t num_allocations = 0u;
 std::size_t double_delete = 0u;
 bool memory_tracking = false;
 
+// NB: getting weird errors on MacOS when doing this
+#if !defined(__APPLE__)
 void* operator new(size_t size)
 {
     if (memory_tracking && num_allocations == max_allocations) {
@@ -49,6 +51,7 @@ void operator delete(void* p) noexcept
 
     std::free(p);
 }
+#endif
 
 struct memory_tracker {
     std::size_t initial_allocations;
