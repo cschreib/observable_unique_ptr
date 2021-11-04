@@ -548,7 +548,7 @@ TEST_CASE("owner release invalid with deleter", "[owner_utility]") {
     }
 
     REQUIRE(instances == 0);
-    REQUIRE(instances_deleter == 1);
+    REQUIRE(instances_deleter == 0);
 }
 
 TEST_CASE("make observable", "[make_observable_unique]") {
