@@ -28,7 +28,7 @@ struct control_block {
 *   as one would do with std::shared_ptr and std::weak_ptr. The price to pay,
 *   compared to a standard std::unique_ptr, is the additional heap allocation
 *   of the reference-counting control block, which make_observable_unique()
-*   will optimise as a single heap allocation with the pointed object (as
+*   will optimize as a single heap allocation with the pointed object (as
 *   std::make_shared() does for std::shared_ptr).
 *
 *   Other notable points (either limitations imposed by the current
@@ -46,7 +46,7 @@ private:
     using control_block = details::control_block;
 
     control_block* block = nullptr;
-    T* pointer = nullptr;
+    T* data = nullptr;
 
     #if __cplusplus == 202002L
     [[no_unique_address]] Deleter deleter;
@@ -74,15 +74,15 @@ private:
         }
     }
 
-    static void delete_and_pop_ref_(control_block* block, T* pointer, Deleter& deleter) noexcept {
+    static void delete_and_pop_ref_(control_block* block, T* data, Deleter& deleter) noexcept {
         if constexpr (std::is_same_v<Deleter, std::default_delete<T>>) {
             if (block->placement_allocated) {
-                pointer->~T();
+                data->~T();
             } else {
-                deleter(pointer);
+                deleter(data);
             }
         } else {
-            deleter(pointer);
+            deleter(data);
         }
 
         block->expired = true;
@@ -95,7 +95,7 @@ private:
     }
 
     void delete_and_pop_ref_() noexcept {
-        delete_and_pop_ref_(block, pointer, deleter);
+        delete_and_pop_ref_(block, data, deleter);
     }
 
     /// Private constructor using pre-allocated control block.
@@ -103,7 +103,7 @@ private:
     *   \param value The pointer to own
     *   \note This is used by make_observable_unique().
     */
-    observable_unique_ptr(control_block* ctrl, T* value) : block(ctrl), pointer(value) {}
+    observable_unique_ptr(control_block* ctrl, T* value) : block(ctrl), data(value) {}
 
     /// Private constructor using pre-allocated control block.
     /** \param ctrl The control block pointer
@@ -111,7 +111,7 @@ private:
     *   \note This is used by make_observable_unique().
     */
     observable_unique_ptr(control_block* ctrl, T* value, Deleter del) :
-        block(ctrl), pointer(value), deleter(del) {}
+        block(ctrl), data(value), deleter(del) {}
 
     // Friendship is required for conversions.
     template<typename U>
@@ -129,7 +129,7 @@ public:
     using observer_type = observer_ptr<T>;
 
     /// Pointer type
-    using pointr = element_type*;
+    using pointer = element_type*;
 
     /// Deleter type
     using deleter_type = Deleter;
@@ -146,10 +146,10 @@ public:
 
     /// Destructor, releases owned object if any
     ~observable_unique_ptr() noexcept {
-        if (pointer) {
+        if (data) {
             delete_and_pop_ref_();
             block = nullptr;
-            pointer = nullptr;
+            data = nullptr;
         }
     }
 
@@ -178,9 +178,9 @@ public:
     *         pointer is set to null and looses ownership.
     */
     observable_unique_ptr(observable_unique_ptr&& value) noexcept :
-        observable_unique_ptr(value.block, value.pointer, std::move(value.deleter)) {
+        observable_unique_ptr(value.block, value.data, std::move(value.deleter)) {
         value.block = nullptr;
-        value.pointer = nullptr;
+        value.data = nullptr;
     }
 
     /// Transfer ownership by implicit casting
@@ -190,9 +190,9 @@ public:
     */
     template<typename U, typename D/*, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>*/>
     observable_unique_ptr(observable_unique_ptr<U,D>&& value) noexcept :
-        observable_unique_ptr(value.block, value.pointer) {
+        observable_unique_ptr(value.block, value.data) {
         value.block = nullptr;
-        value.pointer = nullptr;
+        value.data = nullptr;
     }
 
     /// Transfer ownership by explicit casting
@@ -205,7 +205,7 @@ public:
     observable_unique_ptr(observable_unique_ptr<U,D>&& manager, T* value) noexcept :
         observable_unique_ptr(manager.block, value) {
         manager.block = nullptr;
-        manager.pointer = nullptr;
+        manager.data = nullptr;
     }
 
     /// Transfer ownership by implicit casting
@@ -215,14 +215,14 @@ public:
     */
     template<typename U, typename D/*, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>*/>
     observable_unique_ptr& operator=(observable_unique_ptr<U,D>&& value) noexcept {
-        if (pointer) {
+        if (data) {
             delete_and_pop_ref_();
         }
 
         block = value.block;
         value.block = nullptr;
-        pointer = value.pointer;
-        value.pointer = nullptr;
+        data = value.data;
+        value.data = nullptr;
         deleter = std::move(value.deleter);
 
         return *this;
@@ -256,7 +256,7 @@ public:
     void swap(observable_unique_ptr& other) noexcept {
         using std::swap;
         swap(block, other.block);
-        swap(pointer, other.pointer);
+        swap(data, other.data);
         swap(deleter, other.deleter);
     }
 
@@ -264,10 +264,10 @@ public:
     /** \param ptr A nullptr_t instance
     */
     void reset(std::nullptr_t ptr = nullptr) noexcept {
-        if (pointer) {
+        if (data) {
             delete_and_pop_ref_();
             block = nullptr;
-            pointer = nullptr;
+            data = nullptr;
         }
     }
 
@@ -276,12 +276,12 @@ public:
     */
     void reset(T* ptr) noexcept {
         // Copy old pointer
-        T* old_ptr = pointer;
+        T* old_ptr = data;
         control_block* old_block = block;
 
         // Assign the new one
         block = ptr != nullptr ? allocate_block_() : nullptr;
-        pointer = ptr;
+        data = ptr;
 
         // Delete the old pointer
         // (this follows std::unique_ptr specs)
@@ -294,11 +294,11 @@ public:
     /** \return A pointer to the un-managed object
     */
     T* release() noexcept {
-        T* old_ptr = pointer;
-        if (pointer) {
+        T* old_ptr = data;
+        if (data) {
             pop_ref_();
             block = nullptr;
-            pointer = nullptr;
+            data = nullptr;
         }
 
         return old_ptr;
@@ -312,7 +312,7 @@ public:
     *         you are done using the raw pointer.
     */
     T* get() const noexcept {
-        return pointer;
+        return data;
     }
 
     /// Get a reference to the pointed object (undefined behavior if deleted).
@@ -320,7 +320,7 @@ public:
     *   \note Using this function if expired() is 'true' will leave to undefined behavior.
     */
     T& operator*() const noexcept {
-        return *pointer;
+        return *data;
     }
 
     /// Get a non-owning raw pointer to the pointed object, or nullptr if deleted.
@@ -331,14 +331,14 @@ public:
     *         you are done using the raw pointer.
     */
     T* operator->() const noexcept {
-        return pointer;
+        return data;
     }
 
     /// Check if this pointer points to a valid object.
     /** \return 'true' if the pointed object is valid, 'false' otherwise
     */
     explicit operator bool() noexcept {
-        return pointer != nullptr;
+        return data != nullptr;
     }
 
     template<typename U, typename ... Args>
@@ -346,7 +346,7 @@ public:
 };
 
 /// Create a new observable_unique_ptr with a newly constructed object.
-/** \param args Arguments to construt the new object
+/** \param args Arguments to construct the new object
 *   \return The new observable_unique_ptr
 */
 template<typename T, typename ... Args>
@@ -366,7 +366,7 @@ observable_unique_ptr<T> make_observable_unique(Args&& ... args) {
         // Make owner pointer
         return observable_unique_ptr<T>(block, ptr);
     } catch (...) {
-        // Exception thrown durimg object construction,
+        // Exception thrown during object construction,
         // clean up memory and let exception propagate
         delete[] buffer;
         throw;
@@ -418,7 +418,7 @@ private:
     using control_block = details::control_block;
 
     control_block* block = nullptr;
-    T* pointer = nullptr;
+    T* data = nullptr;
 
     void pop_ref_() noexcept {
         --block->refcount;
@@ -444,17 +444,17 @@ public:
 
     /// Destructor
     ~observer_ptr() noexcept {
-        if (pointer) {
+        if (data) {
             pop_ref_();
             block = nullptr;
-            pointer = nullptr;
+            data = nullptr;
         }
     }
 
     /// Create a weak pointer from an owning pointer.
     template<typename U>
     observer_ptr(const observable_unique_ptr<U>& owner) noexcept :
-        block(owner.block), pointer(owner.pointer) {
+        block(owner.block), data(owner.data) {
         if (block) {
             ++block->refcount;
         }
@@ -465,7 +465,7 @@ public:
     */
     template<typename U>
     observer_ptr(const observer_ptr<U>& value) noexcept :
-        block(value.block), pointer(value.pointer) {
+        block(value.block), data(value.data) {
         if (block) {
             ++block->refcount;
         }
@@ -477,20 +477,20 @@ public:
     *         pointer is set to null.
     */
     template<typename U>
-    observer_ptr(observer_ptr<U>&& value) noexcept : block(value.block), pointer(value.pointer) {
+    observer_ptr(observer_ptr<U>&& value) noexcept : block(value.block), data(value.data) {
         value.block = nullptr;
-        value.pointer = nullptr;
+        value.data = nullptr;
     }
 
     /// Point to another owning pointer.
     template<typename U>
     observer_ptr& operator=(const observable_unique_ptr<U>& owner) noexcept {
-        if (pointer) {
+        if (data) {
             pop_ref_();
         }
 
         block = owner.block;
-        pointer = owner.pointer;
+        data = owner.data;
         if (block) {
             ++block->refcount;
         }
@@ -503,12 +503,12 @@ public:
     */
     template<typename U>
     observer_ptr& operator=(const observer_ptr<U>& value) noexcept {
-        if (pointer) {
+        if (data) {
             pop_ref_();
         }
 
         block = value.block;
-        pointer = value.pointer;
+        data = value.data;
         if (block) {
             ++block->refcount;
         }
@@ -523,24 +523,24 @@ public:
     */
     template<typename U>
     observer_ptr& operator=(observer_ptr<U>&& value) noexcept {
-        if (pointer) {
+        if (data) {
             pop_ref_();
         }
 
         block = value.block;
         value.block = nullptr;
-        pointer = value.pointer;
-        value.pointer = nullptr;
+        data = value.data;
+        value.data = nullptr;
 
         return *this;
     }
 
     /// Set this pointer to null.
     void reset() noexcept {
-        if (pointer) {
+        if (data) {
             pop_ref_();
             block = nullptr;
-            pointer = nullptr;
+            data = nullptr;
         }
     }
 
@@ -551,7 +551,7 @@ public:
     *         will not be reset until you are done using the raw pointer.
     */
     T* get() const noexcept {
-        return expired() ? nullptr : pointer;
+        return expired() ? nullptr : data;
     }
 
     /// Get a non-owning raw pointer to the pointed object, possibly dangling.
@@ -564,7 +564,7 @@ public:
     *         Only use this function if you know the object cannot have been deleted.
     */
     T* raw_get() const noexcept {
-        return pointer;
+        return data;
     }
 
     /// Get a reference to the pointed object (undefined behavior if deleted).
@@ -606,7 +606,7 @@ public:
     void swap(observer_ptr& other) noexcept {
         using std::swap;
         swap(block, other.block);
-        swap(pointer, other.pointer);
+        swap(data, other.data);
     }
 };
 
