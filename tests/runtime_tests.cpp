@@ -1,8 +1,76 @@
 #include "tests_common.hpp"
 
 #include <catch2/catch_test_macros.hpp>
+#include <cstdlib>
+
+// Allocation tracker, to catch memory leaks and double delete
+constexpr std::size_t max_allocations = 20'000;
+void* allocations[max_allocations];
+std::size_t num_allocations = 0u;
+std::size_t double_delete = 0u;
+bool memory_tracking = false;
+
+void* operator new(size_t size)
+{
+    if (memory_tracking && num_allocations == max_allocations) {
+        throw std::bad_alloc();
+    }
+
+    void* p = std::malloc(size);
+    if (!p) {
+        throw std::bad_alloc();
+    }
+
+    if (memory_tracking) {
+        allocations[num_allocations] = p;
+        ++num_allocations;
+    }
+
+    return p;
+}
+
+void operator delete(void* p) noexcept
+{
+    if (memory_tracking) {
+        bool found = false;
+        for (std::size_t i = 0; i < num_allocations; ++i) {
+            if (allocations[i] == p) {
+                std::swap(allocations[i], allocations[num_allocations-1]);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            ++double_delete;
+        }
+
+        --num_allocations;
+    }
+
+    std::free(p);
+}
+
+struct memory_tracker {
+    std::size_t initial_allocations;
+    std::size_t initial_double_delete;
+
+    memory_tracker() noexcept :
+        initial_allocations(num_allocations), initial_double_delete(double_delete) {
+        memory_tracking = true;
+    }
+
+    ~memory_tracker() noexcept {
+        memory_tracking = false;
+    }
+
+    std::size_t leaks() const { return num_allocations - initial_allocations; }
+    std::size_t double_del() const { return double_delete - initial_double_delete; }
+};
 
 TEST_CASE("owner default constructor", "[owner_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr{};
         REQUIRE(instances == 0);
@@ -10,9 +78,13 @@ TEST_CASE("owner default constructor", "[owner_construction]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner default constructor with deleter", "[owner_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr{};
         REQUIRE(instances == 0);
@@ -23,9 +95,13 @@ TEST_CASE("owner default constructor with deleter", "[owner_construction]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner nullptr constructor", "[owner_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr{nullptr};
         REQUIRE(instances == 0);
@@ -33,9 +109,13 @@ TEST_CASE("owner nullptr constructor", "[owner_construction]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner nullptr constructor with deleter", "[owner_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr{nullptr, test_deleter{42}};
         REQUIRE(instances == 0);
@@ -46,9 +126,13 @@ TEST_CASE("owner nullptr constructor with deleter", "[owner_construction]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner move constructor", "[owner_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr_orig(new test_object);
         {
@@ -61,9 +145,13 @@ TEST_CASE("owner move constructor", "[owner_construction]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner move constructor with deleter", "[owner_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr_orig(new test_object, test_deleter{42});
         {
@@ -80,9 +168,13 @@ TEST_CASE("owner move constructor with deleter", "[owner_construction]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner acquiring constructor", "[owner_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr{new test_object};
         REQUIRE(instances == 1);
@@ -90,9 +182,13 @@ TEST_CASE("owner acquiring constructor", "[owner_construction]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner acquiring constructor with deleter", "[owner_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr{new test_object, test_deleter{42}};
         REQUIRE(instances == 1);
@@ -103,9 +199,13 @@ TEST_CASE("owner acquiring constructor with deleter", "[owner_construction]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner implicit conversion constructor", "[owner_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_derived ptr_orig{new test_object_derived};
         {
@@ -121,9 +221,13 @@ TEST_CASE("owner implicit conversion constructor", "[owner_construction]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_derived == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner implicit conversion constructor with deleter", "[owner_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_derived_with_deleter ptr_orig{new test_object_derived, test_deleter{42}};
         {
@@ -143,9 +247,13 @@ TEST_CASE("owner implicit conversion constructor with deleter", "[owner_construc
     REQUIRE(instances == 0);
     REQUIRE(instances_derived == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner explicit conversion constructor", "[owner_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr_orig{new test_object_derived};
         {
@@ -162,9 +270,13 @@ TEST_CASE("owner explicit conversion constructor", "[owner_construction]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_derived == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner explicit conversion constructor with default deleter", "[owner_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr_orig{new test_object_derived, test_deleter{42}};
         {
@@ -185,9 +297,13 @@ TEST_CASE("owner explicit conversion constructor with default deleter", "[owner_
     REQUIRE(instances == 0);
     REQUIRE(instances_derived == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner explicit conversion constructor with custom deleter", "[owner_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr_orig{new test_object_derived, test_deleter{42}};
         {
@@ -209,9 +325,13 @@ TEST_CASE("owner explicit conversion constructor with custom deleter", "[owner_c
     REQUIRE(instances == 0);
     REQUIRE(instances_derived == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner move assignment operator", "[owner_assignment]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr_orig(new test_object);
         {
@@ -225,9 +345,13 @@ TEST_CASE("owner move assignment operator", "[owner_assignment]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner move assignment operator with deleter", "[owner_assignment]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr_orig(new test_object, test_deleter{42});
         {
@@ -245,126 +369,228 @@ TEST_CASE("owner move assignment operator with deleter", "[owner_assignment]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison valid ptr vs nullptr", "[owner_comparison]") {
-    test_ptr ptr(new test_object);
-    REQUIRE(ptr != nullptr);
-    REQUIRE(!(ptr == nullptr));
-    REQUIRE(nullptr != ptr);
-    REQUIRE(!(nullptr == ptr));
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr(new test_object);
+        REQUIRE(ptr != nullptr);
+        REQUIRE(!(ptr == nullptr));
+        REQUIRE(nullptr != ptr);
+        REQUIRE(!(nullptr == ptr));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison valid ptr vs nullptr with deleter", "[owner_comparison]") {
-    test_ptr_with_deleter ptr(new test_object, test_deleter{42});
-    REQUIRE(ptr != nullptr);
-    REQUIRE(!(ptr == nullptr));
-    REQUIRE(nullptr != ptr);
-    REQUIRE(!(nullptr == ptr));
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr(new test_object, test_deleter{42});
+        REQUIRE(ptr != nullptr);
+        REQUIRE(!(ptr == nullptr));
+        REQUIRE(nullptr != ptr);
+        REQUIRE(!(nullptr == ptr));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison invalid ptr vs nullptr", "[owner_comparison]") {
-    test_ptr ptr;
-    REQUIRE(ptr == nullptr);
-    REQUIRE(!(ptr != nullptr));
-    REQUIRE(nullptr == ptr);
-    REQUIRE(!(nullptr != ptr));
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr;
+        REQUIRE(ptr == nullptr);
+        REQUIRE(!(ptr != nullptr));
+        REQUIRE(nullptr == ptr);
+        REQUIRE(!(nullptr != ptr));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison invalid ptr vs nullptr with deleter", "[owner_comparison]") {
-    test_ptr_with_deleter ptr;
-    REQUIRE(ptr == nullptr);
-    REQUIRE(!(ptr != nullptr));
-    REQUIRE(nullptr == ptr);
-    REQUIRE(!(nullptr != ptr));
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr;
+        REQUIRE(ptr == nullptr);
+        REQUIRE(!(ptr != nullptr));
+        REQUIRE(nullptr == ptr);
+        REQUIRE(!(nullptr != ptr));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison invalid ptr vs nullptr with deleter explicit", "[owner_comparison]") {
-    test_ptr_with_deleter ptr(nullptr, test_deleter{42});
-    REQUIRE(ptr == nullptr);
-    REQUIRE(!(ptr != nullptr));
-    REQUIRE(nullptr == ptr);
-    REQUIRE(!(nullptr != ptr));
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr(nullptr, test_deleter{42});
+        REQUIRE(ptr == nullptr);
+        REQUIRE(!(ptr != nullptr));
+        REQUIRE(nullptr == ptr);
+        REQUIRE(!(nullptr != ptr));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison invalid ptr vs invalid ptr", "[owner_comparison]") {
-    test_ptr ptr1;
-    test_ptr ptr2;
-    REQUIRE(ptr1 == ptr2);
-    REQUIRE(!(ptr1 != ptr2));
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr1;
+        test_ptr ptr2;
+        REQUIRE(ptr1 == ptr2);
+        REQUIRE(!(ptr1 != ptr2));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison invalid ptr vs invalid ptr with deleter", "[owner_comparison]") {
-    test_ptr_with_deleter ptr1;
-    test_ptr_with_deleter ptr2;
-    REQUIRE(ptr1 == ptr2);
-    REQUIRE(!(ptr1 != ptr2));
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr1;
+        test_ptr_with_deleter ptr2;
+        REQUIRE(ptr1 == ptr2);
+        REQUIRE(!(ptr1 != ptr2));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison invalid ptr vs invalid ptr with deleter explicit", "[owner_comparison]") {
-    test_ptr_with_deleter ptr1;
-    test_ptr_with_deleter ptr2(nullptr, test_deleter{42});
-    REQUIRE(ptr1 == ptr2);
-    REQUIRE(ptr2 == ptr1);
-    REQUIRE(!(ptr2 != ptr1));
-    REQUIRE(!(ptr2 != ptr1));
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr1;
+        test_ptr_with_deleter ptr2(nullptr, test_deleter{42});
+        REQUIRE(ptr1 == ptr2);
+        REQUIRE(ptr2 == ptr1);
+        REQUIRE(!(ptr2 != ptr1));
+        REQUIRE(!(ptr2 != ptr1));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison invalid ptr vs invalid ptr with both deleter explicit", "[owner_comparison]") {
-    test_ptr_with_deleter ptr1(nullptr, test_deleter{43});
-    test_ptr_with_deleter ptr2(nullptr, test_deleter{42});
-    REQUIRE(ptr1 == ptr2);
-    REQUIRE(ptr2 == ptr1);
-    REQUIRE(!(ptr2 != ptr1));
-    REQUIRE(!(ptr2 != ptr1));
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr1(nullptr, test_deleter{43});
+        test_ptr_with_deleter ptr2(nullptr, test_deleter{42});
+        REQUIRE(ptr1 == ptr2);
+        REQUIRE(ptr2 == ptr1);
+        REQUIRE(!(ptr2 != ptr1));
+        REQUIRE(!(ptr2 != ptr1));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison invalid ptr vs valid ptr", "[owner_comparison]") {
-    test_ptr ptr1;
-    test_ptr ptr2(new test_object);
-    REQUIRE(ptr1 != ptr2);
-    REQUIRE(!(ptr1 == ptr2));
-    REQUIRE(ptr2 != ptr1);
-    REQUIRE(!(ptr2 == ptr1));
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr1;
+        test_ptr ptr2(new test_object);
+        REQUIRE(ptr1 != ptr2);
+        REQUIRE(!(ptr1 == ptr2));
+        REQUIRE(ptr2 != ptr1);
+        REQUIRE(!(ptr2 == ptr1));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison invalid ptr vs valid ptr with deleter", "[owner_comparison]") {
-    test_ptr_with_deleter ptr1;
-    test_ptr_with_deleter ptr2(new test_object, test_deleter{42});
-    REQUIRE(ptr1 != ptr2);
-    REQUIRE(!(ptr1 == ptr2));
-    REQUIRE(ptr2 != ptr1);
-    REQUIRE(!(ptr2 == ptr1));
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr1;
+        test_ptr_with_deleter ptr2(new test_object, test_deleter{42});
+        REQUIRE(ptr1 != ptr2);
+        REQUIRE(!(ptr1 == ptr2));
+        REQUIRE(ptr2 != ptr1);
+        REQUIRE(!(ptr2 == ptr1));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison invalid ptr vs valid ptr with deleter explicit", "[owner_comparison]") {
-    test_ptr_with_deleter ptr1(nullptr, test_deleter{43});
-    test_ptr_with_deleter ptr2(new test_object, test_deleter{42});
-    REQUIRE(ptr1 != ptr2);
-    REQUIRE(!(ptr1 == ptr2));
-    REQUIRE(ptr2 != ptr1);
-    REQUIRE(!(ptr2 == ptr1));
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr1(nullptr, test_deleter{43});
+        test_ptr_with_deleter ptr2(new test_object, test_deleter{42});
+        REQUIRE(ptr1 != ptr2);
+        REQUIRE(!(ptr1 == ptr2));
+        REQUIRE(ptr2 != ptr1);
+        REQUIRE(!(ptr2 == ptr1));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison valid ptr vs valid ptr", "[owner_comparison]") {
-    test_ptr ptr1(new test_object);
-    test_ptr ptr2(new test_object);
-    REQUIRE(ptr1 != ptr2);
-    REQUIRE(!(ptr1 == ptr2));
-    REQUIRE(ptr2 != ptr1);
-    REQUIRE(!(ptr2 == ptr1));
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr1(new test_object);
+        test_ptr ptr2(new test_object);
+        REQUIRE(ptr1 != ptr2);
+        REQUIRE(!(ptr1 == ptr2));
+        REQUIRE(ptr2 != ptr1);
+        REQUIRE(!(ptr2 == ptr1));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner comparison valid ptr vs valid ptr with deleter", "[owner_comparison]") {
-    test_ptr_with_deleter ptr1(new test_object, test_deleter{43});
-    test_ptr_with_deleter ptr2(new test_object, test_deleter{42});
-    REQUIRE(ptr1 != ptr2);
-    REQUIRE(!(ptr1 == ptr2));
-    REQUIRE(ptr2 != ptr1);
-    REQUIRE(!(ptr2 == ptr1));
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr1(new test_object, test_deleter{43});
+        test_ptr_with_deleter ptr2(new test_object, test_deleter{42});
+        REQUIRE(ptr1 != ptr2);
+        REQUIRE(!(ptr1 == ptr2));
+        REQUIRE(ptr2 != ptr1);
+        REQUIRE(!(ptr2 == ptr1));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner reset to null", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr(new test_object);
         ptr.reset();
@@ -373,9 +599,13 @@ TEST_CASE("owner reset to null", "[owner_utility]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner reset to null with deleter", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr(new test_object, test_deleter{42});
         ptr.reset();
@@ -387,9 +617,13 @@ TEST_CASE("owner reset to null with deleter", "[owner_utility]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner reset to new", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr(new test_object);
         ptr.reset(new test_object);
@@ -398,9 +632,13 @@ TEST_CASE("owner reset to new", "[owner_utility]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner reset to new with deleter", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr(new test_object, test_deleter{42});
         ptr.reset(new test_object);
@@ -412,9 +650,13 @@ TEST_CASE("owner reset to new with deleter", "[owner_utility]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner swap no instance", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr_orig;
         test_ptr ptr;
@@ -425,9 +667,13 @@ TEST_CASE("owner swap no instance", "[owner_utility]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner swap no instance with deleter", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr_orig(nullptr, test_deleter{42});
         test_ptr_with_deleter ptr(nullptr, test_deleter{43});
@@ -442,9 +688,13 @@ TEST_CASE("owner swap no instance with deleter", "[owner_utility]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner swap one instance", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr_orig(new test_object);
         test_ptr ptr;
@@ -455,9 +705,13 @@ TEST_CASE("owner swap one instance", "[owner_utility]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner swap one instance with deleter", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr_orig(new test_object, test_deleter{42});
         test_ptr_with_deleter ptr(nullptr, test_deleter{43});
@@ -472,9 +726,13 @@ TEST_CASE("owner swap one instance with deleter", "[owner_utility]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner swap two instances", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr_orig(new test_object);
         test_object* ptr_orig_raw = ptr_orig.get();
@@ -487,9 +745,13 @@ TEST_CASE("owner swap two instances", "[owner_utility]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner swap two instances with deleter", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr_orig(new test_object, test_deleter{42});
         test_object* ptr_orig_raw = ptr_orig.get();
@@ -506,25 +768,50 @@ TEST_CASE("owner swap two instances with deleter", "[owner_utility]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner dereference", "[owner_utility]") {
-    test_ptr ptr(new test_object);
-    REQUIRE(ptr->state_ == 1337);
-    REQUIRE((*ptr).state_ == 1337);
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr(new test_object);
+        REQUIRE(ptr->state_ == 1337);
+        REQUIRE((*ptr).state_ == 1337);
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner operator bool valid", "[owner_utility]") {
-    test_ptr ptr(new test_object);
-    if (ptr) {} else FAIL("if (ptr) should have been true");
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr(new test_object);
+        if (ptr) {} else FAIL("if (ptr) should have been true");
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner operator bool invalid", "[owner_utility]") {
-    test_ptr ptr;
-    if (ptr) FAIL("if (ptr) should not have been true");
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr;
+        if (ptr) FAIL("if (ptr) should not have been true");
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner release valid", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr(new test_object);
         test_object* ptr_raw = ptr.release();
@@ -535,9 +822,13 @@ TEST_CASE("owner release valid", "[owner_utility]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner release valid with deleter", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr(new test_object, test_deleter{42});
         test_object* ptr_raw = ptr.release();
@@ -551,9 +842,13 @@ TEST_CASE("owner release valid with deleter", "[owner_utility]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner release invalid", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr;
         REQUIRE(ptr.release() == nullptr);
@@ -561,9 +856,13 @@ TEST_CASE("owner release invalid", "[owner_utility]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("owner release invalid with deleter", "[owner_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_with_deleter ptr;
         REQUIRE(ptr.release() == nullptr);
@@ -573,9 +872,13 @@ TEST_CASE("owner release invalid with deleter", "[owner_utility]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("make observable", "[make_observable_unique]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr = oup::make_observable_unique<test_object>();
         REQUIRE(instances == 1);
@@ -583,17 +886,25 @@ TEST_CASE("make observable", "[make_observable_unique]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("make observable throw in constructor", "[make_observable_unique]") {
+    memory_tracker mem_track;
+
     REQUIRE_THROWS_AS(
         oup::make_observable_unique<test_object_thrower>(),
         throw_constructor);
 
     REQUIRE(instances_thrower == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer default constructor", "[observer_construction]") {
+    memory_tracker mem_track;
+
     {
         test_optr ptr{};
         REQUIRE(instances == 0);
@@ -602,9 +913,13 @@ TEST_CASE("observer default constructor", "[observer_construction]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer nullptr constructor", "[observer_construction]") {
+    memory_tracker mem_track;
+
     {
         test_optr ptr{nullptr};
         REQUIRE(instances == 0);
@@ -613,9 +928,13 @@ TEST_CASE("observer nullptr constructor", "[observer_construction]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer move constructor", "[observer_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr_owner{new test_object};
         test_optr ptr_orig{ptr_owner};
@@ -630,9 +949,13 @@ TEST_CASE("observer move constructor", "[observer_construction]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer acquiring constructor", "[observer_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr_owner{new test_object};
         test_optr ptr{ptr_owner};
@@ -642,9 +965,13 @@ TEST_CASE("observer acquiring constructor", "[observer_construction]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer acquiring constructor derived", "[observer_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_derived ptr_owner{new test_object_derived};
         test_optr ptr{ptr_owner};
@@ -654,9 +981,13 @@ TEST_CASE("observer acquiring constructor derived", "[observer_construction]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer implicit copy conversion constructor", "[observer_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_derived ptr_owner{new test_object_derived};
         test_optr_derived ptr_orig{ptr_owner};
@@ -676,9 +1007,13 @@ TEST_CASE("observer implicit copy conversion constructor", "[observer_constructi
 
     REQUIRE(instances == 0);
     REQUIRE(instances_derived == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer implicit move conversion constructor", "[observer_construction]") {
+    memory_tracker mem_track;
+
     {
         test_ptr_derived ptr_owner{new test_object_derived};
         test_optr_derived ptr_orig{ptr_owner};
@@ -698,25 +1033,36 @@ TEST_CASE("observer implicit move conversion constructor", "[observer_constructi
 
     REQUIRE(instances == 0);
     REQUIRE(instances_derived == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer expiring", "[observer_utility]") {
-    test_optr ptr;
+    memory_tracker mem_track;
 
     {
-        test_ptr ptr_owner{new test_object};
-        ptr = ptr_owner;
-        REQUIRE(instances == 1);
-        REQUIRE(ptr.get() != nullptr);
-        REQUIRE(ptr.expired() == false);
+        test_optr ptr;
+
+        {
+            test_ptr ptr_owner{new test_object};
+            ptr = ptr_owner;
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() != nullptr);
+            REQUIRE(ptr.expired() == false);
+        }
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(ptr.expired() == true);
     }
 
-    REQUIRE(instances == 0);
-    REQUIRE(ptr.get() == nullptr);
-    REQUIRE(ptr.expired() == true);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer reset to null", "[observer_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr_owner(new test_object);
         test_optr ptr(ptr_owner);
@@ -731,6 +1077,8 @@ TEST_CASE("observer reset to null", "[observer_utility]") {
 
 
 TEST_CASE("observer swap no instance", "[observer_utility]") {
+    memory_tracker mem_track;
+
     {
         test_optr ptr_orig;
         test_optr ptr;
@@ -743,9 +1091,13 @@ TEST_CASE("observer swap no instance", "[observer_utility]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer swap one instance", "[observer_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr_owner(new test_object);
         test_optr ptr_orig(ptr_owner);
@@ -759,9 +1111,13 @@ TEST_CASE("observer swap one instance", "[observer_utility]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer swap two same instance", "[observer_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr_owner(new test_object);
         test_optr ptr_orig(ptr_owner);
@@ -775,9 +1131,13 @@ TEST_CASE("observer swap two same instance", "[observer_utility]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer swap two different instances", "[observer_utility]") {
+    memory_tracker mem_track;
+
     {
         test_ptr ptr_owner1(new test_object);
         test_ptr ptr_owner2(new test_object);
@@ -792,99 +1152,178 @@ TEST_CASE("observer swap two different instances", "[observer_utility]") {
     }
 
     REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer dereference", "[observer_utility]") {
-    test_ptr ptr_owner(new test_object);
-    test_optr ptr(ptr_owner);
-    REQUIRE(ptr->state_ == 1337);
-    REQUIRE((*ptr).state_ == 1337);
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner(new test_object);
+        test_optr ptr(ptr_owner);
+        REQUIRE(ptr->state_ == 1337);
+        REQUIRE((*ptr).state_ == 1337);
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer operator bool valid", "[observer_utility]") {
-    test_ptr ptr_owner(new test_object);
-    test_optr ptr(ptr_owner);
-    if (ptr) {} else FAIL("if (ptr) should have been true");
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner(new test_object);
+        test_optr ptr(ptr_owner);
+        if (ptr) {} else FAIL("if (ptr) should have been true");
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer operator bool invalid", "[observer_utility]") {
-    test_optr ptr;
-    if (ptr) FAIL("if (ptr) should not have been true");
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr;
+        if (ptr) FAIL("if (ptr) should not have been true");
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer comparison valid ptr vs nullptr", "[observer_comparison]") {
-    test_ptr ptr_owner(new test_object);
-    test_optr ptr(ptr_owner);
-    REQUIRE(ptr != nullptr);
-    REQUIRE(!(ptr == nullptr));
-    REQUIRE(nullptr != ptr);
-    REQUIRE(!(nullptr == ptr));
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner(new test_object);
+        test_optr ptr(ptr_owner);
+        REQUIRE(ptr != nullptr);
+        REQUIRE(!(ptr == nullptr));
+        REQUIRE(nullptr != ptr);
+        REQUIRE(!(nullptr == ptr));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer comparison invalid ptr vs nullptr", "[observer_comparison]") {
-    test_optr ptr;
-    REQUIRE(ptr == nullptr);
-    REQUIRE(!(ptr != nullptr));
-    REQUIRE(nullptr == ptr);
-    REQUIRE(!(nullptr != ptr));
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr;
+        REQUIRE(ptr == nullptr);
+        REQUIRE(!(ptr != nullptr));
+        REQUIRE(nullptr == ptr);
+        REQUIRE(!(nullptr != ptr));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer comparison invalid ptr vs invalid ptr", "[observer_comparison]") {
-    test_optr ptr1;
-    test_optr ptr2;
-    REQUIRE(ptr1 == ptr2);
-    REQUIRE(!(ptr1 != ptr2));
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr1;
+        test_optr ptr2;
+        REQUIRE(ptr1 == ptr2);
+        REQUIRE(!(ptr1 != ptr2));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer comparison invalid ptr vs valid ptr", "[observer_comparison]") {
-    test_ptr ptr_owner(new test_object);
-    test_optr ptr1;
-    test_optr ptr2(ptr_owner);
-    REQUIRE(ptr1 != ptr2);
-    REQUIRE(!(ptr1 == ptr2));
-    REQUIRE(ptr2 != ptr1);
-    REQUIRE(!(ptr2 == ptr1));
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner(new test_object);
+        test_optr ptr1;
+        test_optr ptr2(ptr_owner);
+        REQUIRE(ptr1 != ptr2);
+        REQUIRE(!(ptr1 == ptr2));
+        REQUIRE(ptr2 != ptr1);
+        REQUIRE(!(ptr2 == ptr1));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer comparison valid ptr vs valid ptr same owner", "[observer_comparison]") {
-    test_ptr ptr_owner(new test_object);
-    test_optr ptr1(ptr_owner);
-    test_optr ptr2(ptr_owner);
-    REQUIRE(ptr1 == ptr2);
-    REQUIRE(!(ptr1 != ptr2));
-    REQUIRE(ptr2 == ptr1);
-    REQUIRE(!(ptr2 != ptr1));
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner(new test_object);
+        test_optr ptr1(ptr_owner);
+        test_optr ptr2(ptr_owner);
+        REQUIRE(ptr1 == ptr2);
+        REQUIRE(!(ptr1 != ptr2));
+        REQUIRE(ptr2 == ptr1);
+        REQUIRE(!(ptr2 != ptr1));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer comparison valid ptr vs valid ptr different owner", "[observer_comparison]") {
-    test_ptr ptr_owner1(new test_object);
-    test_ptr ptr_owner2(new test_object);
-    test_optr ptr1(ptr_owner1);
-    test_optr ptr2(ptr_owner2);
-    REQUIRE(ptr1 != ptr2);
-    REQUIRE(!(ptr1 == ptr2));
-    REQUIRE(ptr2 != ptr1);
-    REQUIRE(!(ptr2 == ptr1));
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner1(new test_object);
+        test_ptr ptr_owner2(new test_object);
+        test_optr ptr1(ptr_owner1);
+        test_optr ptr2(ptr_owner2);
+        REQUIRE(ptr1 != ptr2);
+        REQUIRE(!(ptr1 == ptr2));
+        REQUIRE(ptr2 != ptr1);
+        REQUIRE(!(ptr2 == ptr1));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer comparison valid ptr vs valid ptr same owner derived", "[observer_comparison]") {
-    test_ptr_derived ptr_owner(new test_object_derived);
-    test_optr ptr1(ptr_owner);
-    test_optr_derived ptr2(ptr_owner);
-    REQUIRE(ptr1 == ptr2);
-    REQUIRE(!(ptr1 != ptr2));
-    REQUIRE(ptr2 == ptr1);
-    REQUIRE(!(ptr2 != ptr1));
+    memory_tracker mem_track;
+
+    {
+        test_ptr_derived ptr_owner(new test_object_derived);
+        test_optr ptr1(ptr_owner);
+        test_optr_derived ptr2(ptr_owner);
+        REQUIRE(ptr1 == ptr2);
+        REQUIRE(!(ptr1 != ptr2));
+        REQUIRE(ptr2 == ptr1);
+        REQUIRE(!(ptr2 != ptr1));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
 TEST_CASE("observer comparison valid ptr vs valid ptr different owner derived", "[observer_comparison]") {
-    test_ptr ptr_owner1(new test_object);
-    test_ptr_derived ptr_owner2(new test_object_derived);
-    test_optr ptr1(ptr_owner1);
-    test_optr_derived ptr2(ptr_owner2);
-    REQUIRE(ptr1 != ptr2);
-    REQUIRE(!(ptr1 == ptr2));
-    REQUIRE(ptr2 != ptr1);
-    REQUIRE(!(ptr2 == ptr1));
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner1(new test_object);
+        test_ptr_derived ptr_owner2(new test_object_derived);
+        test_optr ptr1(ptr_owner1);
+        test_optr_derived ptr2(ptr_owner2);
+        REQUIRE(ptr1 != ptr2);
+        REQUIRE(!(ptr1 == ptr2));
+        REQUIRE(ptr2 != ptr1);
+        REQUIRE(!(ptr2 == ptr1));
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
 }
 
