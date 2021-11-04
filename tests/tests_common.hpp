@@ -41,19 +41,19 @@ struct test_object_thrower {
 struct test_deleter {
     int state_ = 0;
 
-    test_deleter() { ++instances_deleter; }
-    explicit test_deleter(int state) : state_(state) { ++instances_deleter; }
+    test_deleter() noexcept { ++instances_deleter; }
+    explicit test_deleter(int state) noexcept : state_(state) { ++instances_deleter; }
 
-    test_deleter(const test_deleter& source) : state_(source.state_) { ++instances_deleter; }
-    test_deleter(test_deleter&& source) : state_(source.state_) {
+    test_deleter(const test_deleter& source) noexcept : state_(source.state_) { ++instances_deleter; }
+    test_deleter(test_deleter&& source) noexcept : state_(source.state_) {
         source.state_ = 0;
         ++instances_deleter;
     }
 
-    ~test_deleter() { --instances_deleter; }
+    ~test_deleter() noexcept { --instances_deleter; }
 
     test_deleter& operator=(const test_deleter&) = default;
-    test_deleter& operator=(test_deleter&& source) {
+    test_deleter& operator=(test_deleter&& source) noexcept {
         state_ = source.state_;
         source.state_ = 0;
         return *this;

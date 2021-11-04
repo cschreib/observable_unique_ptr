@@ -7,7 +7,6 @@ TEST_CASE("owner default constructor", "[owner_construction]") {
         test_ptr ptr{};
         REQUIRE(instances == 0);
         REQUIRE(ptr.get() == nullptr);
-        REQUIRE(ptr.has_deleter() == false);
     }
 
     REQUIRE(instances == 0);
@@ -19,7 +18,6 @@ TEST_CASE("owner default constructor with deleter", "[owner_construction]") {
         REQUIRE(instances == 0);
         REQUIRE(instances_deleter == 1);
         REQUIRE(ptr.get() == nullptr);
-        REQUIRE(ptr.has_deleter() == true);
         REQUIRE(ptr.get_deleter().state_ == 0);
     }
 
@@ -32,7 +30,6 @@ TEST_CASE("owner nullptr constructor", "[owner_construction]") {
         test_ptr ptr{nullptr};
         REQUIRE(instances == 0);
         REQUIRE(ptr.get() == nullptr);
-        REQUIRE(ptr.has_deleter() == false);
     }
 
     REQUIRE(instances == 0);
@@ -44,7 +41,6 @@ TEST_CASE("owner nullptr constructor with deleter", "[owner_construction]") {
         REQUIRE(instances == 0);
         REQUIRE(instances_deleter == 1);
         REQUIRE(ptr.get() == nullptr);
-        REQUIRE(ptr.has_deleter() == true);
         REQUIRE(ptr.get_deleter().state_ == 42);
     }
 
@@ -59,7 +55,6 @@ TEST_CASE("owner move constructor", "[owner_construction]") {
             test_ptr ptr(std::move(ptr_orig));
             REQUIRE(instances == 1);
             REQUIRE(ptr.get() != nullptr);
-            REQUIRE(ptr.has_deleter() == false);
         }
 
         REQUIRE(instances == 0);
@@ -74,14 +69,13 @@ TEST_CASE("owner move constructor with deleter", "[owner_construction]") {
         {
             test_ptr_with_deleter ptr(std::move(ptr_orig));
             REQUIRE(instances == 1);
-            REQUIRE(instances_deleter == 1);
+            REQUIRE(instances_deleter == 2);
             REQUIRE(ptr.get() != nullptr);
-            REQUIRE(ptr.has_deleter() == true);
-            REQUIRE(ptr.get_deleter().state_ == 42);
+            REQUIRE(ptr.get_deleter().state_ == 0);
         }
 
         REQUIRE(instances == 0);
-        REQUIRE(instances_deleter == 0);
+        REQUIRE(instances_deleter == 1);
     }
 
     REQUIRE(instances == 0);
@@ -93,7 +87,6 @@ TEST_CASE("owner acquiring constructor", "[owner_construction]") {
         test_ptr ptr{new test_object};
         REQUIRE(instances == 1);
         REQUIRE(ptr.get() != nullptr);
-        REQUIRE(ptr.has_deleter() == false);
     }
 
     REQUIRE(instances == 0);
@@ -105,7 +98,6 @@ TEST_CASE("owner acquiring constructor with deleter", "[owner_construction]") {
         REQUIRE(instances == 1);
         REQUIRE(instances_deleter == 1);
         REQUIRE(ptr.get() != nullptr);
-        REQUIRE(ptr.has_deleter() == true);
         REQUIRE(ptr.get_deleter().state_ == 42);
     }
 
@@ -121,7 +113,6 @@ TEST_CASE("owner implicit conversion constructor", "[owner_construction]") {
             REQUIRE(instances == 1);
             REQUIRE(instances_derived == 1);
             REQUIRE(ptr.get() != nullptr);
-            REQUIRE(ptr.has_deleter() == false);
         }
 
         REQUIRE(instances == 0);
@@ -139,15 +130,14 @@ TEST_CASE("owner implicit conversion constructor with deleter", "[owner_construc
             test_ptr_with_deleter ptr(std::move(ptr_orig));
             REQUIRE(instances == 1);
             REQUIRE(instances_derived == 1);
-            REQUIRE(instances_deleter == 1);
+            REQUIRE(instances_deleter == 2);
             REQUIRE(ptr.get() != nullptr);
-            REQUIRE(ptr.has_deleter() == true);
-            REQUIRE(ptr.get_deleter().state_ == 42);
+            REQUIRE(ptr.get_deleter().state_ == 0);
         }
 
         REQUIRE(instances == 0);
         REQUIRE(instances_derived == 0);
-        REQUIRE(instances_deleter == 0);
+        REQUIRE(instances_deleter == 1);
     }
 
     REQUIRE(instances == 0);
@@ -164,7 +154,6 @@ TEST_CASE("owner explicit conversion constructor", "[owner_construction]") {
             REQUIRE(instances == 1);
             REQUIRE(instances_derived == 1);
             REQUIRE(ptr.get() != nullptr);
-            REQUIRE(ptr.has_deleter() == false);
         }
 
         REQUIRE(instances == 0);
@@ -183,15 +172,14 @@ TEST_CASE("owner explicit conversion constructor with deleter", "[owner_construc
                 dynamic_cast<test_object_derived*>(ptr_orig.get()));
             REQUIRE(instances == 1);
             REQUIRE(instances_derived == 1);
-            REQUIRE(instances_deleter == 1);
+            REQUIRE(instances_deleter == 2);
             REQUIRE(ptr.get() != nullptr);
-            REQUIRE(ptr.has_deleter() == true);
-            REQUIRE(ptr.get_deleter().state_ == 42);
+            REQUIRE(ptr.get_deleter().state_ == 0);
         }
 
         REQUIRE(instances == 0);
         REQUIRE(instances_derived == 0);
-        REQUIRE(instances_deleter == 0);
+        REQUIRE(instances_deleter == 1);
     }
 
     REQUIRE(instances == 0);
@@ -207,7 +195,6 @@ TEST_CASE("owner move assignment operator", "[owner_assignment]") {
             ptr = std::move(ptr_orig);
             REQUIRE(instances == 1);
             REQUIRE(ptr.get() != nullptr);
-            REQUIRE(ptr.has_deleter() == false);
         }
 
         REQUIRE(instances == 0);
@@ -223,14 +210,13 @@ TEST_CASE("owner move assignment operator with deleter", "[owner_assignment]") {
             test_ptr_with_deleter ptr;
             ptr = std::move(ptr_orig);
             REQUIRE(instances == 1);
-            REQUIRE(instances_deleter == 1);
+            REQUIRE(instances_deleter == 2);
             REQUIRE(ptr.get() != nullptr);
-            REQUIRE(ptr.has_deleter() == true);
-            REQUIRE(ptr.get_deleter().state_ == 42);
+            REQUIRE(ptr.get_deleter().state_ == 0);
         }
 
         REQUIRE(instances == 0);
-        REQUIRE(instances_deleter == 0);
+        REQUIRE(instances_deleter == 1);
     }
 
     REQUIRE(instances == 0);
@@ -360,7 +346,6 @@ TEST_CASE("owner reset to null", "[owner_utility]") {
         ptr.reset();
         REQUIRE(instances == 0);
         REQUIRE(ptr.get() == nullptr);
-        REQUIRE(ptr.has_deleter() == false);
     }
 
     REQUIRE(instances == 0);
@@ -373,7 +358,6 @@ TEST_CASE("owner reset to null with deleter", "[owner_utility]") {
         REQUIRE(instances == 0);
         REQUIRE(instances_deleter == 1);
         REQUIRE(ptr.get() == nullptr);
-        REQUIRE(ptr.has_deleter() == true);
         REQUIRE(ptr.get_deleter().state_ == 42);
     }
 
@@ -387,7 +371,6 @@ TEST_CASE("owner reset to new", "[owner_utility]") {
         ptr.reset(new test_object);
         REQUIRE(instances == 1);
         REQUIRE(ptr.get() != nullptr);
-        REQUIRE(ptr.has_deleter() == false);
     }
 
     REQUIRE(instances == 0);
@@ -400,23 +383,7 @@ TEST_CASE("owner reset to new with deleter", "[owner_utility]") {
         REQUIRE(instances == 1);
         REQUIRE(instances_deleter == 1);
         REQUIRE(ptr.get() != nullptr);
-        REQUIRE(ptr.has_deleter() == true);
         REQUIRE(ptr.get_deleter().state_ == 42);
-    }
-
-    REQUIRE(instances == 0);
-    REQUIRE(instances_deleter == 0);
-}
-
-TEST_CASE("owner reset to new with new deleter", "[owner_utility]") {
-    {
-        test_ptr_with_deleter ptr(new test_object, test_deleter{42});
-        ptr.reset(new test_object, test_deleter{43});
-        REQUIRE(instances == 1);
-        REQUIRE(instances_deleter == 1);
-        REQUIRE(ptr.get() != nullptr);
-        REQUIRE(ptr.has_deleter() == true);
-        REQUIRE(ptr.get_deleter().state_ == 43);
     }
 
     REQUIRE(instances == 0);
@@ -445,8 +412,6 @@ TEST_CASE("owner swap no instance with deleter", "[owner_utility]") {
         REQUIRE(instances_deleter == 2);
         REQUIRE(ptr_orig.get() == nullptr);
         REQUIRE(ptr.get() == nullptr);
-        REQUIRE(ptr.has_deleter() == true);
-        REQUIRE(ptr_orig.has_deleter() == true);
         REQUIRE(ptr.get_deleter().state_ == 42);
         REQUIRE(ptr_orig.get_deleter().state_ == 43);
     }
@@ -477,8 +442,6 @@ TEST_CASE("owner swap one instance with deleter", "[owner_utility]") {
         REQUIRE(instances_deleter == 2);
         REQUIRE(ptr_orig.get() == nullptr);
         REQUIRE(ptr.get() != nullptr);
-        REQUIRE(ptr.has_deleter() == true);
-        REQUIRE(ptr_orig.has_deleter() == true);
         REQUIRE(ptr.get_deleter().state_ == 42);
         REQUIRE(ptr_orig.get_deleter().state_ == 43);
     }
@@ -513,8 +476,6 @@ TEST_CASE("owner swap two instances with deleter", "[owner_utility]") {
         REQUIRE(instances_deleter == 2);
         REQUIRE(ptr_orig.get() == ptr_raw);
         REQUIRE(ptr.get() == ptr_orig_raw);
-        REQUIRE(ptr.has_deleter() == true);
-        REQUIRE(ptr_orig.has_deleter() == true);
         REQUIRE(ptr.get_deleter().state_ == 42);
         REQUIRE(ptr_orig.get_deleter().state_ == 43);
     }
@@ -539,12 +500,62 @@ TEST_CASE("owner operator bool invalid", "[owner_utility]") {
     if (ptr) FAIL("if (ptr) should not have been true");
 }
 
+TEST_CASE("owner release valid", "[owner_utility]") {
+    {
+        test_ptr ptr(new test_object);
+        test_object* ptr_raw = ptr.release();
+        REQUIRE(ptr_raw != nullptr);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(instances == 1);
+        delete ptr_raw;
+    }
+
+    REQUIRE(instances == 0);
+}
+
+TEST_CASE("owner release valid with deleter", "[owner_utility]") {
+    {
+        test_ptr_with_deleter ptr(new test_object, test_deleter{42});
+        test_object* ptr_raw = ptr.release();
+        REQUIRE(ptr_raw != nullptr);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(instances == 1);
+        REQUIRE(instances_deleter == 1);
+        REQUIRE(ptr.get_deleter().state_ == 42);
+        delete ptr_raw;
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_deleter == 0);
+}
+
+TEST_CASE("owner release invalid", "[owner_utility]") {
+    {
+        test_ptr ptr;
+        REQUIRE(ptr.release() == nullptr);
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+}
+
+TEST_CASE("owner release invalid with deleter", "[owner_utility]") {
+    {
+        test_ptr_with_deleter ptr;
+        REQUIRE(ptr.release() == nullptr);
+        REQUIRE(instances == 0);
+        REQUIRE(instances_deleter == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_deleter == 1);
+}
+
 TEST_CASE("make observable", "[make_observable_unique]") {
     {
         test_ptr ptr = oup::make_observable_unique<test_object>();
         REQUIRE(instances == 1);
         REQUIRE(ptr.get() != nullptr);
-        REQUIRE(ptr.has_deleter() == false);
     }
 
     REQUIRE(instances == 0);
