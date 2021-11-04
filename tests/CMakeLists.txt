@@ -33,7 +33,7 @@ function(run_compile_test TEST_NAME TEST_FILE EXPECTED)
   if (COMPILE_TEST_RESULT STREQUAL EXPECTED)
     message(STATUS "Test ${TEST_NAME} passed.")
   else()
-    message(SEND_ERROR "FAILED test: ${TEST_NAME}, expected ${EXPECTED} and got ${COMPILE_TEST_RESULT}")
+    message(WARNING "FAILED test: ${TEST_NAME}, expected ${EXPECTED} and got ${COMPILE_TEST_RESULT}")
   endif()
 endfunction()
 
