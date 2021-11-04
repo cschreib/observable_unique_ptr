@@ -12,7 +12,7 @@ class observer_ptr;
 
 namespace details {
 struct control_block {
-    std::size_t refcount = 1u;
+    int refcount = 1;
     bool placement_allocated = false;
     bool expired = false;
 };
@@ -60,7 +60,7 @@ private:
 
     static void pop_ref_(control_block* block) noexcept {
         --block->refcount;
-        if (block->refcount == 0u) {
+        if (block->refcount == 0) {
             if constexpr (std::is_same_v<Deleter, std::default_delete<T>>) {
                 if (block->placement_allocated) {
                     block->~control_block();
@@ -401,7 +401,7 @@ observable_unique_ptr<T> make_observable_unique(Args&& ... args) {
 
     try {
         // Construct control block and object
-        block_type* block = new (buffer) details::control_block{1u, true, false};
+        block_type* block = new (buffer) details::control_block{1, true, false};
         T* ptr = new (buffer + block_size) T(std::forward<Args>(args)...);
 
         // Make owner pointer
@@ -463,7 +463,7 @@ private:
 
     void pop_ref_() noexcept {
         --block->refcount;
-        if (block->refcount == 0u) {
+        if (block->refcount == 0) {
             if (block->placement_allocated) {
                 block->~control_block();
                 delete[] reinterpret_cast<std::byte*>(block);
