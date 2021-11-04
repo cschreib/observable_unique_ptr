@@ -302,11 +302,14 @@ public:
     /** \return A pointer to the un-managed object
     */
     T* release() noexcept {
+        T* old_ptr = pointer;
         if (pointer) {
             pop_ref_();
+            block = nullptr;
+            pointer = nullptr;
         }
 
-        return pointer;
+        return old_ptr;
     }
 
     /// Get a non-owning raw pointer to the pointed object, or nullptr if deleted.
