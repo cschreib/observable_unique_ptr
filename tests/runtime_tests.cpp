@@ -71,7 +71,7 @@ TEST_CASE("owner move constructor with deleter", "[owner_construction]") {
             REQUIRE(instances == 1);
             REQUIRE(instances_deleter == 2);
             REQUIRE(ptr.get() != nullptr);
-            REQUIRE(ptr.get_deleter().state_ == 0);
+            REQUIRE(ptr.get_deleter().state_ == 42);
         }
 
         REQUIRE(instances == 0);
@@ -212,7 +212,7 @@ TEST_CASE("owner move assignment operator with deleter", "[owner_assignment]") {
             REQUIRE(instances == 1);
             REQUIRE(instances_deleter == 2);
             REQUIRE(ptr.get() != nullptr);
-            REQUIRE(ptr.get_deleter().state_ == 0);
+            REQUIRE(ptr.get_deleter().state_ == 42);
         }
 
         REQUIRE(instances == 0);

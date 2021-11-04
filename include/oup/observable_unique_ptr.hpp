@@ -185,6 +185,17 @@ public:
     *   \note After this observable_unique_ptr is created, the source
     *         pointer is set to null and looses ownership.
     */
+    observable_unique_ptr(observable_unique_ptr&& value) noexcept :
+        observable_unique_ptr(value.block, value.pointer, std::move(value.deleter)) {
+        value.block = nullptr;
+        value.pointer = nullptr;
+    }
+
+    /// Transfer ownership by implicit casting
+    /** \param value The pointer to take ownership from
+    *   \note After this observable_unique_ptr is created, the source
+    *         pointer is set to null and looses ownership.
+    */
     template<typename U, typename D/*, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>*/>
     observable_unique_ptr(observable_unique_ptr<U,D>&& value) noexcept :
         observable_unique_ptr(value.block, value.pointer) {
