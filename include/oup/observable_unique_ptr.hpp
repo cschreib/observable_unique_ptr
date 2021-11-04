@@ -39,14 +39,6 @@ struct control_block {
 *      less thread-safety compared to std::shared_ptr.
 *    - observable_unique_ptr does not support arrays.
 *    - observable_unique_ptr does not allow custom allocators.
-*    - observable_unique_ptr does not have a release() function to let go of
-*      the ownership.
-*    - observable_unique_ptr allows moving from other observable_unique_ptr
-*      only if the deleter type is exactly the same, while std::unique_ptr
-*      allows moving from a convertible deleter.
-*    - observable_unique_ptr may not own a deleter instance; if in doubt, check
-*      has_deleter() before calling get_deleter(), or use try_get_deleter().
-*    - a moved-from observable_unique_ptr will not own a deleter instance.
 */
 template<typename T, typename Deleter = std::default_delete<T>>
 class observable_unique_ptr {
