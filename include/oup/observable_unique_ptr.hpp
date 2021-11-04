@@ -164,7 +164,7 @@ public:
 
     /// Explicit ownership capture of a raw pointer, with customer deleter.
     /** \param value The raw pointer to take ownership of
-    *   \param deleter The deleter object to use
+    *   \param del The deleter object to use
     *   \note Do *not* manually delete this raw pointer after the
     *         observable_unique_ptr is created. If possible, prefer
     *         using make_observable_unique() instead of this constructor.
