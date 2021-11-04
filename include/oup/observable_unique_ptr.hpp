@@ -103,14 +103,14 @@ private:
     *   \param value The pointer to own
     *   \note This is used by make_observable_unique().
     */
-    observable_unique_ptr(control_block* ctrl, T* value) : block(ctrl), data(value) {}
+    observable_unique_ptr(control_block* ctrl, T* value) noexcept : block(ctrl), data(value) {}
 
     /// Private constructor using pre-allocated control block.
     /** \param ctrl The control block pointer
     *   \param value The pointer to own
     *   \note This is used by make_observable_unique().
     */
-    observable_unique_ptr(control_block* ctrl, T* value, Deleter del) :
+    observable_unique_ptr(control_block* ctrl, T* value, Deleter del) noexcept :
         block(ctrl), data(value), deleter(del) {}
 
     // Friendship is required for conversions.
@@ -175,7 +175,8 @@ public:
     /// Transfer ownership by implicit casting
     /** \param value The pointer to take ownership from
     *   \note After this observable_unique_ptr is created, the source
-    *         pointer is set to null and looses ownership.
+    *         pointer is set to null and looses ownership. The source deleter
+    *         is moved.
     */
     observable_unique_ptr(observable_unique_ptr&& value) noexcept :
         observable_unique_ptr(value.block, value.data, std::move(value.deleter)) {
@@ -186,11 +187,14 @@ public:
     /// Transfer ownership by implicit casting
     /** \param value The pointer to take ownership from
     *   \note After this observable_unique_ptr is created, the source
-    *         pointer is set to null and looses ownership.
+    *         pointer is set to null and looses ownership. The source deleter
+    *         is moved. This constructor only takes part in overload resolution
+    *         if D is convertible to Deleter and U* is convertible to T*.
     */
-    template<typename U, typename D/*, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>*/>
+    template<typename U, typename D, typename enable =
+        std::enable_if_t<std::is_convertible_v<U*, T*> && std::is_convertible_v<D, Deleter>>>
     observable_unique_ptr(observable_unique_ptr<U,D>&& value) noexcept :
-        observable_unique_ptr(value.block, value.data) {
+        observable_unique_ptr(value.block, value.data, std::move(value.deleter)) {
         value.block = nullptr;
         value.data = nullptr;
     }
@@ -199,11 +203,26 @@ public:
     /** \param manager The smart pointer to take ownership from
     *   \param value The casted pointer value to take ownership of
     *   \note After this observable_unique_ptr is created, the source
-    *         pointer is set to null and looses ownership.
+    *         pointer is set to null and looses ownership. The deleter
+    *         is default constructed.
     */
-    template<typename U, typename D/*, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>*/>
+    template<typename U, typename D>
     observable_unique_ptr(observable_unique_ptr<U,D>&& manager, T* value) noexcept :
         observable_unique_ptr(manager.block, value) {
+        manager.block = nullptr;
+        manager.data = nullptr;
+    }
+
+    /// Transfer ownership by explicit casting
+    /** \param manager The smart pointer to take ownership from
+    *   \param value The casted pointer value to take ownership of
+    *   \param del The deleter to use in the new pointer
+    *   \note After this observable_unique_ptr is created, the source
+    *         pointer is set to null and looses ownership.
+    */
+    template<typename U, typename D>
+    observable_unique_ptr(observable_unique_ptr<U,D>&& manager, T* value, Deleter del) noexcept :
+        observable_unique_ptr(manager.block, value, std::move(del)) {
         manager.block = nullptr;
         manager.data = nullptr;
     }
@@ -213,7 +232,29 @@ public:
     *   \note After this observable_unique_ptr is created, the source
     *         pointer is set to null and looses ownership.
     */
-    template<typename U, typename D/*, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>*/>
+    observable_unique_ptr& operator=(observable_unique_ptr&& value) noexcept {
+        if (data) {
+            delete_and_pop_ref_();
+        }
+
+        block = value.block;
+        value.block = nullptr;
+        data = value.data;
+        value.data = nullptr;
+        deleter = std::move(value.deleter);
+
+        return *this;
+    }
+
+    /// Transfer ownership by implicit casting
+    /** \param value The pointer to take ownership from
+    *   \note After this observable_unique_ptr is created, the source
+    *         pointer is set to null and looses ownership. The source deleter
+    *         is moved. This operator only takes part in overload resolution
+    *         if D is convertible to Deleter and U* is convertible to T*.
+    */
+    template<typename U, typename D, typename enable =
+        std::enable_if_t<std::is_convertible_v<U*, T*> && std::is_convertible_v<D, Deleter>>>
     observable_unique_ptr& operator=(observable_unique_ptr<U,D>&& value) noexcept {
         if (data) {
             delete_and_pop_ref_();
@@ -452,7 +493,7 @@ public:
     }
 
     /// Create a weak pointer from an owning pointer.
-    template<typename U>
+    template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
     observer_ptr(const observable_unique_ptr<U>& owner) noexcept :
         block(owner.block), data(owner.data) {
         if (block) {
@@ -463,7 +504,7 @@ public:
     /// Copy an existing observer_ptr instance
     /** \param value The existing weak pointer to copy
     */
-    template<typename U>
+    template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
     observer_ptr(const observer_ptr<U>& value) noexcept :
         block(value.block), data(value.data) {
         if (block) {
@@ -476,14 +517,30 @@ public:
     *   \note After this observable_unique_ptr is created, the source
     *         pointer is set to null.
     */
-    template<typename U>
+    observer_ptr(observer_ptr&& value) noexcept : block(value.block), data(value.data) {
+        value.block = nullptr;
+        value.data = nullptr;
+    }
+
+    /// Move from an existing observer_ptr instance
+    /** \param value The existing weak pointer to move from
+    *   \note After this observable_unique_ptr is created, the source
+    *         pointer is set to null. This constructor only takes part in
+    *         overload resolution if D is convertible to Deleter and U* is
+    *         convertible to T*.
+    */
+    template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
     observer_ptr(observer_ptr<U>&& value) noexcept : block(value.block), data(value.data) {
         value.block = nullptr;
         value.data = nullptr;
     }
 
     /// Point to another owning pointer.
-    template<typename U>
+    /** \param owner The new owner pointer to observe
+    *   \note This operator only takes part in  overload resolution if D
+    *         is convertible to Deleter and U* is convertible to T*.
+    */
+    template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
     observer_ptr& operator=(const observable_unique_ptr<U>& owner) noexcept {
         if (data) {
             pop_ref_();
@@ -501,7 +558,26 @@ public:
     /// Copy an existing observer_ptr instance
     /** \param value The existing weak pointer to copy
     */
-    template<typename U>
+    observer_ptr& operator=(const observer_ptr& value) noexcept {
+        if (data) {
+            pop_ref_();
+        }
+
+        block = value.block;
+        data = value.data;
+        if (block) {
+            ++block->refcount;
+        }
+
+        return *this;
+    }
+
+    /// Copy an existing observer_ptr instance
+    /** \param value The existing weak pointer to copy
+    *   \note This operator only takes part in overload resolution if D
+    *         is convertible to Deleter and U* is convertible to T*.
+    */
+    template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
     observer_ptr& operator=(const observer_ptr<U>& value) noexcept {
         if (data) {
             pop_ref_();
@@ -521,7 +597,27 @@ public:
     *   \note After the assignment is complete, the source
     *         pointer is set to null and looses ownership.
     */
-    template<typename U>
+    observer_ptr& operator=(observer_ptr&& value) noexcept {
+        if (data) {
+            pop_ref_();
+        }
+
+        block = value.block;
+        value.block = nullptr;
+        data = value.data;
+        value.data = nullptr;
+
+        return *this;
+    }
+
+    /// Move from an existing observer_ptr instance
+    /** \param value The existing weak pointer to move from
+    *   \note After the assignment is complete, the source
+    *         pointer is set to null and looses ownership.
+    *         This operator only takes part in overload resolution if D
+    *         is convertible to Deleter and U* is convertible to T*.
+    */
+    template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
     observer_ptr& operator=(observer_ptr<U>&& value) noexcept {
         if (data) {
             pop_ref_();
@@ -631,12 +727,14 @@ bool operator!= (std::nullptr_t, const observer_ptr<T>& value) noexcept {
     return !value.expired();
 }
 
-template<typename T, typename U>
+template<typename T, typename U, typename enable =
+    std::enable_if_t<std::is_convertible_v<U*, T*> || std::is_convertible_v<T*, U*>>>
 bool operator== (const observer_ptr<T>& first, const observer_ptr<U>& second) noexcept {
     return first.get() == second.get();
 }
 
-template<typename T, typename U>
+template<typename T, typename U, typename enable =
+    std::enable_if_t<std::is_convertible_v<U*, T*> || std::is_convertible_v<T*, U*>>>
 bool operator!= (const observer_ptr<T>& first, const observer_ptr<U>& second) noexcept {
     return first.get() != second.get();
 }

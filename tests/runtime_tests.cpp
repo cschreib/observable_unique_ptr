@@ -132,7 +132,7 @@ TEST_CASE("owner implicit conversion constructor with deleter", "[owner_construc
             REQUIRE(instances_derived == 1);
             REQUIRE(instances_deleter == 2);
             REQUIRE(ptr.get() != nullptr);
-            REQUIRE(ptr.get_deleter().state_ == 0);
+            REQUIRE(ptr.get_deleter().state_ == 42);
         }
 
         REQUIRE(instances == 0);
@@ -164,7 +164,7 @@ TEST_CASE("owner explicit conversion constructor", "[owner_construction]") {
     REQUIRE(instances_derived == 0);
 }
 
-TEST_CASE("owner explicit conversion constructor with deleter", "[owner_construction]") {
+TEST_CASE("owner explicit conversion constructor with default deleter", "[owner_construction]") {
     {
         test_ptr_with_deleter ptr_orig{new test_object_derived, test_deleter{42}};
         {
@@ -175,6 +175,30 @@ TEST_CASE("owner explicit conversion constructor with deleter", "[owner_construc
             REQUIRE(instances_deleter == 2);
             REQUIRE(ptr.get() != nullptr);
             REQUIRE(ptr.get_deleter().state_ == 0);
+        }
+
+        REQUIRE(instances == 0);
+        REQUIRE(instances_derived == 0);
+        REQUIRE(instances_deleter == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_derived == 0);
+    REQUIRE(instances_deleter == 0);
+}
+
+TEST_CASE("owner explicit conversion constructor with custom deleter", "[owner_construction]") {
+    {
+        test_ptr_with_deleter ptr_orig{new test_object_derived, test_deleter{42}};
+        {
+            test_ptr_derived_with_deleter ptr(std::move(ptr_orig),
+                dynamic_cast<test_object_derived*>(ptr_orig.get()),
+                test_deleter{43});
+            REQUIRE(instances == 1);
+            REQUIRE(instances_derived == 1);
+            REQUIRE(instances_deleter == 2);
+            REQUIRE(ptr.get() != nullptr);
+            REQUIRE(ptr.get_deleter().state_ == 43);
         }
 
         REQUIRE(instances == 0);
