@@ -36,6 +36,7 @@ void operator delete(void* p) noexcept
         for (std::size_t i = 0; i < num_allocations; ++i) {
             if (allocations[i] == p) {
                 std::swap(allocations[i], allocations[num_allocations-1]);
+                --num_allocations;
                 found = true;
                 break;
             }
@@ -44,8 +45,6 @@ void operator delete(void* p) noexcept
         if (!found) {
             ++double_delete;
         }
-
-        --num_allocations;
     }
 
     std::free(p);
