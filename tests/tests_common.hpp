@@ -8,6 +8,8 @@ int instances_thrower = 0;
 int instances_deleter = 0;
 
 struct test_object {
+    int state_ = 1337;
+
     test_object() noexcept { ++instances; }
     virtual ~test_object() noexcept { --instances; }
 
@@ -39,19 +41,19 @@ struct test_object_thrower {
 struct test_deleter {
     int state_ = 0;
 
-    test_deleter() { ++instances_deleter; }
-    explicit test_deleter(int state) : state_(state) { ++instances_deleter; }
+    test_deleter() noexcept { ++instances_deleter; }
+    explicit test_deleter(int state) noexcept : state_(state) { ++instances_deleter; }
 
-    test_deleter(const test_deleter& source) : state_(source.state_) { ++instances_deleter; }
-    test_deleter(test_deleter&& source) : state_(source.state_) {
+    test_deleter(const test_deleter& source) noexcept : state_(source.state_) { ++instances_deleter; }
+    test_deleter(test_deleter&& source) noexcept : state_(source.state_) {
         source.state_ = 0;
         ++instances_deleter;
     }
 
-    ~test_deleter() { --instances_deleter; }
+    ~test_deleter() noexcept { --instances_deleter; }
 
     test_deleter& operator=(const test_deleter&) = default;
-    test_deleter& operator=(test_deleter&& source) {
+    test_deleter& operator=(test_deleter&& source) noexcept {
         state_ = source.state_;
         source.state_ = 0;
         return *this;
@@ -69,5 +71,5 @@ using test_ptr_derived_with_deleter = oup::observable_unique_ptr<test_object_der
 using test_ptr_thrower = oup::observable_unique_ptr<test_object_thrower>;
 using test_ptr_thrower_with_deleter = oup::observable_unique_ptr<test_object_thrower,test_deleter>;
 
-using test_wptr = oup::weak_ptr<test_object>;
-using test_wptr_derived = oup::weak_ptr<test_object_derived>;
+using test_optr = oup::observer_ptr<test_object>;
+using test_optr_derived = oup::observer_ptr<test_object_derived>;
