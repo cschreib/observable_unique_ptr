@@ -15,6 +15,8 @@ bool memory_tracking = false;
 // Getting weird errors on MacOS when overriding operator new and delete,
 // so disable the memory leak checking for this platform.
 #   define CHECK_MEMORY_LEAKS 0
+#else
+#   define CHECK_MEMORY_LEAKS 1
 #endif
 
 #if defined(CHECK_MEMORY_LEAKS) && CHECK_MEMORY_LEAKS
