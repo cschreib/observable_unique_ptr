@@ -31,12 +31,12 @@ struct control_block {
     int refcount = 1;
     int flags = flag_none;
 
-    bool placement_allocated() const { return flags & flag_placement_allocated; }
-    bool expired() const { return flags & flag_expired; }
-    bool released() const { return flags & flag_released; }
+    bool placement_allocated() const noexcept { return flags & flag_placement_allocated; }
+    bool expired() const noexcept { return flags & flag_expired; }
+    bool released() const noexcept { return flags & flag_released; }
 
-    void set_expired() { flags = flags | flag_expired; }
-    void set_released() { flags = flags | flag_released; }
+    void set_expired() noexcept { flags = flags | flag_expired; }
+    void set_released() noexcept { flags = flags | flag_released; }
 };
 }
 
