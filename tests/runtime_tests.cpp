@@ -819,6 +819,23 @@ TEST_CASE("owner release valid", "[owner_utility]") {
     memory_tracker mem_track;
 
     {
+        test_ptr ptr(new test_object);
+        test_object* ptr_raw = ptr.release();
+        REQUIRE(ptr_raw != nullptr);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(instances == 1);
+        delete ptr_raw;
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner release valid with observer", "[owner_utility]") {
+    memory_tracker mem_track;
+
+    {
         test_optr optr;
         {
             test_ptr ptr(new test_object);
@@ -839,6 +856,23 @@ TEST_CASE("owner release valid", "[owner_utility]") {
 }
 
 TEST_CASE("owner release valid from make_observable_unique", "[owner_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr = oup::make_observable_unique<test_object>();
+        test_object* ptr_raw = ptr.release();
+        REQUIRE(ptr_raw != nullptr);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(instances == 1);
+        delete ptr_raw;
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner release valid from make_observable_unique with obsever", "[owner_utility]") {
     memory_tracker mem_track;
 
     {
@@ -865,9 +899,30 @@ TEST_CASE("owner release valid with deleter", "[owner_utility]") {
     memory_tracker mem_track;
 
     {
+        test_ptr_with_deleter ptr(new test_object, test_deleter{42});
+        test_object* ptr_raw = ptr.release();
+        REQUIRE(ptr_raw != nullptr);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(instances == 1);
+        REQUIRE(instances_deleter == 1);
+        REQUIRE(ptr.get_deleter().state_ == 42);
+        delete ptr_raw;
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner release valid with deleter with observer", "[owner_utility]") {
+    memory_tracker mem_track;
+
+    {
         test_optr optr;
         {
             test_ptr_with_deleter ptr(new test_object, test_deleter{42});
+            optr = ptr;
             test_object* ptr_raw = ptr.release();
             REQUIRE(ptr_raw != nullptr);
             REQUIRE(ptr.get() == nullptr);
@@ -1010,6 +1065,8 @@ TEST_CASE("observer move constructor", "[observer_construction]") {
             REQUIRE(instances == 1);
             REQUIRE(ptr.get() != nullptr);
             REQUIRE(ptr.expired() == false);
+            REQUIRE(ptr_orig.get() == nullptr);
+            REQUIRE(ptr_orig.expired() == true);
         }
 
         REQUIRE(instances == 1);
