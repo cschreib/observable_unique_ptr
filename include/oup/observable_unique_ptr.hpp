@@ -540,9 +540,19 @@ public:
     }
 
     /// Create a weak pointer from an owning pointer.
-    template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
-    observer_ptr(const observable_unique_ptr<U>& owner) noexcept :
+    template<typename U, typename D, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
+    observer_ptr(const observable_unique_ptr<U,D>& owner) noexcept :
         block(owner.block), data(owner.ptr_deleter.data) {
+        if (block) {
+            ++block->refcount;
+        }
+    }
+
+    /// Copy an existing observer_ptr instance
+    /** \param value The existing weak pointer to copy
+    */
+    observer_ptr(const observer_ptr& value) noexcept :
+        block(value.block), data(value.data) {
         if (block) {
             ++block->refcount;
         }
@@ -587,8 +597,8 @@ public:
     *   \note This operator only takes part in  overload resolution if D
     *         is convertible to Deleter and U* is convertible to T*.
     */
-    template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
-    observer_ptr& operator=(const observable_unique_ptr<U>& owner) noexcept {
+    template<typename U, typename D, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
+    observer_ptr& operator=(const observable_unique_ptr<U,D>& owner) noexcept {
         if (data) {
             pop_ref_();
         }

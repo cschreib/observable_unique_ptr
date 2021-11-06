@@ -976,6 +976,29 @@ TEST_CASE("observer nullptr constructor", "[observer_construction]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("observer copy constructor", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object};
+        test_optr ptr_orig{ptr_owner};
+        {
+            test_optr ptr(ptr_orig);
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() != nullptr);
+            REQUIRE(ptr.expired() == false);
+            REQUIRE(ptr_orig.get() != nullptr);
+            REQUIRE(ptr_orig.expired() == false);
+        }
+
+        REQUIRE(instances == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("observer move constructor", "[observer_construction]") {
     memory_tracker mem_track;
 
@@ -1018,6 +1041,22 @@ TEST_CASE("observer acquiring constructor derived", "[observer_construction]") {
 
     {
         test_ptr_derived ptr_owner{new test_object_derived};
+        test_optr ptr{ptr_owner};
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() != nullptr);
+        REQUIRE(ptr.expired() == false);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer acquiring constructor with deleter", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr_owner{new test_object, test_deleter{42}};
         test_optr ptr{ptr_owner};
         REQUIRE(instances == 1);
         REQUIRE(ptr.get() != nullptr);
@@ -1235,6 +1274,172 @@ TEST_CASE("observer operator bool invalid", "[observer_utility]") {
         if (ptr) FAIL("if (ptr) should not have been true");
     }
 
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer copy assignment operator from valid", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object};
+        test_optr ptr_orig{ptr_owner};
+        {
+            test_optr ptr;
+            ptr = ptr_orig;
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() != nullptr);
+            REQUIRE(ptr.expired() == false);
+            REQUIRE(ptr_orig.get() != nullptr);
+            REQUIRE(ptr_orig.expired() == false);
+        }
+
+        REQUIRE(instances == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer copy assignment operator from empty", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr_orig;
+        {
+            test_optr ptr;
+            ptr = ptr_orig;
+            REQUIRE(instances == 0);
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+            REQUIRE(ptr_orig.get() == nullptr);
+            REQUIRE(ptr_orig.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer move assignment operator from valid", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object};
+        test_optr ptr_orig{ptr_owner};
+        {
+            test_optr ptr;
+            ptr = std::move(ptr_orig);
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() != nullptr);
+            REQUIRE(ptr.expired() == false);
+            REQUIRE(ptr_orig.get() == nullptr);
+            REQUIRE(ptr_orig.expired() == true);
+        }
+
+        REQUIRE(instances == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer move assignment operator from empty", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr_orig;
+        {
+            test_optr ptr;
+            ptr = std::move(ptr_orig);
+            REQUIRE(instances == 0);
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+            REQUIRE(ptr_orig.get() == nullptr);
+            REQUIRE(ptr_orig.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer acquiring assignment operator from valid", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object};
+        test_optr ptr;
+        ptr = ptr_owner;
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() != nullptr);
+        REQUIRE(ptr.expired() == false);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer acquiring assignment operator from empty", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner;
+        test_optr ptr;
+        ptr = ptr_owner;
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(ptr.expired() == true);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer acquiring assignment operator from valid with deleter", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr_owner{new test_object, test_deleter{42}};
+        test_optr ptr;
+        ptr = ptr_owner;
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() != nullptr);
+        REQUIRE(ptr.expired() == false);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer acquiring assignment operator from empty with deleter", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr_owner{nullptr, test_deleter{42}};
+        test_optr ptr;
+        ptr = ptr_owner;
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(ptr.expired() == true);
+    }
+
+    REQUIRE(instances == 0);
     REQUIRE(mem_track.leaks() == 0u);
     REQUIRE(mem_track.double_del() == 0u);
 }
