@@ -75,6 +75,38 @@ The follownig limitations are features that were not implemented simply because 
  - `observable_unique_ptr` does not support pointers to arrays, but `std::unique_ptr` and `std::shared_ptr` both do.
  - `observable_unique_ptr` does not support custom allocators, but `std::shared_ptr` does.
 
+
+## Comparison spreadsheet
+
+In this comparison spreadsheet, the raw pointer `T*` is assumed to never be owning, and used only to observe an existing object (which may or may not have been deleted). The stack and heap sizes were measured with gcc and libstdc++.
+
+Labels:
+ - raw: `T*`
+ - unique: `std::unique_ptr<T>`
+ - weak: `std::weak_ptr<T>`
+ - shared: `std::shared_ptr<T>`
+ - observer: `std::observable_ptr<T>`
+ - observable_unique: `std::observable_unique_ptr<T>`
+
+| Pointer              | raw  | unique | weak   | shared | observer | observable_unique |
+|----------------------|------|--------|--------|--------|----------|-------------------|
+| Owning               | ✗    | ✔      | ✗      | ✔      | ✗        | ✔                 |
+| Observable deletion  | ✗    | ✔      | ✔      | ✔      | ✔        | ✔                 |
+| Thread safe deletion | ✗    | ✔(1)   | ✔      | ✔      | ✗(2)     | ✔(1)              |
+| Atomic               | ✔    | ✗      | ✗(3)   | ✗(3)   | ✗        | ✗                 |
+| Stack bytes (64bit)  | 8    | 8      | 16     | 16     | 16       | 16                |
+| Heap bytes (64bit)   | 0    | 0      | 0      | 24     | 0        | 8                 |
+| Total bytes (64bit)  | 8    | 8      | 16     | 40     | 16       | 24                |
+| Stack bytes (32bit)  | 4    | 4      | 8      | 8      | 8        | 8                 |
+| Heap bytes (32bit)   | 0    | 0      | 0      | 16     | 0        | 8                 |
+| Total bytes (32bit)  | 4    | 4      | 8      | 24     | 8        | 16                |
+
+Notes:
+
+ - (1) By construction, only one thread can own the pointer, therefore deletion is thread-safe.
+ - (2) If `expired()` returns true, the pointer is garanteed to remain `nullptr` forever, with no race condition. If `expired()` returns false, the pointer could still expire on the next instant, which can lead to race conditions.
+ - (3) Yes, if using `std::atomic<std::shared_ptr<T>>`.
+
 ## Notes
 
 ### Alternative implementation
