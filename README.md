@@ -21,8 +21,7 @@ Note: Because of the unique ownership model, observer pointers cannot extend the
 ## Usage
 
 This is a header-only library requiring a C++17-compliant compiler. You have multiple ways to set it up:
- - just include this repository as a submodule in your own git repository and use CMake `add_subdirectory`,
- - use CMake `FetchContent`,
+ - just include this repository as a submodule in your own git repository and use CMake `add_subdirectory` (or use CMake `FetchContent`), then link with `target_link_libraries(<your-target> PUBLIC oup::oup)`.
  - download the header and include it in your own sources.
 
 From there, include the single header `<oup/observable_unique_ptr.hpp>`, and directly use the smart pointer in your own code:
