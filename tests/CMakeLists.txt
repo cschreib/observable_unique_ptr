@@ -16,6 +16,7 @@ target_link_libraries(oup_tests PRIVATE oup::oup)
 
 include(CTest)
 include(Catch)
+
 catch_discover_tests(oup_tests)
 
 # Compile-time error tests
@@ -30,7 +31,7 @@ function(run_compile_test TEST_NAME TEST_FILE EXPECTED)
       "-DINCLUDE_DIRECTORIES=${PROJECT_SOURCE_DIR}/include"
       "-DCMAKE_CXX_STANDARD=17")
 
-  if (COMPILE_TEST_RESULT STREQUAL EXPECTED)
+  if(COMPILE_TEST_RESULT STREQUAL EXPECTED)
     message(STATUS "Test ${TEST_NAME} passed.")
   else()
     message(WARNING "FAILED test: ${TEST_NAME}, expected ${EXPECTED} and got ${COMPILE_TEST_RESULT}")
