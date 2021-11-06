@@ -75,7 +75,7 @@ The follownig limitations are features that were not implemented simply because 
 
 ### Alternative implementation
 
-An alternative implementation of an "observable unique pointer" can be found [here](https://www.codeproject.com/articles/1011134/smart-observers-to-use-with-unique-ptr). It does not compile out of the box with gcc unfortunately, but it does contain more features (like creating an observer pointer from a raw `this`). Have a look to check if this better suits your needs.
+An alternative implementation of an "observable unique pointer" can be found [here](https://www.codeproject.com/articles/1011134/smart-observers-to-use-with-unique-ptr). It does not compile out of the box with gcc unfortunately, but it does contain more features (like creating an observer pointer from a raw `this`) and lacks others (their `make_observable` always performs two allocations). Have a look to check if this better suits your needs.
 
 
 ### ABI compatibility
