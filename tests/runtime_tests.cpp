@@ -6,6 +6,7 @@
 // Allocation tracker, to catch memory leaks and double delete
 constexpr std::size_t max_allocations = 20'000;
 void* allocations[max_allocations];
+void* allocations_array[max_allocations];
 std::size_t num_allocations = 0u;
 std::size_t double_delete = 0u;
 bool memory_tracking = false;
@@ -28,20 +29,25 @@ void* allocate(std::size_t size, bool array) {
     }
 
     if (memory_tracking) {
-        allocations[num_allocations] = p;
+        if (array) {
+            allocations_array[num_allocations] = p;
+        } else {
+            allocations[num_allocations] = p;
+        }
+
         ++num_allocations;
     }
 
     return p;
 }
 
-void operator delete(void* p) noexcept
-{
+void deallocate(void* p, bool array) {
     if (memory_tracking) {
         bool found = false;
+        void** allocations_type = array ? allocations_array : allocations;
         for (std::size_t i = 0; i < num_allocations; ++i) {
-            if (allocations[i] == p) {
-                std::swap(allocations[i], allocations[num_allocations-1]);
+            if (allocations_type[i] == p) {
+                std::swap(allocations_type[i], allocations_type[num_allocations-1]);
                 --num_allocations;
                 found = true;
                 break;
@@ -54,6 +60,22 @@ void operator delete(void* p) noexcept
     }
 
     std::free(p);
+}
+
+void* operator new(std::size_t size) {
+    return allocate(size, false);
+}
+
+void* operator new[](size_t size) {
+    return allocate(size, true);
+}
+
+void operator delete(void* p) noexcept {
+    deallocate(p, false);
+}
+
+void operator delete[](void* p) noexcept {
+    deallocate(p, true);
 }
 #endif
 
