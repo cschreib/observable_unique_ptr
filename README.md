@@ -88,27 +88,27 @@ Labels:
  - observer: `oup::observable_ptr<T>`
  - observable_unique: `oup::observable_unique_ptr<T>`
 
-| Pointer                  | raw  | unique | weak   | shared | observer | observable_unique |
-|--------------------------|------|--------|--------|--------|----------|-------------------|
-| Owning                   | ❌    | ✔      | ❌      | ✔      | ❌        | ✔                 |
-| Observable deletion      | ❌    | ✔      | ✔      | ✔      | ✔        | ✔                 |
-| Thread safe deletion     | ❌    | ✔(1)   | ✔      | ✔      | ❌(2)     | ✔(1)              |
-| Atomic                   | ✔    | ❌      | ❌(3)   | ❌(3)   | ❌        | ❌                 |
-| Support arrays           | ✔    | ✔      | ✔      | ✔      | ❌        | ❌                 |
-| Support custom allocator | ✔    | ✔      | ✔      | ✔      | ❌        | ❌                 |
-| Size in bytes (64 bit)   |      |        |        |        |          |                   |
-|  - Stack (per instance)  | 8    | 8      | 16     | 16     | 16       | 16                |
-|  - Heap (shared)         | 0    | 0      | 0      | 24     | 0        | 8                 |
-|  - Total                 | 8    | 8      | 16     | 40     | 16       | 24                |
-| Size in bytes (32 bit)   |      |        |        |        |          |                   |
-|  - Stack (per instance)  | 4    | 4      | 8      | 8      | 8        | 8                 |
-|  - Heap (shared)         | 0    | 0      | 0      | 16     | 0        | 8                 |
-|  - Total                 | 4    | 4      | 8      | 24     | 8        | 16                |
+| Pointer                  | raw  | weak   | observer | unique | shared | observable_unique |
+|--------------------------|------|--------|----------|--------|--------|-------------------|
+| Owning                   | no   | no     | no       | yes    | yes    | yes               |
+| Observable deletion      | no   | yes    | yes      | yes    | yes    | yes               |
+| Thread safe deletion     | no   | yes    | no(1)    | yes(2) | yes    | yes(2)            |
+| Atomic                   | yes  | no(3)  | no       | no     | no(3)  | no                |
+| Support arrays           | yes  | yes    | no       | yes    | yes    | no                |
+| Support custom allocator | yes  | yes    | no       | yes    | yes    | no                |
+| Size in bytes (64 bit)   |      |        |          |        |        |                   |
+|  - Stack (per instance)  | 8    | 16     | 16       | 8      | 16     | 16                |
+|  - Heap (shared)         | 0    | 0      | 0        | 0      | 24     | 8                 |
+|  - Total                 | 8    | 16     | 16       | 8      | 40     | 24                |
+| Size in bytes (32 bit)   |      |        |          |        |        |                   |
+|  - Stack (per instance)  | 4    | 8      | 8        | 4      | 8      | 8                 |
+|  - Heap (shared)         | 0    | 0      | 0        | 0      | 16     | 8                 |
+|  - Total                 | 4    | 8      | 8        | 4      | 24     | 16                |
 
 Notes:
 
- - (1) By construction, only one thread can own the pointer, therefore deletion is thread-safe.
- - (2) If `expired()` returns true, the pointer is garanteed to remain `nullptr` forever, with no race condition. If `expired()` returns false, the pointer could still expire on the next instant, which can lead to race conditions.
+ - (1) If `expired()` returns true, the pointer is garanteed to remain `nullptr` forever, with no ace condition. If `expired()` returns false, the pointer could still expire on the next instant, which can lead to race conditions.
+ - (2) By construction, only one thread can own the pointer, therefore deletion is thread-safe.
  - (3) Yes if using `std::atomic<std::shared_ptr<T>>` and `std::atomic<std::weak_ptr<T>>`.
 
 ## Notes
