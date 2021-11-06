@@ -12,9 +12,22 @@ class observer_ptr;
 
 namespace details {
 struct control_block {
+    enum flag_elements {
+        flag_none = 0,
+        flag_placement_allocated = 1,
+        flag_expired = 2,
+        flag_released = 4
+    };
+
     int refcount = 1;
-    bool placement_allocated = false;
-    bool expired = false;
+    int flags = flag_none;
+
+    bool placement_allocated() const { return flags & flag_placement_allocated; }
+    bool expired() const { return flags & flag_expired; }
+    bool released() const { return flags & flag_released; }
+
+    void set_expired() { flags = flags | flag_expired; }
+    void set_released() { flags = flags | flag_released; }
 };
 }
 
@@ -61,12 +74,12 @@ private:
     static void pop_ref_(control_block* block) noexcept {
         --block->refcount;
         if (block->refcount == 0) {
-            if constexpr (std::is_same_v<Deleter, std::default_delete<T>>) {
-                if (block->placement_allocated) {
+            if (block->placement_allocated()) {
+                if (block->released()) {
                     block->~control_block();
-                    delete[] reinterpret_cast<std::byte*>(block);
                 } else {
-                    delete block;
+                    block->~control_block();
+                    delete[] (reinterpret_cast<std::byte*>(block) - sizeof(T));
                 }
             } else {
                 delete block;
@@ -75,17 +88,13 @@ private:
     }
 
     static void delete_and_pop_ref_(control_block* block, T* data, Deleter& deleter) noexcept {
-        if constexpr (std::is_same_v<Deleter, std::default_delete<T>>) {
-            if (block->placement_allocated) {
-                data->~T();
-            } else {
-                deleter(data);
-            }
+        if (block->placement_allocated()) {
+            data->~T();
         } else {
             deleter(data);
         }
 
-        block->expired = true;
+        block->set_expired();
 
         pop_ref_(block);
     }
@@ -331,12 +340,18 @@ public:
         }
     }
 
-    /// Releases ownership of the managed object.
+    /// Releases ownership of the managed object and mark observers as expired.
     /** \return A pointer to the un-managed object
+    *   \note The returned pointer, if not nullptr, becomes owned by the caller and
+    *         must be either manually deleted, or managed by another shared pointer.
+    *         Existing observer pointers will see the object as expired.
     */
     T* release() noexcept {
         T* old_ptr = data;
         if (data) {
+            block->set_expired();
+            block->set_released();
+
             pop_ref_();
             block = nullptr;
             data = nullptr;
@@ -401,8 +416,9 @@ observable_unique_ptr<T> make_observable_unique(Args&& ... args) {
 
     try {
         // Construct control block and object
-        block_type* block = new (buffer) details::control_block{1, true, false};
-        T* ptr = new (buffer + block_size) T(std::forward<Args>(args)...);
+        T* ptr = new (buffer) T(std::forward<Args>(args)...);
+        block_type* block = new (buffer + object_size) details::control_block{
+            1, details::control_block::flag_placement_allocated};
 
         // Make owner pointer
         return observable_unique_ptr<T>(block, ptr);
@@ -464,9 +480,13 @@ private:
     void pop_ref_() noexcept {
         --block->refcount;
         if (block->refcount == 0) {
-            if (block->placement_allocated) {
-                block->~control_block();
-                delete[] reinterpret_cast<std::byte*>(block);
+            if (block->placement_allocated()) {
+                if (block->released()) {
+                    block->~control_block();
+                } else {
+                    block->~control_block();
+                    delete[] reinterpret_cast<std::byte*>(block);
+                }
             } else {
                 delete block;
             }
@@ -686,14 +706,14 @@ public:
     /** \return 'true' if the pointed object is valid, 'false' otherwise
     */
     bool expired() const noexcept {
-        return block == nullptr || block->expired;
+        return block == nullptr || block->expired();
     }
 
     /// Check if this pointer points to a valid object.
     /** \return 'true' if the pointed object is valid, 'false' otherwise
     */
     explicit operator bool() noexcept {
-        return block != nullptr && !block->expired;
+        return block != nullptr && !block->expired();
     }
 
     /// Swap the content of this pointer with that of another pointer.
