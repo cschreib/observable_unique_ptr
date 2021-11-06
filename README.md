@@ -1,6 +1,13 @@
 # observable_unique_ptr<T, Deleter>
 
-![Build Status](https://github.com/cschreib/observable_unique_ptr/actions/workflows/cmake.yml/badge.svg) ![Build Status](https://github.com/cschreib/observable_unique_ptr/actions/workflows/doc.yml/badge.svg)
+![Build Status](https://github.com/cschreib/observable_unique_ptr/actions/workflows/cmake.yml/badge.svg) ![Docs Build Status](https://github.com/cschreib/observable_unique_ptr/actions/workflows/doc.yml/badge.svg)
+
+Built and tested on:
+ - Linux (GCC/clang)
+ - Windows (MSVC 32/64)
+ - MacOS (clang)
+ - WebAssembly (Emscripten)
+
 
 ## Introduction
 
