@@ -194,7 +194,7 @@ public:
     *         using make_observable_unique() instead of this constructor.
     */
     explicit observable_unique_ptr(T* value) :
-        observable_unique_ptr(allocate_block_(), value) {}
+        observable_unique_ptr(value != nullptr ? allocate_block_() : nullptr, value) {}
 
     /// Explicit ownership capture of a raw pointer, with customer deleter.
     /** \param value The raw pointer to take ownership of
@@ -204,7 +204,7 @@ public:
     *         using make_observable_unique() instead of this constructor.
     */
     explicit observable_unique_ptr(T* value, Deleter del) :
-        observable_unique_ptr(allocate_block_(), value, std::move(del)) {}
+        observable_unique_ptr(value != nullptr ? allocate_block_() : nullptr, value, std::move(del)) {}
 
     /// Transfer ownership by implicit casting
     /** \param value The pointer to take ownership from
