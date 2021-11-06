@@ -3,7 +3,6 @@ name: CI
 on: [push, pull_request]
 
 env:
-  BUILD_TYPE: Release
   EM_VERSION: 2.0.16
   EM_CACHE_FOLDER: 'emsdk-cache'
 
@@ -19,8 +18,11 @@ jobs:
         - { name: Windows 64,   os: windows-latest, compiler: vs2019,  arch: "64", cmakepp: "",        flags: "-A x64"}
         - { name: MacOS,        os: macos-latest,   compiler: clang++, arch: "64", cmakepp: "",        flags: ""}
         - { name: WebAssembly,  os: ubuntu-latest,  compiler: em++,    arch: "32", cmakepp: "emcmake", flags: "-DCMAKE_CXX_FLAGS=\"-s DISABLE_EXCEPTION_CATCHING=0\" -DCMAKE_CROSSCOMPILING_EMULATOR=node"}
+        build-type:
+        - Release
+        - Debug
 
-    name: ${{matrix.platform.name}}
+    name: ${{matrix.platform.name}} ${{matrix.build-type}}
     runs-on: ${{matrix.platform.os}}
 
     steps:
@@ -54,12 +56,12 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: ${{matrix.platform.cmakepp}} cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${{matrix.platform.flags}} -DOUP_DO_TEST=1
+      run: ${{matrix.platform.cmakepp}} cmake .. -DCMAKE_BUILD_TYPE=${{matrix.build-type}} ${{matrix.platform.flags}} -DOUP_DO_TEST=1
 
     - name: Build
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake --build . --config ${BUILD_TYPE} --parallel 2
+      run: cmake --build . --config ${{matrix.build-type}} --parallel 2
 
     - name: Test
       shell: bash
