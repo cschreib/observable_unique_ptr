@@ -5,6 +5,15 @@
 #include <cstddef>
 #include <utility>
 
+// When compiled in C++20 mode, by default the implementation will
+// attempt to optimize away empty deleters. This is not ABI-compatible
+// with previous versions of C++, which lack the [[no_unique_address]]
+// attribute. If ABI compatibility with previous versions of C++ is a
+// concern to you, please define the macro below.
+#if !defined(OUP_CPP17_ABI_COMPAT)
+#   define OUP_CPP17_ABI_COMPAT
+#endif
+
 namespace oup {
 
 template<typename T>
@@ -61,7 +70,7 @@ private:
     control_block* block = nullptr;
     T* data = nullptr;
 
-    #if __cplusplus == 202002L
+    #if __cplusplus == 202002L && !defined(OUP_CPP17_ABI_COMPAT)
     [[no_unique_address]] Deleter deleter;
     #else
     Deleter deleter;

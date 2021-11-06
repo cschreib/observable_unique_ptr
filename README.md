@@ -72,4 +72,12 @@ The follownig limitations are features that were not implemented simply because 
 
 ## Notes
 
+
+### Alternative implementation
+
 An alternative implementation of an "observable unique pointer" can be found [here](https://www.codeproject.com/articles/1011134/smart-observers-to-use-with-unique-ptr). It does not compile out of the box with gcc unfortunately, but it does contain more features (like creating an observer pointer from a raw `this`). Have a look to check if this better suits your needs.
+
+
+### ABI compatibility
+
+When compiled in C++20 mode, by default the implementation will attempt to optimize empty deleters. This is not ABI-compatible with previous versions of C++, which lack the `[[no_unique_address]]` attribute (introduced in C++20). If ABI compatibility with previous versions of C++ is a concern to you, please define the macro `OUP_CPP17_ABI_COMPAT` before including the header of this library. This will disable the empty deleter optimisation, and enable binary compatibility with older C++ versions.
