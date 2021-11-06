@@ -237,6 +237,37 @@ TEST_CASE("owner acquiring constructor with deleter", "[owner_construction]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("owner acquiring constructor null", "[owner_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr{static_cast<test_object*>(nullptr)};
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner acquiring constructor null with deleter", "[owner_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr{static_cast<test_object*>(nullptr), test_deleter{42}};
+        REQUIRE(instances == 0);
+        REQUIRE(instances_deleter == 1);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(ptr.get_deleter().state_ == 42);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("owner implicit conversion constructor", "[owner_construction]") {
     memory_tracker mem_track;
 
