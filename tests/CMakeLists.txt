@@ -46,3 +46,8 @@ run_compile_test("is_implicit_constructor_base_to_derived_allowed_move" compile_
 run_compile_test("is_implicit_constructor_base_to_derived_allowed_move_with_deleter" compile_test_implicit_const_base_to_derived3.cpp FALSE)
 
 message(STATUS "Running compile-time tests ended.")
+
+# Benchmarks
+
+add_executable(oup_size_benchmark ${PROJECT_SOURCE_DIR}/tests/size_benchmark.cpp)
+target_link_libraries(oup_size_benchmark PRIVATE oup::oup)

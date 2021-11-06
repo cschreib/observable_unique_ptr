@@ -70,6 +70,10 @@ struct memory_tracker {
     std::size_t double_del() const { return double_delete - initial_double_delete; }
 };
 
+TEST_CASE("owner size", "[owner_size]") {
+    REQUIRE(sizeof(test_ptr) == 2*sizeof(void*));
+}
+
 TEST_CASE("owner default constructor", "[owner_construction]") {
     memory_tracker mem_track;
 
@@ -936,6 +940,10 @@ TEST_CASE("make observable throw in constructor", "[make_observable_unique]") {
     REQUIRE(instances_thrower == 0);
     REQUIRE(mem_track.leaks() == 0u);
     REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer size", "[observer_size]") {
+    REQUIRE(sizeof(test_optr) == 2*sizeof(void*));
 }
 
 TEST_CASE("observer default constructor", "[observer_construction]") {
