@@ -900,7 +900,7 @@ TEST_CASE("owner release valid from make_observable_unique", "[owner_utility]") 
     REQUIRE(mem_track.double_del() == 0u);
 }
 
-TEST_CASE("owner release valid from make_observable_unique with obsever", "[owner_utility]") {
+TEST_CASE("owner release valid from make_observable_unique with observer", "[owner_utility]") {
     memory_tracker mem_track;
 
     {
