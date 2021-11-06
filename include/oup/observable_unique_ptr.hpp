@@ -413,6 +413,9 @@ public:
 /// Create a new observable_unique_ptr with a newly constructed object.
 /** \param args Arguments to construct the new object
 *   \return The new observable_unique_ptr
+*   \note Custom deleters are not supported by this function. If you require
+*         a custom deleter, please use the observable_unique_ptr constructors
+*         directly.
 */
 template<typename T, typename ... Args>
 observable_unique_ptr<T> make_observable_unique(Args&& ... args) {
