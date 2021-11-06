@@ -10,10 +10,14 @@ std::size_t num_allocations = 0u;
 std::size_t double_delete = 0u;
 bool memory_tracking = false;
 
-// NB: getting weird errors on MacOS when doing this
-#if !defined(__APPLE__)
-void* operator new(size_t size)
-{
+#if defined(OUP_PLATFORM_OSX)
+// Getting weird errors on MacOS when overriding operator new and delete,
+// so disable the memory leak checking for this platform.
+#   define CHECK_MEMORY_LEAKS 0
+#endif
+
+#if defined(CHECK_MEMORY_LEAKS) && CHECK_MEMORY_LEAKS
+void* allocate(std::size_t size, bool array) {
     if (memory_tracking && num_allocations == max_allocations) {
         throw std::bad_alloc();
     }
