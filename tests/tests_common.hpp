@@ -65,10 +65,13 @@ struct test_deleter {
 };
 
 using test_ptr = oup::observable_unique_ptr<test_object>;
+using test_sptr = oup::observable_sealed_ptr<test_object>;
 using test_ptr_derived = oup::observable_unique_ptr<test_object_derived>;
+using test_sptr_derived = oup::observable_sealed_ptr<test_object_derived>;
 using test_ptr_with_deleter = oup::observable_unique_ptr<test_object,test_deleter>;
 using test_ptr_derived_with_deleter = oup::observable_unique_ptr<test_object_derived,test_deleter>;
 using test_ptr_thrower = oup::observable_unique_ptr<test_object_thrower>;
+using test_sptr_thrower = oup::observable_sealed_ptr<test_object_thrower>;
 using test_ptr_thrower_with_deleter = oup::observable_unique_ptr<test_object_thrower,test_deleter>;
 
 using test_optr = oup::observer_ptr<test_object>;
