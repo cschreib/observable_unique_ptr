@@ -1,4 +1,4 @@
-# observable_unique_ptr<T, Deleter>, observable_sealed_ptr<T>, observer_ptr<T>
+# observable_unique_ptr, observable_sealed_ptr, observer_ptr
 
 ![Build Status](https://github.com/cschreib/observable_unique_ptr/actions/workflows/cmake.yml/badge.svg) ![Docs Build Status](https://github.com/cschreib/observable_unique_ptr/actions/workflows/doc.yml/badge.svg)
 
@@ -139,7 +139,7 @@ You can run the benchmarks yourself, they are located in `tests/speed_benchmark.
 
 Detail of the benchmarks:
  - Create owner empty: default-construct an owner pointer (to nullptr).
- - Create owner: construct an owner pointer by taking ownership of an object (for `oup::observer_sealed_ptr`, this is using `oup::make_observable_sealed()`).
+ - Create owner: construct an owner pointer by taking ownership of an existing object.
  - Create owner factory: construct an owner pointer using `std::make_*` or `oup::make_*` factory functions.
  - Dereference owner: get a reference to the underlying owned object from an owner pointer.
  - Create observer empty: default-construct an observer pointer (to nullptr).
