@@ -80,5 +80,6 @@ target_link_libraries(oup_size_benchmark PRIVATE oup::oup)
 
 add_executable(oup_speed_benchmark
   ${PROJECT_SOURCE_DIR}/tests/speed_benchmark.cpp
-  ${PROJECT_SOURCE_DIR}/tests/speed_benchmark_utility.cpp)
+  ${PROJECT_SOURCE_DIR}/tests/speed_benchmark_utility.cpp
+  ${PROJECT_SOURCE_DIR}/tests/speed_benchmark_utility2.cpp)
 target_link_libraries(oup_speed_benchmark PRIVATE oup::oup)

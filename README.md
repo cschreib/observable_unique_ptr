@@ -122,27 +122,27 @@ Notes:
 
 ## Speed benchmarks
 
-Labels are the same as in the comparison spreadsheet. The speed benchmarks were compiled with gcc 9.3.0 and libstdc++, with all optimizations turned on (except LTO), and run on a linux (5.1.0-89) machine with a Ryzen 5 2600 CPU. Speed is measured relative to `std::unique_ptr<T>` used as owner pointer, and `T*` used as observer pointer.
+Labels are the same as in the comparison spreadsheet. The speed benchmarks were compiled with gcc 9.3.0 and libstdc++, with all optimizations turned on (except LTO), and run on a linux (5.1.0-89) machine with a Ryzen 5 2600 CPU. Speed is measured relative to `std::unique_ptr<T>` used as owner pointer, and `T*` used as observer pointer, which should be the fastest possible implementation (but obviously the one with least safety).
 
-You can run the benchmarks yourself, they are located in `tests/speed_benchmark.cpp`. The benchmark executable runs tests for three object types: `int`, `std::string`, and `std::array<int,65'536>`, to simulate objects of various allocation cost. The timings below are reported for `int`, which should be most relevant to highlight the overhead from the pointer itself. In real life scenarios, the actual measured overhead will be substantially lower, as actual business logic is likely to dominate the time budget.
+You can run the benchmarks yourself, they are located in `tests/speed_benchmark.cpp`. The benchmark executable runs tests for three object types: `int`, `float`, `std::string`, and `std::array<int,65'536>`, to simulate objects of various allocation cost. The timings below are the worst-case values measured across all object types, which should be most relevant to highlight the overhead from the pointer itself (and erases flukes from the benchmarking framework). In real life scenarios, the actual measured overhead will be substantially lower, as actual business logic is likely to dominate the time budget.
 
 | Pointer                  | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
 |--------------------------|------------|-------------|---------------------|---------------------|
-| Create owner empty       | 1          | 0.72        | 0.83                | 1                   |
-| Create owner             | 1          | 2.58        | 1.85                | N/A                 |
-| Create owner factory     | 1          | 1.40        | 1.80                | 1.13                |
+| Create owner empty       | 1          | 1.1         | 1.1                 | 1.1                 |
+| Create owner             | 1          | 2.2         | 1.9                 | N/A                 |
+| Create owner factory     | 1          | 1.3         | 1.8                 | 1.3                 |
 | Dereference owner        | 1          | 1           | 1                   | 1                   |
-| Create observer empty    | 1          | 1           | 0.71                | 0.71                |
-| Create observer          | 1          | 2.14        | 2.14                | 2.04                |
-| Create observer copy     | 1          | 3.00        | 3.00                | 3.00                |
-| Dereference observer     | 1          | 3.50        | 0.75                | 0.75                |
+| Create observer empty    | 1          | 1.2         | 1.2                 | 1.3                 |
+| Create observer          | 1          | 1.5         | 1.6                 | 1.6                 |
+| Create observer copy     | 1          | 1.7         | 1.7                 | 1.7                 |
+| Dereference observer     | 1          | 4.8         | 1.2                 | 1.3                 |
 
 Detail of the benchmarks:
- - Create owner empty: default-construct an owner pointer (contains nullptr).
+ - Create owner empty: default-construct an owner pointer (to nullptr).
  - Create owner: construct an owner pointer by taking ownership of an object (for `oup::observer_sealed_ptr`, this is using `oup::make_observable_sealed()`).
  - Create owner factory: construct an owner pointer using `std::make_*` or `oup::make_*` factory functions.
  - Dereference owner: get a reference to the underlying owned object from an owner pointer.
- - Create observer empty: default-construct an observer pointer (contains nullptr).
+ - Create observer empty: default-construct an observer pointer (to nullptr).
  - Create observer: construct an observer pointer from an owner pointer.
  - Create observer copy: construct a new observer pointer from another observer pointer.
  - Dereference observer: get a reference to the underlying object from an observer pointer.
