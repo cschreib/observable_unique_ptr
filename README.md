@@ -8,6 +8,7 @@ Built and tested on:
  - MacOS (clang)
  - WebAssembly (Emscripten)
 
+Table of content:
 <!-- MarkdownTOC autolink="true" -->
 
 - [Introduction](#introduction)
