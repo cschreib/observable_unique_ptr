@@ -908,7 +908,7 @@ public:
 
     /// Move from an existing observer_ptr instance
     /** \param value The existing weak pointer to move from
-    *   \note After this observable_unique_ptr is created, the source
+    *   \note After this observer_ptr is created, the source
     *         pointer is set to null.
     */
     observer_ptr(observer_ptr&& value) noexcept : block(value.block), data(value.data) {
@@ -918,7 +918,7 @@ public:
 
     /// Move from an existing observer_ptr instance
     /** \param value The existing weak pointer to move from
-    *   \note After this observable_unique_ptr is created, the source
+    *   \note After this observer_ptr is created, the source
     *         pointer is set to null. This constructor only takes part in
     *         overload resolution if D is convertible to Deleter and U* is
     *         convertible to T*.
@@ -1057,7 +1057,7 @@ public:
     /// Get a non-owning raw pointer to the pointed object, or nullptr if deleted.
     /** \return 'nullptr' if expired() is 'true', or the pointed object otherwise
     *   \note This does not extend the lifetime of the pointed object. Therefore, when
-    *         calling this function, you must make sure that the owning observable_unique_ptr
+    *         calling this function, you must make sure that the owning pointer
     *         will not be reset until you are done using the raw pointer.
     */
     T* get() const noexcept {
@@ -1067,7 +1067,7 @@ public:
     /// Get a non-owning raw pointer to the pointed object, possibly dangling.
     /** \return The pointed object, which may be a dangling pointer if the object has been deleted
     *   \note This does not extend the lifetime of the pointed object. Therefore, when
-    *         calling this function, you must make sure that the owning observable_unique_ptr
+    *         calling this function, you must make sure that the owning pointer
     *         will not be reset until you are done using the raw pointer. In addition,
     *         this function will not check if the pointer has expired (i.e., if the object
     *         has been deleted), so the returned pointer may be dangling.
@@ -1089,7 +1089,7 @@ public:
     /** \return 'nullptr' if expired() is 'true', or the pointed object otherwise
     *   \note Contrary to std::weak_ptr::lock(), this does not extend the lifetime
     *         of the pointed object. Therefore, when calling this function, you must
-    *         make sure that the owning observable_unique_ptr will not be reset until
+    *         make sure that the owning pointer will not be reset until
     *         you are done using the raw pointer.
     */
     T* operator->() const noexcept {
