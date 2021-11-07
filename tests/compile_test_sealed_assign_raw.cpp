@@ -1,7 +1,7 @@
 #include "tests_common.hpp"
 
 int main() {
-    test_optr ptr;
+    test_sptr ptr;
     ptr = new test_object;
     return 0;
 }
