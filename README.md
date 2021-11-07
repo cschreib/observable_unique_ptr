@@ -96,11 +96,12 @@ Labels:
 | Owning                   | no   | no     | no       | yes    | yes    | yes        | yes        |
 | Releasable               | N/A  | N/A    | N/A      | yes    | no     | yes        | no         |
 | Observable deletion      | no   | yes    | yes      | yes    | yes    | yes        | yes        |
-| Thread safe deletion     | no   | yes    | no(1)    | yes(2) | yes    | yes(2)     | yes(2)     |
+| Thread-safe deletion     | no   | yes    | no(1)    | yes(2) | yes    | yes(2)     | yes(2)     |
 | Atomic                   | yes  | no(3)  | no       | no     | no(3)  | no         | no         |
 | Support arrays           | yes  | yes    | no       | yes    | yes    | no         | no         |
-| Support custom allocator | yes  | yes    | no       | yes    | yes    | no         | no         |
-| Number of heap alloc.    | 0    | 0      | 0        | 1      | 1 or 2 | 2          | 1          |
+| Support custom allocator | N/A  | yes    | no       | yes    | yes    | no         | no         |
+| Support custom deleter   | N/A  | N/A    | N/A      | yes    | yes(4) | yes        | no         |
+| Number of heap alloc.    | 0    | 0      | 0        | 1      | 1/2(5) | 2          | 1          |
 | Size in bytes (64 bit)   |      |        |          |        |        |            |            |
 |  - Stack (per instance)  | 8    | 16     | 16       | 8      | 16     | 16         | 16         |
 |  - Heap (shared)         | 0    | 0      | 0        | 0      | 24     | 8          | 8          |
@@ -112,9 +113,11 @@ Labels:
 
 Notes:
 
- - (1) If `expired()` returns true, the pointer is guaranteed to remain `nullptr` forever, with no ace condition. If `expired()` returns false, the pointer could still expire on the next instant, which can lead to race conditions.
+ - (1) If `expired()` returns true, the pointer is guaranteed to remain `nullptr` forever, with no race condition. If `expired()` returns false, the pointer could still expire on the next instant, which can lead to race conditions.
  - (2) By construction, only one thread can own the pointer, therefore deletion is thread-safe.
  - (3) Yes if using `std::atomic<std::shared_ptr<T>>` and `std::atomic<std::weak_ptr<T>>`.
+ - (4) Not if using `std::make_shared()`.
+ - (5) 2 by default, or 1 if using `std::make_shared()`.
 
 
 ## Notes
