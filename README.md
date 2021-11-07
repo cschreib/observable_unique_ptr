@@ -87,7 +87,7 @@ Labels:
  - unique: `std::unique_ptr<T>`
  - weak: `std::weak_ptr<T>`
  - shared: `std::shared_ptr<T>`
- - observer: `oup::observable_ptr<T>`
+ - observer: `oup::observer_ptr<T>`
  - obs_unique: `oup::observable_unique_ptr<T>`
  - obs_sealed: `oup::observable_sealed_ptr<T>`
 
