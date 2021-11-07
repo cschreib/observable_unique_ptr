@@ -7,7 +7,6 @@ auto run_benchmark_for(F&& func) {
 
     double elapsed = 0.0;
     double elapsed_square = 0.0;
-    double count = 0.0;
     double attempts = 0.0;
     constexpr std::size_t num_iter = 1'000'000;
 
