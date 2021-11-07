@@ -8,6 +8,17 @@ Built and tested on:
  - MacOS (clang)
  - WebAssembly (Emscripten)
 
+<!-- MarkdownTOC autolink="true" -->
+
+- [Introduction](#introduction)
+- [Usage](#usage)
+- [Limitations](#limitations)
+- [Comparison spreadsheet](#comparison-spreadsheet)
+- [Speed benchmarks](#speed-benchmarks)
+- [Alternative implementation](#alternative-implementation)
+
+<!-- /MarkdownTOC -->
+
 
 ## Introduction
 
@@ -176,9 +187,6 @@ Detail of the benchmarks:
 | Dereference observer     |     1      |     114     |         1           |         1           |
 
 
-
-## Notes
-
-### Alternative implementation
+## Alternative implementation
 
 An alternative implementation of an "observable unique pointer" can be found [here](https://www.codeproject.com/articles/1011134/smart-observers-to-use-with-unique-ptr). It does not compile out of the box with gcc unfortunately, but it does contain more features (like creating an observer pointer from a raw `this`) and lacks others (their `make_observable` always performs two allocations). Have a look to check if this better suits your needs.
