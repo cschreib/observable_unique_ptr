@@ -2023,6 +2023,27 @@ TEST_CASE("observer operator bool invalid", "[observer_utility]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("observer get and raw get", "[observer_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr;
+        REQUIRE(ptr.raw_get() == nullptr);
+        REQUIRE(ptr.get() == nullptr);
+        test_ptr owner_ptr{new test_object};
+        ptr = owner_ptr;
+        REQUIRE(ptr.raw_get() == owner_ptr.get());
+        REQUIRE(ptr.get() == owner_ptr.get());
+        test_object* raw_ptr = owner_ptr.get();
+        owner_ptr.reset();
+        REQUIRE(ptr.raw_get() == raw_ptr);
+        REQUIRE(ptr.get() == nullptr);
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("observer copy assignment operator valid to empty", "[observer_assignment]") {
     memory_tracker mem_track;
 
