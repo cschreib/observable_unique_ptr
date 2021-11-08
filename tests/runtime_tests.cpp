@@ -110,7 +110,7 @@ TEST_CASE("owner default constructor", "[owner_construction]") {
     memory_tracker mem_track;
 
     {
-        test_ptr ptr{};
+        test_ptr ptr;
         REQUIRE(instances == 0);
         REQUIRE(ptr.get() == nullptr);
     }
@@ -124,7 +124,7 @@ TEST_CASE("owner default constructor sealed", "[owner_construction]") {
     memory_tracker mem_track;
 
     {
-        test_sptr ptr{};
+        test_sptr ptr;
         REQUIRE(instances == 0);
         REQUIRE(ptr.get() == nullptr);
     }
@@ -138,7 +138,7 @@ TEST_CASE("owner default constructor with deleter", "[owner_construction]") {
     memory_tracker mem_track;
 
     {
-        test_ptr_with_deleter ptr{};
+        test_ptr_with_deleter ptr;
         REQUIRE(instances == 0);
         REQUIRE(instances_deleter == 1);
         REQUIRE(ptr.get() == nullptr);
@@ -490,7 +490,7 @@ TEST_CASE("owner explicit conversion constructor with custom deleter", "[owner_c
     REQUIRE(mem_track.double_del() == 0u);
 }
 
-TEST_CASE("owner move assignment operator", "[owner_assignment]") {
+TEST_CASE("owner move assignment operator valid to empty", "[owner_assignment]") {
     memory_tracker mem_track;
 
     {
@@ -510,7 +510,7 @@ TEST_CASE("owner move assignment operator", "[owner_assignment]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
-TEST_CASE("owner move assignment operator sealed", "[owner_assignment]") {
+TEST_CASE("owner move assignment operator valid to empty sealed", "[owner_assignment]") {
     memory_tracker mem_track;
 
     {
@@ -530,13 +530,205 @@ TEST_CASE("owner move assignment operator sealed", "[owner_assignment]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
-TEST_CASE("owner move assignment operator with deleter", "[owner_assignment]") {
+TEST_CASE("owner move assignment operator valid to empty with deleter", "[owner_assignment]") {
     memory_tracker mem_track;
 
     {
         test_ptr_with_deleter ptr_orig(new test_object, test_deleter{42});
         {
             test_ptr_with_deleter ptr;
+            ptr = std::move(ptr_orig);
+            REQUIRE(instances == 1);
+            REQUIRE(instances_deleter == 2);
+            REQUIRE(ptr.get() != nullptr);
+            REQUIRE(ptr.get_deleter().state_ == 42);
+        }
+
+        REQUIRE(instances == 0);
+        REQUIRE(instances_deleter == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator empty to valid", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_orig;
+        {
+            test_ptr ptr(new test_object);
+            ptr = std::move(ptr_orig);
+            REQUIRE(instances == 0);
+            REQUIRE(ptr.get() == nullptr);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator empty to valid sealed", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr_orig;
+        {
+            test_sptr ptr = oup::make_observable_sealed<test_object>();
+            ptr = std::move(ptr_orig);
+            REQUIRE(instances == 0);
+            REQUIRE(ptr.get() == nullptr);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator empty to valid with deleter", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr_orig;
+        {
+            test_ptr_with_deleter ptr(new test_object, test_deleter{42});
+            ptr = std::move(ptr_orig);
+            REQUIRE(instances == 0);
+            REQUIRE(instances_deleter == 2);
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.get_deleter().state_ == 0);
+        }
+
+        REQUIRE(instances == 0);
+        REQUIRE(instances_deleter == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator empty to empty", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_orig;
+        {
+            test_ptr ptr;
+            ptr = std::move(ptr_orig);
+            REQUIRE(instances == 0);
+            REQUIRE(ptr.get() == nullptr);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator empty to empty sealed", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr_orig;
+        {
+            test_sptr ptr;
+            ptr = std::move(ptr_orig);
+            REQUIRE(instances == 0);
+            REQUIRE(ptr.get() == nullptr);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator empty to empty with deleter", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr_orig;
+        {
+            test_ptr_with_deleter ptr;
+            ptr = std::move(ptr_orig);
+            REQUIRE(instances == 0);
+            REQUIRE(instances_deleter == 2);
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.get_deleter().state_ == 0);
+        }
+
+        REQUIRE(instances == 0);
+        REQUIRE(instances_deleter == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator valid to valid", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_orig(new test_object);
+        {
+            test_ptr ptr(new test_object);
+            ptr = std::move(ptr_orig);
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() != nullptr);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator valid to valid sealed", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr_orig = oup::make_observable_sealed<test_object>();
+        {
+            test_sptr ptr = oup::make_observable_sealed<test_object>();
+            ptr = std::move(ptr_orig);
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() != nullptr);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator valid to valid with deleter", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr_orig(new test_object, test_deleter{42});
+        {
+            test_ptr_with_deleter ptr(new test_object, test_deleter{43});
             ptr = std::move(ptr_orig);
             REQUIRE(instances == 1);
             REQUIRE(instances_deleter == 2);
