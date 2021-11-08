@@ -1,6 +1,6 @@
 # observable_unique_ptr, observable_sealed_ptr, observer_ptr
 
-![Build Status](https://github.com/cschreib/observable_unique_ptr/actions/workflows/cmake.yml/badge.svg) ![Docs Build Status](https://github.com/cschreib/observable_unique_ptr/actions/workflows/doc.yml/badge.svg)
+![Build Status](https://github.com/cschreib/observable_unique_ptr/actions/workflows/cmake.yml/badge.svg) ![Docs Build Status](https://github.com/cschreib/observable_unique_ptr/actions/workflows/doc.yml/badge.svg) [![codecov](https://codecov.io/gh/cschreib/observable_unique_ptr/branch/main/graph/badge.svg?token=8C11D2U94D)](https://codecov.io/gh/cschreib/observable_unique_ptr)
 
 Built and tested on:
  - Linux (GCC/clang)
