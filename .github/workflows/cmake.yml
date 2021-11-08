@@ -70,7 +70,7 @@ jobs:
       run: ctest --output-on-failure
 
     - name: Compute Code Coverage
-      if: runner.os == 'Linux' && ${{matrix.platform.compiler}} == 'g++' && ${{matrix.build-type}} == 'Debug'
+      if: runner.os == 'Linux' && matrix.platform.compiler == 'g++' && matrix.build-type == 'Debug'
       run: |
         gcov ${{github.workspace}}/build/tests/CMakeFiles/oup_tests.dir/runtime_tests.cpp.gcda
         ls | grep '.gcov' | grep -v observable_unique_ptr | xargs -d"\n" rm
