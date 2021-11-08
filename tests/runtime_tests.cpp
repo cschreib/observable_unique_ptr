@@ -1637,6 +1637,66 @@ TEST_CASE("observer expiring sealed", "[observer_utility]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("observer expiring reset", "[observer_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object};
+        test_optr ptr = ptr_owner;
+        REQUIRE(!ptr.expired());
+        ptr_owner.reset();
+        REQUIRE(ptr.expired());
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer expiring reset sealed", "[observer_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr_owner = oup::make_observable_sealed<test_object>();
+        test_optr ptr = ptr_owner;
+        REQUIRE(!ptr.expired());
+        ptr_owner.reset();
+        REQUIRE(ptr.expired());
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer not expiring when owner moved", "[observer_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object};
+        test_optr ptr = ptr_owner;
+        REQUIRE(!ptr.expired());
+        test_ptr ptr_owner_new = std::move(ptr_owner);
+        REQUIRE(!ptr.expired());
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer not expiring when owner moved sealed", "[observer_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr_owner = oup::make_observable_sealed<test_object>();
+        test_optr ptr = ptr_owner;
+        REQUIRE(!ptr.expired());
+        test_sptr ptr_owner_new = std::move(ptr_owner);
+        REQUIRE(!ptr.expired());
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("observer reset to null", "[observer_utility]") {
     memory_tracker mem_track;
 
@@ -2105,3 +2165,62 @@ TEST_CASE("observer comparison valid ptr vs valid ptr different owner derived", 
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+struct observer_owner {
+    oup::observer_ptr<observer_owner> obs;
+};
+
+TEST_CASE("object owning observer pointer to itself", "[system_tests]") {
+    memory_tracker mem_track;
+
+    {
+        auto ptr = oup::make_observable_sealed<observer_owner>();
+        ptr->obs = ptr;
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("object owning observer pointer to other", "[system_tests]") {
+    memory_tracker mem_track;
+
+    {
+        auto ptr1 = oup::make_observable_sealed<observer_owner>();
+        auto ptr2 = oup::make_observable_sealed<observer_owner>();
+        ptr1->obs = ptr2;
+        ptr2->obs = ptr1;
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("object owning observer pointer chain", "[system_tests]") {
+    memory_tracker mem_track;
+
+    {
+        auto ptr1 = oup::make_observable_sealed<observer_owner>();
+        auto ptr2 = oup::make_observable_sealed<observer_owner>();
+        auto ptr3 = oup::make_observable_sealed<observer_owner>();
+        ptr1->obs = ptr2;
+        ptr2->obs = ptr3;
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("object owning observer pointer chain reversed", "[system_tests]") {
+    memory_tracker mem_track;
+
+    {
+        auto ptr1 = oup::make_observable_sealed<observer_owner>();
+        auto ptr2 = oup::make_observable_sealed<observer_owner>();
+        auto ptr3 = oup::make_observable_sealed<observer_owner>();
+        ptr3->obs = ptr2;
+        ptr2->obs = ptr1;
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
