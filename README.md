@@ -29,7 +29,7 @@ The only difference between `observable_unique_ptr` and `observable_sealed_ptr` 
 
 These pointers are useful for cases where the shared-ownership of `std::shared_ptr` is not desirable, e.g., when lifetime must be carefully controlled and not be allowed to extend, yet non-owning/weak/observer references to the object may exist after the object has been deleted.
 
-Note: Because of the unique ownership model, observer pointers cannot extend the lifetime of the pointed object, hence this library provides less thread-safety compared to `std::shared_ptr`/`std::weak_ptr`. This is also true of `std::unique_ptr`, and is a fundamental limitation of unique ownership. If this is an issue, you will need either to add your own explicit locking logic, or use `std::shared_ptr`/`std::weak_ptr`.
+Note: Because of the unique ownership model, observer pointers cannot extend the lifetime of the pointed object, hence this library provides less safety compared to `std::shared_ptr`/`std::weak_ptr`. This is also true of `std::unique_ptr`, and is a fundamental limitation of unique ownership. If this is an issue, simply use `std::shared_ptr`/`std::weak_ptr`.
 
 
 ## Usage
@@ -52,27 +52,29 @@ int main() {
     oup::observer_ptr<std::string> obs_ptr;
 
     {
-        // Unique pointer that owns the object
+        // Sealed (unique) pointer that owns the object
         auto owner_ptr = oup::make_observable_sealed<std::string>("hello");
+
+        // A sealed pointer cannot be copied but it can be moved
+        // auto tmp_copied = owner_ptr; // error!
+        // auto tmp_moved = std::move(owner_ptr); // OK
 
         // Make the observer pointer point to the object
         obs_ptr = owner_ptr;
 
-        // Observer pointer is valid
+        // The observer pointer is now valid
         assert(!obs_ptr.expired());
 
         // It can be used like a regular raw pointer
         assert(obs_ptr != nullptr);
         std::cout << *obs_ptr << std::endl;
 
-        // The unique pointer cannot be copied
-        auto tmp_copied = owner_ptr; // error!
-
-        // ... but it can be moved
-        auto tmp_moved = std::move(owner_ptr); // OK
+        // An observer pointer can be copied and moved
+        // auto tmp_copied = obs_ptr; // OK
+        // auto tmp_moved = std::move(obs_ptr); // OK
     }
 
-    // The unique pointer has gone out of scope, the object is deleted,
+    // The sealed pointer has gone out of scope, the object is deleted,
     // the observer pointer is now null.
     assert(obs_ptr.expired());
     assert(obs_ptr == nullptr);
