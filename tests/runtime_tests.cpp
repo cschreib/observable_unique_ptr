@@ -2,6 +2,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <cstdlib>
+#include <vector>
+#include <algorithm>
 
 // Allocation tracker, to catch memory leaks and double delete
 constexpr std::size_t max_allocations = 20'000;
@@ -2572,7 +2574,7 @@ TEST_CASE("object owning observer pointer to other", "[system_tests]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
-TEST_CASE("object owning observer pointer chain", "[system_tests]") {
+TEST_CASE("object owning observer pointer open chain", "[system_tests]") {
     memory_tracker mem_track;
 
     {
@@ -2587,7 +2589,7 @@ TEST_CASE("object owning observer pointer chain", "[system_tests]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
-TEST_CASE("object owning observer pointer chain reversed", "[system_tests]") {
+TEST_CASE("object owning observer pointer open chain reversed", "[system_tests]") {
     memory_tracker mem_track;
 
     {
@@ -2596,6 +2598,54 @@ TEST_CASE("object owning observer pointer chain reversed", "[system_tests]") {
         auto ptr3 = oup::make_observable_sealed<observer_owner>();
         ptr3->obs = ptr2;
         ptr2->obs = ptr1;
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("object owning observer pointer closed chain interleaved", "[system_tests]") {
+    memory_tracker mem_track;
+
+    {
+        auto ptr1 = oup::make_observable_sealed<observer_owner>();
+        auto ptr2 = oup::make_observable_sealed<observer_owner>();
+        auto ptr3 = oup::make_observable_sealed<observer_owner>();
+        auto ptr4 = oup::make_observable_sealed<observer_owner>();
+        ptr1->obs = ptr2;
+        ptr2->obs = ptr4;
+        ptr3->obs = ptr1;
+        ptr4->obs = ptr3;
+    }
+
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("pointers in vector", "[system_tests]") {
+    memory_tracker mem_track;
+
+    {
+        std::vector<test_sptr> vec_own;
+        std::vector<test_optr> vec_obs;
+
+        vec_own.resize(100);
+        REQUIRE(std::all_of(vec_own.begin(), vec_own.end(), [](const auto& p) { return p == nullptr; }) == true);
+
+        std::generate(vec_own.begin(), vec_own.end(), []() { return oup::make_observable_sealed<test_object>(); });
+        REQUIRE(std::none_of(vec_own.begin(), vec_own.end(), [](const auto& p) { return p == nullptr; }) == true);
+
+        vec_obs.resize(100);
+        REQUIRE(std::all_of(vec_obs.begin(), vec_obs.end(), [](const auto& p) { return p == nullptr; }) == true);
+
+        std::copy(vec_own.begin(), vec_own.end(), vec_obs.begin());
+        REQUIRE(std::none_of(vec_own.begin(), vec_own.end(), [](const auto& p) { return p == nullptr; }) == true);
+
+        std::vector<test_sptr> vec_own_new = std::move(vec_own);
+        REQUIRE(std::none_of(vec_own.begin(), vec_own.end(), [](const auto& p) { return p == nullptr; }) == true);
+
+        vec_own_new.clear();
+        REQUIRE(std::all_of(vec_obs.begin(), vec_obs.end(), [](const auto& p) { return p == nullptr; }) == true);
     }
 
     REQUIRE(mem_track.leaks() == 0u);
