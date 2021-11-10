@@ -11,6 +11,9 @@ namespace oup {
 template<typename T>
 class observer_ptr;
 
+template<typename T>
+class enable_observer_from_this;
+
 namespace details {
 struct control_block {
     enum flag_elements {
@@ -106,13 +109,24 @@ protected:
         delete_and_pop_ref_(block, ptr_deleter.data, ptr_deleter);
     }
 
+    /// Fill in the observer pointer for objects inheriting from enable_observer_from_this.
+    void set_this_observer() noexcept {
+        if constexpr (std::is_base_of_v<enable_observer_from_this<T>, T>) {
+            if (ptr_deleter.data) {
+                ptr_deleter.data->this_observer = *this;
+            }
+        }
+    }
+
     /// Private constructor using pre-allocated control block.
     /** \param ctrl The control block pointer
     *   \param value The pointer to own
     *   \note This is used by make_observable_unique().
     */
     observable_unique_ptr_base(control_block_type* ctrl, T* value) noexcept :
-        block(ctrl), ptr_deleter{Deleter{}, value} {}
+        block(ctrl), ptr_deleter{Deleter{}, value} {
+        set_this_observer();
+    }
 
     /// Private constructor using pre-allocated control block.
     /** \param ctrl The control block pointer
@@ -121,7 +135,9 @@ protected:
     *   \note This is used by make_observable_sealed().
     */
     observable_unique_ptr_base(control_block_type* ctrl, T* value, Deleter del) noexcept :
-        block(ctrl), ptr_deleter{std::move(del), value} {}
+        block(ctrl), ptr_deleter{std::move(del), value} {
+        set_this_observer();
+    }
 
     // Friendship is required for conversions.
     template<typename U>
@@ -181,6 +197,7 @@ public:
         observable_unique_ptr_base(value.block, value.ptr_deleter.data, std::move(value.ptr_deleter)) {
         value.block = nullptr;
         value.ptr_deleter.data = nullptr;
+        set_this_observer();
     }
 
     /// Transfer ownership by implicit casting
@@ -195,6 +212,7 @@ public:
         observable_unique_ptr_base(value.block, value.ptr_deleter.data, std::move(value.ptr_deleter)) {
         value.block = nullptr;
         value.ptr_deleter.data = nullptr;
+        set_this_observer();
     }
 
     /// Transfer ownership by explicit casting
@@ -209,6 +227,7 @@ public:
         observable_unique_ptr_base(manager.block, value) {
         manager.block = nullptr;
         manager.ptr_deleter.data = nullptr;
+        set_this_observer();
     }
 
     /// Transfer ownership by explicit casting
@@ -223,6 +242,7 @@ public:
         observable_unique_ptr_base(manager.block, value, std::move(del)) {
         manager.block = nullptr;
         manager.ptr_deleter.data = nullptr;
+        set_this_observer();
     }
 
     /// Transfer ownership by implicit casting
@@ -240,6 +260,7 @@ public:
         ptr_deleter.data = value.ptr_deleter.data;
         value.ptr_deleter.data = nullptr;
         static_cast<Deleter&>(ptr_deleter) = std::move(static_cast<Deleter&>(value.ptr_deleter));
+        set_this_observer();
 
         return *this;
     }
@@ -262,6 +283,7 @@ public:
         ptr_deleter.data = value.ptr_deleter.data;
         value.ptr_deleter.data = nullptr;
         static_cast<Deleter&>(ptr_deleter) = std::move(static_cast<Deleter&>(ptr_deleter));
+        set_this_observer();
 
         return *this;
     }
@@ -299,6 +321,8 @@ public:
         using std::swap;
         swap(block, other.block);
         swap(ptr_deleter, other.ptr_deleter);
+        other.set_this_observer();
+        set_this_observer();
     }
 
     /// Replaces the managed object with a null pointer.
@@ -1168,6 +1192,64 @@ template<typename T, typename U, typename enable =
 bool operator!= (const observer_ptr<T>& first, const observer_ptr<U>& second) noexcept {
     return first.get() != second.get();
 }
+
+/// Enables creating an observer pointer from 'this'.
+/** If an object must be able to create an observer pointer to itself,
+*   without having direct access to the owner pointer (unique or sealed),
+*   then the object's class can inherit from enable_observer_from_this.
+*   This provides the observer_from_this() member function, which returns
+*   a new observer pointer to the object. For this mechanism to work,
+*   the class must inherit publicly from enable_observer_from_this,
+*   and the object must be owned by a unique or sealed pointer when
+*   calling observer_from_this(). If the latter condition is not satisfied,
+*   i.e., the object was allocated on the stack, or is owned by another
+*   type of smart pointer, then observer_from_this() will return nullptr.
+*/
+template<typename T>
+class enable_observer_from_this {
+    observer_ptr<T> this_observer;
+
+    // Friendship is required for assignement of the observer.
+    template<typename U, typename D>
+    friend class observable_unique_ptr_base;
+
+protected:
+    enable_observer_from_this() noexcept = default;
+
+    enable_observer_from_this(const enable_observer_from_this&) noexcept {
+        // Do not copy the other object's observer, this would be an
+        // invalid reference.
+    };
+
+    enable_observer_from_this(enable_observer_from_this&&) noexcept {
+        // Do not move the other object's observer, this would be an
+        // invalid reference.
+    };
+
+    ~enable_observer_from_this() noexcept = default;
+
+public:
+
+    /// Return an observer pointer to 'this'.
+    /** \return A new observer pointer pointing to 'this'.
+    *   \note If 'this' is not owned by a unique or sealed pointer, i.e., if
+    *   the object was allocated on the stack, or if it is owned by another
+    *   type of smart pointer, then this function will return nullptr.
+    */
+    observer_ptr<T> observer_from_this() {
+        return this_observer;
+    }
+
+    /// Return a const observer pointer to 'this'.
+    /** \return A new observer pointer pointing to 'this'.
+    *   \note If 'this' is not owned by a unique or sealed pointer, i.e., if
+    *   the object was allocated on the stack, or if it is owned by another
+    *   type of smart pointer, then this function will return nullptr.
+    */
+    observer_ptr<const T> observer_from_this() const {
+        return this_observer;
+    }
+};
 
 }
 
