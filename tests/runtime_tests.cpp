@@ -1387,6 +1387,52 @@ TEST_CASE("owner swap two instances with deleter", "[owner_utility]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("owner swap self", "[owner_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr(new test_object);
+        ptr.swap(ptr);
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() != nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner swap self sealed", "[owner_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr = oup::make_observable_sealed<test_object>();
+        ptr.swap(ptr);
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() != nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner swap self with deleter", "[owner_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr(new test_object, test_deleter{43});
+        ptr.swap(ptr);
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() != nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("owner dereference", "[owner_utility]") {
     memory_tracker mem_track;
 
@@ -2074,6 +2120,23 @@ TEST_CASE("observer swap two different instances", "[observer_utility]") {
         REQUIRE(ptr_orig.get() == ptr_owner2.get());
         REQUIRE(ptr.get() == ptr_owner1.get());
         REQUIRE(ptr_orig.expired() == false);
+        REQUIRE(ptr.expired() == false);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer swap self", "[observer_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner(new test_object);
+        test_optr ptr(ptr_owner);
+        ptr.swap(ptr);
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() == ptr_owner.get());
         REQUIRE(ptr.expired() == false);
     }
 
