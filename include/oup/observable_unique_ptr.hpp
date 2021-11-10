@@ -292,6 +292,10 @@ public:
     /** \param other The other pointer to swap with
     */
     void swap(observable_unique_ptr_base& other) noexcept {
+        if (&other == this) {
+            return;
+        }
+
         using std::swap;
         swap(block, other.block);
         swap(ptr_deleter, other.ptr_deleter);
@@ -973,6 +977,10 @@ public:
     /** \param value The existing weak pointer to copy
     */
     observer_ptr& operator=(const observer_ptr& value) noexcept {
+        if (&value == this) {
+            return *this;
+        }
+
         if (data) {
             pop_ref_();
         }
@@ -993,6 +1001,10 @@ public:
     */
     template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
     observer_ptr& operator=(const observer_ptr<U>& value) noexcept {
+        if (&value == this) {
+            return *this;
+        }
+
         if (data) {
             pop_ref_();
         }
@@ -1114,6 +1126,10 @@ public:
     /** \param other The other pointer to swap with
     */
     void swap(observer_ptr& other) noexcept {
+        if (&other == this) {
+            return;
+        }
+
         using std::swap;
         swap(block, other.block);
         swap(data, other.data);
