@@ -1183,7 +1183,7 @@ template<typename T>
 class enable_observer_from_this {
     mutable observer_ptr<T> this_observer;
 
-    // Friendship is required for assignement of the observer.
+    // Friendship is required for assignment of the observer.
     template<typename U, typename D>
     friend class details::observable_unique_ptr_base;
 
