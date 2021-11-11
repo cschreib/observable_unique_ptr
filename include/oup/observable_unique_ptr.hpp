@@ -772,7 +772,7 @@ observable_sealed_ptr<T> make_observable_sealed(Args&& ... args) {
     // Allocate memory
     constexpr std::size_t block_size = sizeof(block_type);
     constexpr std::size_t object_size = sizeof(T);
-    std::byte* buffer = new std::byte[block_size + object_size];
+    std::byte* buffer = reinterpret_cast<std::byte*>(operator new(block_size + object_size));
 
     try {
         // Construct control block and object
@@ -784,7 +784,7 @@ observable_sealed_ptr<T> make_observable_sealed(Args&& ... args) {
     } catch (...) {
         // Exception thrown during object construction,
         // clean up memory and let exception propagate
-        delete[] buffer;
+        delete buffer;
         throw;
     }
 }
