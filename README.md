@@ -83,6 +83,8 @@ int main() {
 }
 ```
 
+As with `std::shared_ptr`/`std::weak_ptr`, if you need to obtain an observer pointer to an object when you only have `this` (i.e., from a member function), you can inherit from `oup::enable_observer_from_this<T>` to gain access to the `observer_from_this()` member function. This function will return a valid observer pointer as long as the object is owned by a unique or sealed pointer, and will return `nullptr` in all other cases.
+
 
 ## Limitations
 
@@ -192,4 +194,4 @@ Detail of the benchmarks:
 
 ## Alternative implementation
 
-An alternative implementation of an "observable unique pointer" can be found [here](https://www.codeproject.com/articles/1011134/smart-observers-to-use-with-unique-ptr). It does not compile out of the box with gcc unfortunately, but it does contain more features (like creating an observer pointer from a raw `this`) and lacks others (their `make_observable` always performs two allocations). Have a look to check if this better suits your needs.
+An alternative implementation of an "observable unique pointer" can be found [here](https://www.codeproject.com/articles/1011134/smart-observers-to-use-with-unique-ptr). It does not compile out of the box with gcc unfortunately and lacks certain features (their `make_observable` always performs two allocations). Have a look to check if this better suits your needs.

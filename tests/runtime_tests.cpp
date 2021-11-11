@@ -748,6 +748,102 @@ TEST_CASE("owner move assignment operator valid to valid with deleter", "[owner_
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("owner move assignment operator self to self", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr(new test_object);
+        ptr = std::move(ptr);
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator self to self sealed", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr = oup::make_observable_sealed<test_object>();
+        ptr = std::move(ptr);
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator self to self with deleter", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr(new test_object, test_deleter{42});
+        ptr = std::move(ptr);
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(instances_deleter == 1);
+        REQUIRE(ptr.get_deleter().state_ == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator self to self empty", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr;
+        ptr = std::move(ptr);
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator self to self empty sealed", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr;
+        ptr = std::move(ptr);
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner move assignment operator self to self empty with deleter", "[owner_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr;
+        ptr = std::move(ptr);
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(instances_deleter == 1);
+        REQUIRE(ptr.get_deleter().state_ == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("owner comparison valid ptr vs nullptr", "[owner_comparison]") {
     memory_tracker mem_track;
 
@@ -1283,6 +1379,52 @@ TEST_CASE("owner swap two instances with deleter", "[owner_utility]") {
         REQUIRE(ptr.get() == ptr_orig_raw);
         REQUIRE(ptr.get_deleter().state_ == 42);
         REQUIRE(ptr_orig.get_deleter().state_ == 43);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner swap self", "[owner_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr(new test_object);
+        ptr.swap(ptr);
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() != nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner swap self sealed", "[owner_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr = oup::make_observable_sealed<test_object>();
+        ptr.swap(ptr);
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() != nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner swap self with deleter", "[owner_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr(new test_object, test_deleter{43});
+        ptr.swap(ptr);
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() != nullptr);
     }
 
     REQUIRE(instances == 0);
@@ -1986,6 +2128,23 @@ TEST_CASE("observer swap two different instances", "[observer_utility]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("observer swap self", "[observer_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner(new test_object);
+        test_optr ptr(ptr_owner);
+        ptr.swap(ptr);
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() == ptr_owner.get());
+        REQUIRE(ptr.expired() == false);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("observer dereference", "[observer_utility]") {
     memory_tracker mem_track;
 
@@ -2118,6 +2277,59 @@ TEST_CASE("observer copy assignment operator empty to empty", "[observer_assignm
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("observer copy assignment operator self to self", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object};
+        test_optr ptr{ptr_owner};
+        ptr = ptr;
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() != nullptr);
+        REQUIRE(ptr.expired() == false);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer copy assignment operator self to self expired", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr;
+        {
+            test_ptr ptr_owner{new test_object};
+            ptr = ptr_owner;
+        }
+        ptr = ptr;
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(ptr.expired() == true);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer copy assignment operator self to self empty", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr;
+        ptr = ptr;
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(ptr.expired() == true);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("observer move assignment operator valid to empty", "[observer_assignment]") {
     memory_tracker mem_track;
 
@@ -2183,6 +2395,59 @@ TEST_CASE("observer move assignment operator empty to empty", "[observer_assignm
         }
 
         REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer move assignment operator self to self", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object};
+        test_optr ptr{ptr_owner};
+        ptr = std::move(ptr);
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(ptr.expired() == true);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer move assignment operator self to self expired", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr;
+        {
+            test_ptr ptr_owner{new test_object};
+            ptr = ptr_owner;
+        }
+        ptr = std::move(ptr);
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(ptr.expired() == true);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer move assignment operator self to self empty", "[observer_assignment]") {
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr;
+        ptr = std::move(ptr);
+        REQUIRE(instances == 0);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(ptr.expired() == true);
     }
 
     REQUIRE(instances == 0);
@@ -2648,6 +2913,239 @@ TEST_CASE("pointers in vector", "[system_tests]") {
         REQUIRE(std::all_of(vec_obs.begin(), vec_obs.end(), [](const auto& p) { return p == nullptr; }) == true);
     }
 
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_from_this ptr{new test_object_observer_from_this};
+        const test_ptr_from_this& cptr = ptr;
+
+        test_optr_from_this optr_from_this = ptr->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this_const.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this sealed", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_from_this ptr = oup::make_observable_sealed<test_object_observer_from_this>();
+        const test_sptr_from_this& cptr = ptr;
+
+        test_optr_from_this optr_from_this = ptr->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this_const.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this derived", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_from_this_derived ptr{new test_object_observer_from_this_derived};
+        const test_ptr_from_this_derived& cptr = ptr;
+
+        test_optr_from_this optr_from_this = ptr->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this_const.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this after move", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_from_this ptr1{new test_object_observer_from_this};
+        test_ptr_from_this ptr2{std::move(ptr1)};
+        const test_ptr_from_this& cptr2 = ptr2;
+
+        test_optr_from_this optr_from_this = ptr2->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr2.get());
+        REQUIRE(optr_from_this_const.get() == ptr2.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this after move sealed", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_from_this ptr1 = oup::make_observable_sealed<test_object_observer_from_this>();
+        test_sptr_from_this ptr2{std::move(ptr1)};
+        const test_sptr_from_this& cptr2 = ptr2;
+
+        test_optr_from_this optr_from_this = ptr2->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr2.get());
+        REQUIRE(optr_from_this_const.get() == ptr2.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this after move assignment", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_from_this ptr1{new test_object_observer_from_this};
+        test_ptr_from_this ptr2;
+        ptr2 = std::move(ptr1);
+
+        const test_ptr_from_this& cptr2 = ptr2;
+        test_optr_from_this optr_from_this = ptr2->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr2.get());
+        REQUIRE(optr_from_this_const.get() == ptr2.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this after move assignment sealed", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_from_this ptr1 = oup::make_observable_sealed<test_object_observer_from_this>();
+        test_sptr_from_this ptr2;
+        ptr2 = std::move(ptr1);
+        const test_sptr_from_this& cptr2 = ptr2;
+
+        test_optr_from_this optr_from_this = ptr2->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr2.get());
+        REQUIRE(optr_from_this_const.get() == ptr2.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this after release", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_from_this ptr1{new test_object_observer_from_this};
+        test_object_observer_from_this* ptr2 = ptr1.release();
+        const test_object_observer_from_this* cptr2 = ptr2;
+
+        test_optr_from_this optr_from_this = ptr2->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == true);
+        REQUIRE(optr_from_this_const.expired() == true);
+        REQUIRE(optr_from_this.get() == nullptr);
+        REQUIRE(optr_from_this_const.get() == nullptr);
+
+        delete ptr2;
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this after release and reset", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_from_this ptr1{new test_object_observer_from_this};
+        test_object_observer_from_this* ptr2 = ptr1.release();
+        const test_object_observer_from_this* cptr2 = ptr2;
+
+        test_ptr_from_this ptr3;
+        ptr3.reset(ptr2);
+
+        test_optr_from_this optr_from_this = ptr2->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr2);
+        REQUIRE(optr_from_this_const.get() == ptr2);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this stack", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_object_observer_from_this obj;
+        const test_object_observer_from_this& cobj = obj;
+
+        test_optr_from_this optr_from_this = obj.observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cobj.observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == true);
+        REQUIRE(optr_from_this_const.expired() == true);
+        REQUIRE(optr_from_this.get() == nullptr);
+        REQUIRE(optr_from_this_const.get() == nullptr);
+    }
+
+    REQUIRE(instances == 0);
     REQUIRE(mem_track.leaks() == 0u);
     REQUIRE(mem_track.double_del() == 0u);
 }
