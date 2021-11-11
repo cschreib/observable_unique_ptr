@@ -110,10 +110,11 @@ protected:
     }
 
     /// Fill in the observer pointer for objects inheriting from enable_observer_from_this.
-    void set_this_observer() noexcept {
+    void set_this_observer_() noexcept {
         if constexpr (std::is_base_of_v<enable_observer_from_this<T>, T>) {
             if (ptr_deleter.data) {
-                ptr_deleter.data->this_observer = *this;
+                ptr_deleter.data->this_observer.set_data_(block, ptr_deleter.data);
+                ++block->refcount;
             }
         }
     }
@@ -124,9 +125,7 @@ protected:
     *   \note This is used by make_observable_unique().
     */
     observable_unique_ptr_base(control_block_type* ctrl, T* value) noexcept :
-        block(ctrl), ptr_deleter{Deleter{}, value} {
-        set_this_observer();
-    }
+        block(ctrl), ptr_deleter{Deleter{}, value} {}
 
     /// Private constructor using pre-allocated control block.
     /** \param ctrl The control block pointer
@@ -135,9 +134,7 @@ protected:
     *   \note This is used by make_observable_sealed().
     */
     observable_unique_ptr_base(control_block_type* ctrl, T* value, Deleter del) noexcept :
-        block(ctrl), ptr_deleter{std::move(del), value} {
-        set_this_observer();
-    }
+        block(ctrl), ptr_deleter{std::move(del), value} {}
 
     // Friendship is required for conversions.
     template<typename U>
@@ -197,7 +194,6 @@ public:
         observable_unique_ptr_base(value.block, value.ptr_deleter.data, std::move(value.ptr_deleter)) {
         value.block = nullptr;
         value.ptr_deleter.data = nullptr;
-        set_this_observer();
     }
 
     /// Transfer ownership by implicit casting
@@ -212,7 +208,6 @@ public:
         observable_unique_ptr_base(value.block, value.ptr_deleter.data, std::move(value.ptr_deleter)) {
         value.block = nullptr;
         value.ptr_deleter.data = nullptr;
-        set_this_observer();
     }
 
     /// Transfer ownership by explicit casting
@@ -227,7 +222,6 @@ public:
         observable_unique_ptr_base(manager.block, value) {
         manager.block = nullptr;
         manager.ptr_deleter.data = nullptr;
-        set_this_observer();
     }
 
     /// Transfer ownership by explicit casting
@@ -242,7 +236,6 @@ public:
         observable_unique_ptr_base(manager.block, value, std::move(del)) {
         manager.block = nullptr;
         manager.ptr_deleter.data = nullptr;
-        set_this_observer();
     }
 
     /// Transfer ownership by implicit casting
@@ -260,7 +253,6 @@ public:
         ptr_deleter.data = value.ptr_deleter.data;
         value.ptr_deleter.data = nullptr;
         static_cast<Deleter&>(ptr_deleter) = std::move(static_cast<Deleter&>(value.ptr_deleter));
-        set_this_observer();
 
         return *this;
     }
@@ -283,7 +275,6 @@ public:
         ptr_deleter.data = value.ptr_deleter.data;
         value.ptr_deleter.data = nullptr;
         static_cast<Deleter&>(ptr_deleter) = std::move(static_cast<Deleter&>(ptr_deleter));
-        set_this_observer();
 
         return *this;
     }
@@ -321,8 +312,6 @@ public:
         using std::swap;
         swap(block, other.block);
         swap(ptr_deleter, other.ptr_deleter);
-        other.set_this_observer();
-        set_this_observer();
     }
 
     /// Replaces the managed object with a null pointer.
@@ -409,21 +398,6 @@ private:
         return new control_block_type;
     }
 
-    static void pop_ref_(control_block_type* block) noexcept {
-        --block->refcount;
-        if (block->refcount == 0) {
-            delete block;
-        }
-    }
-
-    static void delete_and_pop_ref_(control_block_type* block, T* data, Deleter& deleter) noexcept {
-        deleter(data);
-
-        block->set_expired();
-
-        pop_ref_(block);
-    }
-
     // Friendship is required for conversions.
     template<typename U>
     friend class observer_ptr;
@@ -461,7 +435,9 @@ public:
     *         using make_observable_unique() instead of this constructor.
     */
     explicit observable_unique_ptr(T* value) :
-        base(value != nullptr ? allocate_block_() : nullptr, value) {}
+        base(value != nullptr ? allocate_block_() : nullptr, value) {
+        base::set_this_observer_();
+    }
 
     /// Explicit ownership capture of a raw pointer, with customer deleter.
     /** \param value The raw pointer to take ownership of
@@ -471,7 +447,9 @@ public:
     *         using make_observable_unique() instead of this constructor.
     */
     explicit observable_unique_ptr(T* value, Deleter del) :
-        base(value != nullptr ? allocate_block_() : nullptr, value, std::move(del)) {}
+        base(value != nullptr ? allocate_block_() : nullptr, value, std::move(del)) {
+        base::set_this_observer_();
+    }
 
     /// Transfer ownership by implicit casting
     /** \param value The pointer to take ownership from
@@ -502,7 +480,9 @@ public:
     */
     template<typename U, typename D>
     observable_unique_ptr(observable_unique_ptr<U,D>&& manager, T* value) noexcept :
-        base(std::move(manager), value) {}
+        base(std::move(manager), value) {
+        base::set_this_observer_();
+    }
 
     /// Transfer ownership by explicit casting
     /** \param manager The smart pointer to take ownership from
@@ -513,7 +493,9 @@ public:
     */
     template<typename U, typename D>
     observable_unique_ptr(observable_unique_ptr<U,D>&& manager, T* value, Deleter del) noexcept :
-        base(std::move(manager), value, del) {}
+        base(std::move(manager), value, del) {
+        base::set_this_observer_();
+    }
 
     /// Transfer ownership by implicit casting
     /** \param value The pointer to take ownership from
@@ -572,8 +554,10 @@ public:
         // Delete the old pointer
         // (this follows std::unique_ptr specs)
         if (old_ptr) {
-            delete_and_pop_ref_(old_block, old_ptr, base::ptr_deleter);
+            base::delete_and_pop_ref_(old_block, old_ptr, base::ptr_deleter);
         }
+
+        base::set_this_observer_();
     }
 
     /// Releases ownership of the managed object and mark observers as expired.
@@ -636,7 +620,9 @@ private:
     *   \note This is used by make_observable_sealed().
     */
     observable_sealed_ptr(control_block_type* ctrl, T* value) noexcept :
-        base(ctrl, value, oup::placement_delete<T>{}) {}
+        base(ctrl, value, oup::placement_delete<T>{}) {
+        base::set_this_observer_();
+    }
 
     // Friendship is required for conversions.
     template<typename U>
@@ -863,6 +849,9 @@ private:
     // Friendship is required for conversions.
     template<typename U>
     friend class observer_ptr;
+    // Friendship is required for enable_observer_from_this.
+    template<typename U, typename D>
+    friend class details::observable_unique_ptr_base;
 
     using control_block = details::control_block;
 
@@ -874,6 +863,15 @@ private:
         if (block->refcount == 0) {
             delete block;
         }
+    }
+
+    void set_data_(control_block* b, T* d) noexcept {
+        if (data) {
+            pop_ref_();
+        }
+
+        block = b;
+        data = d;
     }
 
 public:
@@ -964,12 +962,8 @@ public:
     */
     template<typename U, typename D, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
     observer_ptr& operator=(const observable_unique_ptr<U,D>& owner) noexcept {
-        if (data) {
-            pop_ref_();
-        }
+        set_data_(owner.block, owner.ptr_deleter.data);
 
-        block = owner.block;
-        data = owner.ptr_deleter.data;
         if (block) {
             ++block->refcount;
         }
@@ -984,12 +978,8 @@ public:
     */
     template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
     observer_ptr& operator=(const observable_sealed_ptr<U>& owner) noexcept {
-        if (data) {
-            pop_ref_();
-        }
+        set_data_(owner.block, owner.ptr_deleter.data);
 
-        block = owner.block;
-        data = owner.ptr_deleter.data;
         if (block) {
             ++block->refcount;
         }
@@ -1005,12 +995,8 @@ public:
             return *this;
         }
 
-        if (data) {
-            pop_ref_();
-        }
+        set_data_(value.block, value.data);
 
-        block = value.block;
-        data = value.data;
         if (block) {
             ++block->refcount;
         }
@@ -1029,12 +1015,8 @@ public:
             return *this;
         }
 
-        if (data) {
-            pop_ref_();
-        }
+        set_data_(value.block, value.data);
 
-        block = value.block;
-        data = value.data;
         if (block) {
             ++block->refcount;
         }
@@ -1048,13 +1030,9 @@ public:
     *         pointer is set to null and looses ownership.
     */
     observer_ptr& operator=(observer_ptr&& value) noexcept {
-        if (data) {
-            pop_ref_();
-        }
+        set_data_(value.block, value.data);
 
-        block = value.block;
         value.block = nullptr;
-        data = value.data;
         value.data = nullptr;
 
         return *this;
@@ -1069,13 +1047,9 @@ public:
     */
     template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
     observer_ptr& operator=(observer_ptr<U>&& value) noexcept {
-        if (data) {
-            pop_ref_();
-        }
+        set_data_(value.block, value.data);
 
-        block = value.block;
         value.block = nullptr;
-        data = value.data;
         value.data = nullptr;
 
         return *this;
@@ -1207,11 +1181,11 @@ bool operator!= (const observer_ptr<T>& first, const observer_ptr<U>& second) no
 */
 template<typename T>
 class enable_observer_from_this {
-    observer_ptr<T> this_observer;
+    mutable observer_ptr<T> this_observer;
 
     // Friendship is required for assignement of the observer.
     template<typename U, typename D>
-    friend class observable_unique_ptr_base;
+    friend class details::observable_unique_ptr_base;
 
 protected:
     enable_observer_from_this() noexcept = default;

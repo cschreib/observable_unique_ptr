@@ -2916,3 +2916,163 @@ TEST_CASE("pointers in vector", "[system_tests]") {
     REQUIRE(mem_track.leaks() == 0u);
     REQUIRE(mem_track.double_del() == 0u);
 }
+
+TEST_CASE("observer from this", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_from_this ptr{new test_object_observer_from_this};
+        const test_ptr_from_this& cptr = ptr;
+
+        test_optr_from_this optr_from_this = ptr->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this_const.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this sealed", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_from_this ptr = oup::make_observable_sealed<test_object_observer_from_this>();
+        const test_sptr_from_this& cptr = ptr;
+
+        test_optr_from_this optr_from_this = ptr->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this_const.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this after move", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_from_this ptr1{new test_object_observer_from_this};
+        test_ptr_from_this ptr2{std::move(ptr1)};
+        const test_ptr_from_this& cptr2 = ptr2;
+
+        test_optr_from_this optr_from_this = ptr2->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr2.get());
+        REQUIRE(optr_from_this_const.get() == ptr2.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this after move sealed", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_from_this ptr1 = oup::make_observable_sealed<test_object_observer_from_this>();
+        test_sptr_from_this ptr2{std::move(ptr1)};
+        const test_sptr_from_this& cptr2 = ptr2;
+
+        test_optr_from_this optr_from_this = ptr2->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr2.get());
+        REQUIRE(optr_from_this_const.get() == ptr2.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this after move assignment", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_from_this ptr1{new test_object_observer_from_this};
+        test_ptr_from_this ptr2;
+        ptr2 = std::move(ptr1);
+
+        const test_ptr_from_this& cptr2 = ptr2;
+        test_optr_from_this optr_from_this = ptr2->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr2.get());
+        REQUIRE(optr_from_this_const.get() == ptr2.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this after move assignment sealed", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_from_this ptr1 = oup::make_observable_sealed<test_object_observer_from_this>();
+        test_sptr_from_this ptr2;
+        ptr2 = std::move(ptr1);
+        const test_sptr_from_this& cptr2 = ptr2;
+
+        test_optr_from_this optr_from_this = ptr2->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr2.get());
+        REQUIRE(optr_from_this_const.get() == ptr2.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this stack", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_object_observer_from_this obj;
+        const test_object_observer_from_this& cobj = obj;
+
+        test_optr_from_this optr_from_this = obj.observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cobj.observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == true);
+        REQUIRE(optr_from_this_const.expired() == true);
+        REQUIRE(optr_from_this.get() == nullptr);
+        REQUIRE(optr_from_this_const.get() == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
