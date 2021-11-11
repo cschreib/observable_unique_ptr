@@ -42,6 +42,9 @@ struct test_object_observer_from_this :
     public test_object,
     public oup::enable_observer_from_this<test_object_observer_from_this> {};
 
+struct test_object_observer_from_this_derived :
+    public test_object_observer_from_this {};
+
 struct test_deleter {
     int state_ = 0;
 
@@ -79,8 +82,12 @@ using test_sptr_thrower = oup::observable_sealed_ptr<test_object_thrower>;
 using test_ptr_thrower_with_deleter = oup::observable_unique_ptr<test_object_thrower,test_deleter>;
 using test_ptr_from_this = oup::observable_unique_ptr<test_object_observer_from_this>;
 using test_sptr_from_this = oup::observable_sealed_ptr<test_object_observer_from_this>;
+using test_ptr_from_this_derived = oup::observable_unique_ptr<test_object_observer_from_this_derived>;
+using test_sptr_from_this_derived = oup::observable_sealed_ptr<test_object_observer_from_this_derived>;
 
 using test_optr = oup::observer_ptr<test_object>;
 using test_optr_derived = oup::observer_ptr<test_object_derived>;
 using test_optr_from_this = oup::observer_ptr<test_object_observer_from_this>;
 using test_optr_from_this_const = oup::observer_ptr<const test_object_observer_from_this>;
+using test_optr_from_this_derived = oup::observer_ptr<test_object_observer_from_this_derived>;
+using test_optr_from_this_derived_const = oup::observer_ptr<const test_object_observer_from_this_derived>;

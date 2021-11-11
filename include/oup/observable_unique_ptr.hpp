@@ -15,6 +15,7 @@ template<typename T>
 class enable_observer_from_this;
 
 namespace details {
+
 struct control_block {
     enum flag_elements {
         flag_none = 0,
@@ -37,6 +38,7 @@ template<typename T, typename Deleter>
 struct ptr_and_deleter : Deleter {
     T* data = nullptr;
 };
+
 }
 
 /// Simple default deleter
@@ -78,6 +80,9 @@ struct placement_delete
 };
 
 namespace details {
+
+struct enable_observer_from_this_base {};
+
 template<typename T, typename Deleter = oup::default_delete<T>>
 class observable_unique_ptr_base {
 protected:
@@ -111,7 +116,7 @@ protected:
 
     /// Fill in the observer pointer for objects inheriting from enable_observer_from_this.
     void set_this_observer_() noexcept {
-        if constexpr (std::is_base_of_v<enable_observer_from_this<T>, T>) {
+        if constexpr (std::is_base_of_v<details::enable_observer_from_this_base, T>) {
             if (ptr_deleter.data) {
                 ptr_deleter.data->this_observer.set_data_(block, ptr_deleter.data);
                 ++block->refcount;
@@ -362,6 +367,7 @@ public:
         return ptr_deleter.data != nullptr;
     }
 };
+
 }
 
 /// Unique-ownership smart pointer, can be observed by observer_ptr, ownership can be released.
@@ -1180,7 +1186,7 @@ bool operator!= (const observer_ptr<T>& first, const observer_ptr<U>& second) no
 *   type of smart pointer, then observer_from_this() will return nullptr.
 */
 template<typename T>
-class enable_observer_from_this {
+class enable_observer_from_this : public details::enable_observer_from_this_base {
     mutable observer_ptr<T> this_observer;
 
     // Friendship is required for assignment of the observer.

@@ -2961,6 +2961,28 @@ TEST_CASE("observer from this sealed", "[observer_from_this]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("observer from this derived", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_from_this_derived ptr{new test_object_observer_from_this_derived};
+        const test_ptr_from_this_derived& cptr = ptr;
+
+        test_optr_from_this optr_from_this = ptr->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this_const.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("observer from this after move", "[observer_from_this]") {
     memory_tracker mem_track;
 
