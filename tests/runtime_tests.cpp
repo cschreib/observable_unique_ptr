@@ -536,6 +536,34 @@ TEST_CASE("owner explicit conversion constructor with nullptr sealed", "[owner_c
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("owner explicit conversion constructor with nullptr with custom deleter", "[owner_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr_orig{new test_object_derived, test_deleter{42}};
+        {
+            test_ptr_derived_with_deleter ptr(std::move(ptr_orig),
+                static_cast<test_object_derived*>(nullptr),
+                test_deleter{43});
+            REQUIRE(instances == 0);
+            REQUIRE(instances_derived == 0);
+            REQUIRE(instances_deleter == 2);
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.get_deleter().state_ == 43);
+        }
+
+        REQUIRE(instances == 0);
+        REQUIRE(instances_derived == 0);
+        REQUIRE(instances_deleter == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_derived == 0);
+    REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("owner move assignment operator valid to empty", "[owner_assignment]") {
     memory_tracker mem_track;
 
