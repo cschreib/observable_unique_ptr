@@ -115,10 +115,20 @@ protected:
     }
 
     /// Fill in the observer pointer for objects inheriting from enable_observer_from_this.
-    void set_this_observer_() noexcept {
-        if constexpr (std::is_base_of_v<details::enable_observer_from_this_base, T>) {
-            if (ptr_deleter.data) {
-                ptr_deleter.data->this_observer.set_data_(block, ptr_deleter.data);
+    /** \note It is important to preserve the type of the pointer as supplied by the user.
+    *         It might be of a derived type that inherits from enable_observer_from_this, while
+    *         the base type T might not. We still want to fill in the observer pointer if we can.
+    */
+    template<typename U>
+    void set_this_observer_(U* p) noexcept {
+        if constexpr (std::is_convertible_v<U*,const details::enable_observer_from_this_base*>) {
+            using input_observer_type = std::decay_t<decltype(p->this_observer)>;
+            using observer_element_type = typename input_observer_type::element_type;
+            static_assert(std::is_convertible_v<U*, observer_element_type*>,
+                "incompatible type specified in enable_observer_from_this");
+
+            if (p) {
+                p->this_observer.set_data_(block, p);
                 ++block->refcount;
             }
         }
@@ -440,9 +450,10 @@ public:
     *         observable_unique_ptr is created. If possible, prefer
     *         using make_observable_unique() instead of this constructor.
     */
-    explicit observable_unique_ptr(T* value) :
+    template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*,T*>>>
+    explicit observable_unique_ptr(U* value) :
         base(value != nullptr ? allocate_block_() : nullptr, value) {
-        base::set_this_observer_();
+        base::set_this_observer_(value);
     }
 
     /// Explicit ownership capture of a raw pointer, with customer deleter.
@@ -452,9 +463,10 @@ public:
     *         observable_unique_ptr is created. If possible, prefer
     *         using make_observable_unique() instead of this constructor.
     */
-    explicit observable_unique_ptr(T* value, Deleter del) :
+    template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*,T*>>>
+    explicit observable_unique_ptr(U* value, Deleter del) :
         base(value != nullptr ? allocate_block_() : nullptr, value, std::move(del)) {
-        base::set_this_observer_();
+        base::set_this_observer_(value);
     }
 
     /// Transfer ownership by implicit casting
@@ -484,10 +496,11 @@ public:
     *         pointer is set to null and looses ownership. The deleter
     *         is default constructed.
     */
-    template<typename U, typename D>
-    observable_unique_ptr(observable_unique_ptr<U,D>&& manager, T* value) noexcept :
+    template<typename U, typename D, typename V, typename enable =
+        std::enable_if_t<std::is_convertible_v<V*,T*>>>
+    observable_unique_ptr(observable_unique_ptr<U,D>&& manager, V* value) noexcept :
         base(std::move(manager), value) {
-        base::set_this_observer_();
+        base::set_this_observer_(value);
     }
 
     /// Transfer ownership by explicit casting
@@ -497,10 +510,11 @@ public:
     *   \note After this observable_unique_ptr is created, the source
     *         pointer is set to null and looses ownership.
     */
-    template<typename U, typename D>
-    observable_unique_ptr(observable_unique_ptr<U,D>&& manager, T* value, Deleter del) noexcept :
+    template<typename U, typename D, typename V, typename enable =
+        std::enable_if_t<std::is_convertible_v<V*,T*>>>
+    observable_unique_ptr(observable_unique_ptr<U,D>&& manager, V* value, Deleter del) noexcept :
         base(std::move(manager), value, del) {
-        base::set_this_observer_();
+        base::set_this_observer_(value);
     }
 
     /// Transfer ownership by implicit casting
@@ -548,7 +562,8 @@ public:
     /// Replaces the managed object.
     /** \param ptr A nullptr_t instance
     */
-    void reset(T* ptr) noexcept {
+    template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*,T*>>>
+    void reset(U* ptr) noexcept {
         // Copy old pointer
         T* old_ptr = base::ptr_deleter.data;
         control_block_type* old_block = base::block;
@@ -563,7 +578,7 @@ public:
             base::delete_and_pop_ref_(old_block, old_ptr, base::ptr_deleter);
         }
 
-        base::set_this_observer_();
+        base::set_this_observer_(ptr);
     }
 
     /// Releases ownership of the managed object and mark observers as expired.
@@ -625,9 +640,10 @@ private:
     *   \param value The pointer to own
     *   \note This is used by make_observable_sealed().
     */
-    observable_sealed_ptr(control_block_type* ctrl, T* value) noexcept :
+    template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*,T*>>>
+    observable_sealed_ptr(control_block_type* ctrl, U* value) noexcept :
         base(ctrl, value, oup::placement_delete<T>{}) {
-        base::set_this_observer_();
+        base::set_this_observer_(value);
     }
 
     // Friendship is required for conversions.
@@ -659,7 +675,8 @@ public:
     /// Explicit ownership capture of a raw pointer is forbidden.
     /** \note If you need to do this, use observable_unique_ptr instead.
     */
-    explicit observable_sealed_ptr(T*) = delete;
+    template<typename U>
+    explicit observable_sealed_ptr(U*) = delete;
 
     /// Transfer ownership by implicit casting
     /** \param value The pointer to take ownership from
@@ -760,6 +777,7 @@ observable_unique_ptr<T> make_observable_unique(Args&& ... args) {
 template<typename T, typename ... Args>
 observable_sealed_ptr<T> make_observable_sealed(Args&& ... args) {
     using block_type = typename observable_sealed_ptr<T>::control_block_type;
+    using decayed_type = std::decay_t<T>;
 
     // Allocate memory
     constexpr std::size_t block_size = sizeof(block_type);
@@ -769,7 +787,7 @@ observable_sealed_ptr<T> make_observable_sealed(Args&& ... args) {
     try {
         // Construct control block and object
         block_type* block = new (buffer) block_type;
-        T* ptr = new (buffer + block_size) T(std::forward<Args>(args)...);
+        decayed_type* ptr = new (buffer + block_size) decayed_type(std::forward<Args>(args)...);
 
         // Make owner pointer
         return observable_sealed_ptr<T>(block, ptr);
@@ -1184,6 +1202,15 @@ bool operator!= (const observer_ptr<T>& first, const observer_ptr<U>& second) no
 *   calling observer_from_this(). If the latter condition is not satisfied,
 *   i.e., the object was allocated on the stack, or is owned by another
 *   type of smart pointer, then observer_from_this() will return nullptr.
+*
+*   **Corner cases.**
+*    - If a class A inherits from both another class B and enable_observer_from_this<A>,
+*      and it is owned by an observable_unique_ptr<B>. The function observer_from_this()
+*      will always return nullptr if ownership is taken from a pointer to B*, but will
+*      be a valid pointer if ownership is taken from a pointer to A*.
+*
+*           observable_unique_ptr<B> p(new A); // observer pointer is valid
+*           observable_unique_ptr<B> p(static_cast<B*>(new A)); // observer pointer is nullptr
 */
 template<typename T>
 class enable_observer_from_this : public details::enable_observer_from_this_base {

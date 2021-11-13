@@ -82,6 +82,8 @@ using test_sptr_thrower = oup::observable_sealed_ptr<test_object_thrower>;
 using test_ptr_thrower_with_deleter = oup::observable_unique_ptr<test_object_thrower,test_deleter>;
 using test_ptr_from_this = oup::observable_unique_ptr<test_object_observer_from_this>;
 using test_sptr_from_this = oup::observable_sealed_ptr<test_object_observer_from_this>;
+using test_cptr_from_this = oup::observable_unique_ptr<const test_object_observer_from_this>;
+using test_csptr_from_this = oup::observable_sealed_ptr<const test_object_observer_from_this>;
 using test_ptr_from_this_derived = oup::observable_unique_ptr<test_object_observer_from_this_derived>;
 using test_sptr_from_this_derived = oup::observable_sealed_ptr<test_object_observer_from_this_derived>;
 
