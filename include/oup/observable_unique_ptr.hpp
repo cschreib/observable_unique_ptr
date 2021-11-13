@@ -587,7 +587,7 @@ public:
     /** \param ptr The new object to manage (can be `nullptr`, then this is equivalent to `reset()`)
     */
     template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*,T*>>>
-    void reset(U* ptr) noexcept {
+    void reset(U* ptr) {
         // Copy old pointer
         T* old_ptr = base::ptr_deleter.data;
         control_block_type* old_block = base::block;
