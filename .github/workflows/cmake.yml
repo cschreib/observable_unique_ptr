@@ -34,7 +34,7 @@ jobs:
 
     - name: Setup Clang
       if: matrix.platform.compiler == 'clang++' && matrix.platform.os == 'ubuntu-latest'
-      run: sudo apt install libc++-dev
+      run: sudo apt install clang libc++-dev libc++abi-dev
 
     - name: Setup Emscripten cache
       if: matrix.platform.compiler == 'em++'
