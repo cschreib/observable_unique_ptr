@@ -450,6 +450,8 @@ private:
     friend base;
 
 public:
+    static_assert(!std::is_array_v<T>, "T[] is not supported");
+
     using typename base::element_type;
     using typename base::observer_type;
     using typename base::pointer;
@@ -682,6 +684,8 @@ private:
     friend base;
 
 public:
+    static_assert(!std::is_array_v<T>, "T[] is not supported");
+
     using typename base::element_type;
     using typename base::observer_type;
     using typename base::pointer;
@@ -933,6 +937,8 @@ private:
     }
 
 public:
+    static_assert(!std::is_array_v<T>, "T[] is not supported");
+
     /// Type of the pointed object
     using element_type = T;
 
