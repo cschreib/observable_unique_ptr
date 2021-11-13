@@ -3221,3 +3221,27 @@ TEST_CASE("observer from this stack", "[observer_from_this]") {
     REQUIRE(mem_track.leaks() == 0u);
     REQUIRE(mem_track.double_del() == 0u);
 }
+
+TEST_CASE("observer from this heap", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_object_observer_from_this* obj = new test_object_observer_from_this;
+        const test_object_observer_from_this* cobj = obj;
+
+        test_optr_from_this optr_from_this = obj->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cobj->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == true);
+        REQUIRE(optr_from_this_const.expired() == true);
+        REQUIRE(optr_from_this.get() == nullptr);
+        REQUIRE(optr_from_this_const.get() == nullptr);
+
+        delete obj;
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
