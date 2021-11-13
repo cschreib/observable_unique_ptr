@@ -77,6 +77,8 @@ struct test_deleter {
 
 using test_ptr = oup::observable_unique_ptr<test_object>;
 using test_sptr = oup::observable_sealed_ptr<test_object>;
+using test_ptr_const = oup::observable_unique_ptr<const test_object>;
+using test_sptr_const = oup::observable_sealed_ptr<const test_object>;
 using test_ptr_derived = oup::observable_unique_ptr<test_object_derived>;
 using test_sptr_derived = oup::observable_sealed_ptr<test_object_derived>;
 using test_ptr_with_deleter = oup::observable_unique_ptr<test_object,test_deleter>;
@@ -94,6 +96,7 @@ using test_ptr_from_this_multi = oup::observable_unique_ptr<test_object_observer
 using test_sptr_from_this_multi = oup::observable_sealed_ptr<test_object_observer_from_this_multi>;
 
 using test_optr = oup::observer_ptr<test_object>;
+using test_optr_const = oup::observer_ptr<const test_object>;
 using test_optr_derived = oup::observer_ptr<test_object_derived>;
 using test_optr_from_this = oup::observer_ptr<test_object_observer_from_this>;
 using test_optr_from_this_const = oup::observer_ptr<const test_object_observer_from_this>;

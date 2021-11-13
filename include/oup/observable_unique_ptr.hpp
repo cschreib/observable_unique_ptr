@@ -1377,9 +1377,6 @@ protected:
     };
 
 public:
-
-    using observer_element_type = T;
-
     /// Return an observer pointer to 'this'.
     /** \return A new observer pointer pointing to 'this'.
     *   \note If 'this' is not owned by a unique or sealed pointer, i.e., if
@@ -1449,6 +1446,48 @@ template<typename U, typename T>
 observer_ptr<U> static_pointer_cast(observer_ptr<T>&& ptr) {
     // NB: can use raw_get() as static cast of an expired pointer is fine
     return observer_ptr<U>(std::move(ptr), static_cast<U*>(ptr.raw_get()));
+}
+
+/// Perform a `const_cast` for an `observable_unique_ptr`.
+/** \param ptr The pointer to cast
+*   \note Ownership will be transfered to the returned pointer.
+          If the input pointer is null, the output pointer will also be null.
+*/
+template<typename U, typename T>
+observable_unique_ptr<U> const_pointer_cast(observable_unique_ptr<T>&& ptr) {
+    return observable_unique_ptr<U>(std::move(ptr), const_cast<U*>(ptr.get()));
+}
+
+/// Perform a `const_cast` for an `observable_unique_ptr`.
+/** \param ptr The pointer to cast
+*   \note Ownership will be transfered to the returned pointer.
+          If the input pointer is null, the output pointer will also be null.
+*/
+template<typename U, typename T>
+observable_sealed_ptr<U> const_pointer_cast(observable_sealed_ptr<T>&& ptr) {
+    return observable_sealed_ptr<U>(std::move(ptr), const_cast<U*>(ptr.get()));
+}
+
+/// Perform a `const_cast` for an `observer_ptr`.
+/** \param ptr The pointer to cast
+*   \note A new observer is returned, the input observer is not modified.
+          If the input pointer is null, the output pointer will also be null.
+*/
+template<typename U, typename T>
+observer_ptr<U> const_pointer_cast(const observer_ptr<T>& ptr) {
+    // NB: can use raw_get() as const cast of an expired pointer is fine
+    return observer_ptr<U>(ptr, const_cast<U*>(ptr.raw_get()));
+}
+
+/// Perform a `const_cast` for an `observer_ptr`.
+/** \param ptr The pointer to cast
+*   \note A new observer is returned, the input observer is set to null.
+          If the input pointer is null, the output pointer will also be null.
+*/
+template<typename U, typename T>
+observer_ptr<U> const_pointer_cast(observer_ptr<T>&& ptr) {
+    // NB: can use raw_get() as const cast of an expired pointer is fine
+    return observer_ptr<U>(std::move(ptr), const_cast<U*>(ptr.raw_get()));
 }
 
 }
