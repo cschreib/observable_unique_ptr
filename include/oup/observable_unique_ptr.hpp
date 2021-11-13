@@ -258,7 +258,11 @@ public:
     */
     template<typename U, typename D>
     observable_unique_ptr_base(observable_unique_ptr_base<U,D>&& manager, T* value) noexcept :
-        observable_unique_ptr_base(manager.block, value) {
+        observable_unique_ptr_base(value != nullptr ? manager.block : nullptr, value) {
+        if (manager.ptr_deleter.data != nullptr && value == nullptr) {
+            manager.delete_and_pop_ref_();
+        }
+
         manager.block = nullptr;
         manager.ptr_deleter.data = nullptr;
     }
@@ -272,7 +276,11 @@ public:
     */
     template<typename U, typename D>
     observable_unique_ptr_base(observable_unique_ptr_base<U,D>&& manager, T* value, Deleter del) noexcept :
-        observable_unique_ptr_base(manager.block, value, std::move(del)) {
+        observable_unique_ptr_base(value != nullptr ? manager.block : nullptr, value, std::move(del)) {
+        if (manager.ptr_deleter.data != nullptr && value == nullptr) {
+            manager.delete_and_pop_ref_();
+        }
+
         manager.block = nullptr;
         manager.ptr_deleter.data = nullptr;
     }

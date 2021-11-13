@@ -492,6 +492,50 @@ TEST_CASE("owner explicit conversion constructor with custom deleter", "[owner_c
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("owner explicit conversion constructor with nullptr", "[owner_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_orig{new test_object_derived};
+        {
+            test_ptr_derived ptr(std::move(ptr_orig), static_cast<test_object_derived*>(nullptr));
+            REQUIRE(instances == 0);
+            REQUIRE(instances_derived == 0);
+            REQUIRE(ptr.get() == nullptr);
+        }
+
+        REQUIRE(instances == 0);
+        REQUIRE(instances_derived == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_derived == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner explicit conversion constructor with nullptr sealed", "[owner_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr_orig = oup::make_observable_sealed<test_object_derived>();
+        {
+            test_sptr_derived ptr(std::move(ptr_orig), static_cast<test_object_derived*>(nullptr));
+            REQUIRE(instances == 0);
+            REQUIRE(instances_derived == 0);
+            REQUIRE(ptr.get() == nullptr);
+        }
+
+        REQUIRE(instances == 0);
+        REQUIRE(instances_derived == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_derived == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("owner move assignment operator valid to empty", "[owner_assignment]") {
     memory_tracker mem_track;
 
