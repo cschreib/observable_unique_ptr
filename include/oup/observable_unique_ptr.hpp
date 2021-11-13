@@ -1324,6 +1324,9 @@ public:
     *   type of smart pointer, then this function will return nullptr.
     */
     observer_ptr<T> observer_from_this() {
+        static_assert(std::is_base_of_v<enable_observer_from_this,std::decay_t<T>>,
+            "T must inherit from enable_observer_from_this<T>");
+
         return observer_ptr<T>{this_control_block,
             this_control_block ? static_cast<T*>(this) : nullptr};
     }
@@ -1335,6 +1338,9 @@ public:
     *   type of smart pointer, then this function will return nullptr.
     */
     observer_ptr<const T> observer_from_this() const {
+        static_assert(std::is_base_of_v<enable_observer_from_this,std::decay_t<T>>,
+            "T must inherit from enable_observer_from_this<T>");
+
         return observer_ptr<const T>{this_control_block,
             this_control_block ? static_cast<const T*>(this) : nullptr};
     }
