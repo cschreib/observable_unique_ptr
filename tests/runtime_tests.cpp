@@ -1806,9 +1806,90 @@ TEST_CASE("observer copy constructor", "[observer_construction]") {
             REQUIRE(ptr.expired() == false);
             REQUIRE(ptr_orig.get() != nullptr);
             REQUIRE(ptr_orig.expired() == false);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer explicit conversion copy constructor ", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object_derived};
+        test_optr ptr_orig{ptr_owner};
+        {
+            test_optr ptr{ptr_orig, static_cast<test_object_derived*>(ptr_orig.get())};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == static_cast<test_object_derived*>(ptr_owner.get()));
+            REQUIRE(ptr.expired() == false);
+            REQUIRE(ptr_orig.get() == ptr_owner.get());
+            REQUIRE(ptr_orig.expired() == false);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer explicit conversion copy constructor null pointer", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object_derived};
+        test_optr ptr_orig{ptr_owner};
+        {
+            test_optr ptr{ptr_orig, static_cast<test_object_derived*>(nullptr)};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+            REQUIRE(ptr_orig.get() == ptr_owner.get());
+            REQUIRE(ptr_orig.expired() == false);
         }
 
         REQUIRE(instances == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer explicit conversion copy constructor subobject", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object_derived};
+        test_optr ptr_orig{ptr_owner};
+        {
+            int_optr ptr{ptr_orig, &ptr_owner->state_};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == &ptr_owner->state_);
+            REQUIRE(ptr.expired() == false);
+            REQUIRE(ptr_orig.get() == ptr_owner.get());
+            REQUIRE(ptr_orig.expired() == false);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
     }
 
     REQUIRE(instances == 0);
@@ -1829,9 +1910,90 @@ TEST_CASE("observer move constructor", "[observer_construction]") {
             REQUIRE(ptr.expired() == false);
             REQUIRE(ptr_orig.get() == nullptr);
             REQUIRE(ptr_orig.expired() == true);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer explicit conversion move constructor ", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object_derived};
+        test_optr ptr_orig{ptr_owner};
+        {
+            test_optr ptr{std::move(ptr_orig), static_cast<test_object_derived*>(ptr_orig.get())};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == static_cast<test_object_derived*>(ptr_owner.get()));
+            REQUIRE(ptr.expired() == false);
+            REQUIRE(ptr_orig.get() == nullptr);
+            REQUIRE(ptr_orig.expired() == true);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer explicit conversion move constructor null pointer", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object_derived};
+        test_optr ptr_orig{ptr_owner};
+        {
+            test_optr ptr{std::move(ptr_orig), static_cast<test_object_derived*>(nullptr)};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+            REQUIRE(ptr_orig.get() == nullptr);
+            REQUIRE(ptr_orig.expired() == true);
         }
 
         REQUIRE(instances == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer explicit conversion move constructor subobject", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object_derived};
+        test_optr ptr_orig{ptr_owner};
+        {
+            int_optr ptr{std::move(ptr_orig), &ptr_owner->state_};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == &ptr_owner->state_);
+            REQUIRE(ptr.expired() == false);
+            REQUIRE(ptr_orig.get() == nullptr);
+            REQUIRE(ptr_orig.expired() == true);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
     }
 
     REQUIRE(instances == 0);

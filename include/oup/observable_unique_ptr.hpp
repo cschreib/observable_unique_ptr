@@ -1014,6 +1014,24 @@ public:
         }
     }
 
+    /// Copy an existing `observer_ptr` instance with explicit casting
+    /** \param manager The observer pointer to copy the observed data from
+    *   \param value The casted pointer value to observe
+    *   \note After this smart pointer is created, the source
+    *         pointer is set to null and looses ownership. The deleter
+    *         is default constructed. The raw pointer `value` may or may
+    *         not be related to the raw pointer observed by `manager`.
+    *         This could be a pointer to any other object which is known to
+    *         have the same lifetime.
+    */
+    template<typename U>
+    observer_ptr(const observer_ptr<U>& manager, T* value) noexcept :
+        block(value != nullptr ? manager.block : nullptr), data(value) {
+        if (block) {
+            ++block->refcount;
+        }
+    }
+
     /// Move from an existing `observer_ptr` instance
     /** \param value The existing observer pointer to move from
     *   \note After this `observer_ptr` is created, the source
@@ -1034,6 +1052,27 @@ public:
     observer_ptr(observer_ptr<U>&& value) noexcept : block(value.block), data(value.data) {
         value.block = nullptr;
         value.data = nullptr;
+    }
+
+    /// Move from an existing `observer_ptr` instance with explicit casting
+    /** \param manager The observer pointer to copy the observed data from
+    *   \param value The casted pointer value to observe
+    *   \note After this smart pointer is created, the source
+    *         pointer is set to null and looses ownership. The deleter
+    *         is default constructed. The raw pointer `value` may or may
+    *         not be related to the raw pointer observed by `manager`.
+    *         This could be a pointer to any other object which is known to
+    *         have the same lifetime.
+    */
+    template<typename U>
+    observer_ptr(observer_ptr<U>&& manager, T* value) noexcept :
+        block(value != nullptr ? manager.block : nullptr), data(value) {
+        if (manager.data != nullptr && value == nullptr) {
+            manager.pop_ref_();
+        }
+
+        manager.block = nullptr;
+        manager.data = nullptr;
     }
 
     /// Point to another owning pointer.

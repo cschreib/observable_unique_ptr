@@ -101,3 +101,4 @@ using test_optr_from_this_derived = oup::observer_ptr<test_object_observer_from_
 using test_optr_from_this_derived_const = oup::observer_ptr<const test_object_observer_from_this_derived>;
 using test_optr_from_this_multi = oup::observer_ptr<test_object_observer_from_this_multi>;
 using test_optr_from_this_multi_const = oup::observer_ptr<const test_object_observer_from_this_multi>;
+using int_optr = oup::observer_ptr<int>;
