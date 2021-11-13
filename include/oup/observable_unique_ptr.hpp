@@ -258,7 +258,11 @@ public:
     */
     template<typename U, typename D>
     observable_unique_ptr_base(observable_unique_ptr_base<U,D>&& manager, T* value) noexcept :
-        observable_unique_ptr_base(manager.block, value) {
+        observable_unique_ptr_base(value != nullptr ? manager.block : nullptr, value) {
+        if (manager.ptr_deleter.data != nullptr && value == nullptr) {
+            manager.delete_and_pop_ref_();
+        }
+
         manager.block = nullptr;
         manager.ptr_deleter.data = nullptr;
     }
@@ -272,7 +276,11 @@ public:
     */
     template<typename U, typename D>
     observable_unique_ptr_base(observable_unique_ptr_base<U,D>&& manager, T* value, Deleter del) noexcept :
-        observable_unique_ptr_base(manager.block, value, std::move(del)) {
+        observable_unique_ptr_base(value != nullptr ? manager.block : nullptr, value, std::move(del)) {
+        if (manager.ptr_deleter.data != nullptr && value == nullptr) {
+            manager.delete_and_pop_ref_();
+        }
+
         manager.block = nullptr;
         manager.ptr_deleter.data = nullptr;
     }
@@ -520,7 +528,10 @@ public:
     *   \param value The casted pointer value to take ownership of
     *   \note After this observable_unique_ptr is created, the source
     *         pointer is set to null and looses ownership. The deleter
-    *         is default constructed.
+    *         is default constructed. The raw pointer `value`
+    *         must be obtained by casting the raw pointer managed by `manager`
+    *         (const cast, dynamic cast, etc), such that deleting `value` has
+    *         the same effect as deleting the pointer owned by `manager`.
     */
     template<typename U, typename D, typename V, typename enable =
         std::enable_if_t<std::is_convertible_v<V*,T*>>>
@@ -534,7 +545,10 @@ public:
     *   \param value The casted pointer value to take ownership of
     *   \param del The deleter to use in the new pointer
     *   \note After this observable_unique_ptr is created, the source
-    *         pointer is set to null and looses ownership.
+    *         pointer is set to null and looses ownership. The raw pointer `value`
+    *         must be obtained by casting the raw pointer managed by `manager`
+    *         (const cast, dynamic cast, etc), such that deleting `value` has
+    *         the same effect as deleting the pointer owned by `manager`.
     */
     template<typename U, typename D, typename V, typename enable =
         std::enable_if_t<std::is_convertible_v<V*,T*>>>
@@ -728,10 +742,14 @@ public:
     /** \param manager The smart pointer to take ownership from
     *   \param value The casted pointer value to take ownership of
     *   \note After this `observable_sealed_ptr` is created, the source
-    *         pointer is set to null and looses ownership.
+    *         pointer is set to null and looses ownership. The raw pointer `value`
+    *         must be obtained by casting the raw pointer managed by `manager`
+    *         (const cast, dynamic cast, etc), such that deleting `value` has
+    *         the same effect as deleting the pointer owned by `manager`.
     */
-    template<typename U>
-    observable_sealed_ptr(observable_sealed_ptr<U>&& manager, T* value) noexcept :
+    template<typename U, typename V, typename enable =
+        std::enable_if_t<std::is_convertible_v<V*,T*>>>
+    observable_sealed_ptr(observable_sealed_ptr<U>&& manager, V* value) noexcept :
         base(std::move(manager), value) {}
 
     /// Transfer ownership by implicit casting
@@ -996,6 +1014,24 @@ public:
         }
     }
 
+    /// Copy an existing `observer_ptr` instance with explicit casting
+    /** \param manager The observer pointer to copy the observed data from
+    *   \param value The casted pointer value to observe
+    *   \note After this smart pointer is created, the source
+    *         pointer is set to null and looses ownership. The deleter
+    *         is default constructed. The raw pointer `value` may or may
+    *         not be related to the raw pointer observed by `manager`.
+    *         This could be a pointer to any other object which is known to
+    *         have the same lifetime.
+    */
+    template<typename U>
+    observer_ptr(const observer_ptr<U>& manager, T* value) noexcept :
+        block(value != nullptr ? manager.block : nullptr), data(value) {
+        if (block) {
+            ++block->refcount;
+        }
+    }
+
     /// Move from an existing `observer_ptr` instance
     /** \param value The existing observer pointer to move from
     *   \note After this `observer_ptr` is created, the source
@@ -1016,6 +1052,27 @@ public:
     observer_ptr(observer_ptr<U>&& value) noexcept : block(value.block), data(value.data) {
         value.block = nullptr;
         value.data = nullptr;
+    }
+
+    /// Move from an existing `observer_ptr` instance with explicit casting
+    /** \param manager The observer pointer to copy the observed data from
+    *   \param value The casted pointer value to observe
+    *   \note After this smart pointer is created, the source
+    *         pointer is set to null and looses ownership. The deleter
+    *         is default constructed. The raw pointer `value` may or may
+    *         not be related to the raw pointer observed by `manager`.
+    *         This could be a pointer to any other object which is known to
+    *         have the same lifetime.
+    */
+    template<typename U>
+    observer_ptr(observer_ptr<U>&& manager, T* value) noexcept :
+        block(value != nullptr ? manager.block : nullptr), data(value) {
+        if (manager.data != nullptr && value == nullptr) {
+            manager.pop_ref_();
+        }
+
+        manager.block = nullptr;
+        manager.data = nullptr;
     }
 
     /// Point to another owning pointer.
@@ -1320,9 +1377,6 @@ protected:
     };
 
 public:
-
-    using observer_element_type = T;
-
     /// Return an observer pointer to 'this'.
     /** \return A new observer pointer pointing to 'this'.
     *   \note If 'this' is not owned by a unique or sealed pointer, i.e., if
@@ -1351,6 +1405,147 @@ public:
             this_control_block ? static_cast<const T*>(this) : nullptr};
     }
 };
+
+/// Perform a `static_cast` for an `observable_unique_ptr`.
+/** \param ptr The pointer to cast
+*   \note Ownership will be transfered to the returned pointer.
+          If the input pointer is null, the output pointer will also be null.
+*/
+template<typename U, typename T>
+observable_unique_ptr<U> static_pointer_cast(observable_unique_ptr<T>&& ptr) {
+    return observable_unique_ptr<U>(std::move(ptr), static_cast<U*>(ptr.get()));
+}
+
+/// Perform a `static_cast` for an `observable_unique_ptr`.
+/** \param ptr The pointer to cast
+*   \note Ownership will be transfered to the returned pointer.
+          If the input pointer is null, the output pointer will also be null.
+*/
+template<typename U, typename T>
+observable_sealed_ptr<U> static_pointer_cast(observable_sealed_ptr<T>&& ptr) {
+    return observable_sealed_ptr<U>(std::move(ptr), static_cast<U*>(ptr.get()));
+}
+
+/// Perform a `static_cast` for an `observer_ptr`.
+/** \param ptr The pointer to cast
+*   \note A new observer is returned, the input observer is not modified.
+          If the input pointer is null, the output pointer will also be null.
+*/
+template<typename U, typename T>
+observer_ptr<U> static_pointer_cast(const observer_ptr<T>& ptr) {
+    // NB: can use raw_get() as static cast of an expired pointer is fine
+    return observer_ptr<U>(ptr, static_cast<U*>(ptr.raw_get()));
+}
+
+/// Perform a `static_cast` for an `observer_ptr`.
+/** \param ptr The pointer to cast
+*   \note A new observer is returned, the input observer is set to null.
+          If the input pointer is null, the output pointer will also be null.
+*/
+template<typename U, typename T>
+observer_ptr<U> static_pointer_cast(observer_ptr<T>&& ptr) {
+    // NB: can use raw_get() as static cast of an expired pointer is fine
+    return observer_ptr<U>(std::move(ptr), static_cast<U*>(ptr.raw_get()));
+}
+
+/// Perform a `const_cast` for an `observable_unique_ptr`.
+/** \param ptr The pointer to cast
+*   \note Ownership will be transfered to the returned pointer.
+          If the input pointer is null, the output pointer will also be null.
+*/
+template<typename U, typename T>
+observable_unique_ptr<U> const_pointer_cast(observable_unique_ptr<T>&& ptr) {
+    return observable_unique_ptr<U>(std::move(ptr), const_cast<U*>(ptr.get()));
+}
+
+/// Perform a `const_cast` for an `observable_unique_ptr`.
+/** \param ptr The pointer to cast
+*   \note Ownership will be transfered to the returned pointer.
+          If the input pointer is null, the output pointer will also be null.
+*/
+template<typename U, typename T>
+observable_sealed_ptr<U> const_pointer_cast(observable_sealed_ptr<T>&& ptr) {
+    return observable_sealed_ptr<U>(std::move(ptr), const_cast<U*>(ptr.get()));
+}
+
+/// Perform a `const_cast` for an `observer_ptr`.
+/** \param ptr The pointer to cast
+*   \note A new observer is returned, the input observer is not modified.
+          If the input pointer is null, the output pointer will also be null.
+*/
+template<typename U, typename T>
+observer_ptr<U> const_pointer_cast(const observer_ptr<T>& ptr) {
+    // NB: can use raw_get() as const cast of an expired pointer is fine
+    return observer_ptr<U>(ptr, const_cast<U*>(ptr.raw_get()));
+}
+
+/// Perform a `const_cast` for an `observer_ptr`.
+/** \param ptr The pointer to cast
+*   \note A new observer is returned, the input observer is set to null.
+          If the input pointer is null, the output pointer will also be null.
+*/
+template<typename U, typename T>
+observer_ptr<U> const_pointer_cast(observer_ptr<T>&& ptr) {
+    // NB: can use raw_get() as const cast of an expired pointer is fine
+    return observer_ptr<U>(std::move(ptr), const_cast<U*>(ptr.raw_get()));
+}
+
+/// Perform a `dynamic_cast` for an `observable_unique_ptr`.
+/** \param ptr The pointer to cast
+*   \note Ownership will be transfered to the returned pointer unless the cast
+*         fails, in which case ownership remains in the original pointer, std::bad_cast
+*         is thrown, and no memory is leaked. If the input pointer is null,
+*         the output pointer will also be null.
+*/
+template<typename U, typename T>
+observable_unique_ptr<U> dynamic_pointer_cast(observable_unique_ptr<T>&& ptr) {
+    if (ptr == nullptr) {
+        return observable_unique_ptr<U>{};
+    }
+
+    U& casted_object = dynamic_cast<U&>(*ptr.get());
+    return observable_unique_ptr<U>(std::move(ptr), &casted_object);
+}
+
+/// Perform a `dynamic_cast` for an `observable_unique_ptr`.
+/** \param ptr The pointer to cast
+*   \note Ownership will be transfered to the returned pointer unless the cast
+*         fails, in which case ownership remains in the original pointer, and
+*         no memory is leaked.
+*/
+template<typename U, typename T>
+observable_sealed_ptr<U> dynamic_pointer_cast(observable_sealed_ptr<T>&& ptr) {
+    if (ptr == nullptr) {
+        return observable_sealed_ptr<U>{};
+    }
+
+    U& casted_object = dynamic_cast<U&>(*ptr.get());
+    return observable_sealed_ptr<U>(std::move(ptr), &casted_object);
+}
+
+/// Perform a `dynamic_cast` for an `observer_ptr`.
+/** \param ptr The pointer to cast
+*   \note A new observer is returned, the input observer is not modified.
+          If the input pointer is null, or if the cast fails, the output pointer
+          will be null.
+*/
+template<typename U, typename T>
+observer_ptr<U> dynamic_pointer_cast(const observer_ptr<T>& ptr) {
+    // NB: must use get() as dynamic cast of an expired pointer is UB
+    return observer_ptr<U>(ptr, dynamic_cast<U*>(ptr.get()));
+}
+
+/// Perform a `dynamic_cast` for an `observer_ptr`.
+/** \param ptr The pointer to cast
+*   \note A new observer is returned, the input observer is set to null.
+          If the input pointer is null, or if the cast fails, the output pointer
+          will be null.
+*/
+template<typename U, typename T>
+observer_ptr<U> dynamic_pointer_cast(observer_ptr<T>&& ptr) {
+    // NB: must use get() as dynamic cast of an expired pointer is UB
+    return observer_ptr<U>(std::move(ptr), dynamic_cast<U*>(ptr.get()));
+}
 
 }
 

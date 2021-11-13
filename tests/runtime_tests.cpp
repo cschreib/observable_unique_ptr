@@ -492,6 +492,78 @@ TEST_CASE("owner explicit conversion constructor with custom deleter", "[owner_c
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("owner explicit conversion constructor with nullptr", "[owner_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_orig{new test_object_derived};
+        {
+            test_ptr_derived ptr(std::move(ptr_orig), static_cast<test_object_derived*>(nullptr));
+            REQUIRE(instances == 0);
+            REQUIRE(instances_derived == 0);
+            REQUIRE(ptr.get() == nullptr);
+        }
+
+        REQUIRE(instances == 0);
+        REQUIRE(instances_derived == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_derived == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner explicit conversion constructor with nullptr sealed", "[owner_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr_orig = oup::make_observable_sealed<test_object_derived>();
+        {
+            test_sptr_derived ptr(std::move(ptr_orig), static_cast<test_object_derived*>(nullptr));
+            REQUIRE(instances == 0);
+            REQUIRE(instances_derived == 0);
+            REQUIRE(ptr.get() == nullptr);
+        }
+
+        REQUIRE(instances == 0);
+        REQUIRE(instances_derived == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_derived == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner explicit conversion constructor with nullptr with custom deleter", "[owner_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_with_deleter ptr_orig{new test_object_derived, test_deleter{42}};
+        {
+            test_ptr_derived_with_deleter ptr(std::move(ptr_orig),
+                static_cast<test_object_derived*>(nullptr),
+                test_deleter{43});
+            REQUIRE(instances == 0);
+            REQUIRE(instances_derived == 0);
+            REQUIRE(instances_deleter == 2);
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.get_deleter().state_ == 43);
+        }
+
+        REQUIRE(instances == 0);
+        REQUIRE(instances_derived == 0);
+        REQUIRE(instances_deleter == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(instances_derived == 0);
+    REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("owner move assignment operator valid to empty", "[owner_assignment]") {
     memory_tracker mem_track;
 
@@ -1762,9 +1834,90 @@ TEST_CASE("observer copy constructor", "[observer_construction]") {
             REQUIRE(ptr.expired() == false);
             REQUIRE(ptr_orig.get() != nullptr);
             REQUIRE(ptr_orig.expired() == false);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer explicit conversion copy constructor ", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object_derived};
+        test_optr ptr_orig{ptr_owner};
+        {
+            test_optr ptr{ptr_orig, static_cast<test_object_derived*>(ptr_orig.get())};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == static_cast<test_object_derived*>(ptr_owner.get()));
+            REQUIRE(ptr.expired() == false);
+            REQUIRE(ptr_orig.get() == ptr_owner.get());
+            REQUIRE(ptr_orig.expired() == false);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer explicit conversion copy constructor null pointer", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object_derived};
+        test_optr ptr_orig{ptr_owner};
+        {
+            test_optr ptr{ptr_orig, static_cast<test_object_derived*>(nullptr)};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+            REQUIRE(ptr_orig.get() == ptr_owner.get());
+            REQUIRE(ptr_orig.expired() == false);
         }
 
         REQUIRE(instances == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer explicit conversion copy constructor subobject", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object_derived};
+        test_optr ptr_orig{ptr_owner};
+        {
+            int_optr ptr{ptr_orig, &ptr_owner->state_};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == &ptr_owner->state_);
+            REQUIRE(ptr.expired() == false);
+            REQUIRE(ptr_orig.get() == ptr_owner.get());
+            REQUIRE(ptr_orig.expired() == false);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
     }
 
     REQUIRE(instances == 0);
@@ -1785,9 +1938,90 @@ TEST_CASE("observer move constructor", "[observer_construction]") {
             REQUIRE(ptr.expired() == false);
             REQUIRE(ptr_orig.get() == nullptr);
             REQUIRE(ptr_orig.expired() == true);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer explicit conversion move constructor ", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object_derived};
+        test_optr ptr_orig{ptr_owner};
+        {
+            test_optr ptr{std::move(ptr_orig), static_cast<test_object_derived*>(ptr_orig.get())};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == static_cast<test_object_derived*>(ptr_owner.get()));
+            REQUIRE(ptr.expired() == false);
+            REQUIRE(ptr_orig.get() == nullptr);
+            REQUIRE(ptr_orig.expired() == true);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer explicit conversion move constructor null pointer", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object_derived};
+        test_optr ptr_orig{ptr_owner};
+        {
+            test_optr ptr{std::move(ptr_orig), static_cast<test_object_derived*>(nullptr)};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+            REQUIRE(ptr_orig.get() == nullptr);
+            REQUIRE(ptr_orig.expired() == true);
         }
 
         REQUIRE(instances == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer explicit conversion move constructor subobject", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object_derived};
+        test_optr ptr_orig{ptr_owner};
+        {
+            int_optr ptr{std::move(ptr_orig), &ptr_owner->state_};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == &ptr_owner->state_);
+            REQUIRE(ptr.expired() == false);
+            REQUIRE(ptr_orig.get() == nullptr);
+            REQUIRE(ptr_orig.expired() == true);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
     }
 
     REQUIRE(instances == 0);
@@ -3269,6 +3503,509 @@ TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
         REQUIRE(optr_from_this_deriv.expired() == false);
         REQUIRE(optr_from_this_base.get() == raw_ptr_base);
         REQUIRE(optr_from_this_deriv.get() == raw_ptr_deriv);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("static pointer cast unique from valid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_object_derived* raw_ptr = new test_object_derived;
+        test_ptr ptr_orig{raw_ptr};
+        test_ptr_derived ptr = oup::static_pointer_cast<test_object_derived>(std::move(ptr_orig));
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr.get() == raw_ptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("static pointer cast unique from null", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_orig;
+        test_ptr_derived ptr = oup::static_pointer_cast<test_object_derived>(std::move(ptr_orig));
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("static pointer cast sealed from valid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_derived ptr_init = oup::make_observable_sealed<test_object_derived>();
+        test_object_derived* raw_ptr = ptr_init.get();
+        test_sptr ptr_orig{std::move(ptr_init)};
+        test_sptr_derived ptr = oup::static_pointer_cast<test_object_derived>(std::move(ptr_orig));
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr.get() == raw_ptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("static pointer cast sealed from null", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr_orig;
+        test_sptr_derived ptr = oup::static_pointer_cast<test_object_derived>(std::move(ptr_orig));
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("static pointer cast observer copy from valid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_derived ptr_owner = oup::make_observable_sealed<test_object_derived>();
+        test_object_derived* raw_ptr = ptr_owner.get();
+        test_optr ptr_orig{ptr_owner};
+        test_optr_derived ptr = oup::static_pointer_cast<test_object_derived>(ptr_orig);
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig.get() == raw_ptr);
+        REQUIRE(ptr.get() == raw_ptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("static pointer cast observer copy from null", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr_orig;
+        test_optr_derived ptr = oup::static_pointer_cast<test_object_derived>(ptr_orig);
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("static pointer cast observer move from valid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_derived ptr_owner = oup::make_observable_sealed<test_object_derived>();
+        test_object_derived* raw_ptr = ptr_owner.get();
+        test_optr ptr_orig{ptr_owner};
+        test_optr_derived ptr = oup::static_pointer_cast<test_object_derived>(std::move(ptr_orig));
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr.get() == raw_ptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("static pointer cast observer move from null", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr_orig;
+        test_optr_derived ptr = oup::static_pointer_cast<test_object_derived>(std::move(ptr_orig));
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("const pointer cast unique from valid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_object* raw_ptr = new test_object;
+        test_ptr_const ptr_orig{raw_ptr};
+        test_ptr ptr = oup::const_pointer_cast<test_object>(std::move(ptr_orig));
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr.get() == raw_ptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("const pointer cast unique from null", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_const ptr_orig;
+        test_ptr ptr = oup::const_pointer_cast<test_object>(std::move(ptr_orig));
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("const pointer cast sealed from valid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr_init = oup::make_observable_sealed<test_object>();
+        test_object* raw_ptr = ptr_init.get();
+        test_sptr_const ptr_orig{std::move(ptr_init)};
+        test_sptr ptr = oup::const_pointer_cast<test_object>(std::move(ptr_orig));
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr.get() == raw_ptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("const pointer cast sealed from null", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_const ptr_orig;
+        test_sptr ptr = oup::const_pointer_cast<test_object>(std::move(ptr_orig));
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("const pointer cast observer copy from valid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr_owner = oup::make_observable_sealed<test_object>();
+        test_object* raw_ptr = ptr_owner.get();
+        test_optr_const ptr_orig{ptr_owner};
+        test_optr ptr = oup::const_pointer_cast<test_object>(ptr_orig);
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig.get() == raw_ptr);
+        REQUIRE(ptr.get() == raw_ptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("const pointer cast observer copy from null", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_optr_const ptr_orig;
+        test_optr ptr = oup::const_pointer_cast<test_object>(ptr_orig);
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("const pointer cast observer move from valid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr_owner = oup::make_observable_sealed<test_object_derived>();
+        test_object* raw_ptr = ptr_owner.get();
+        test_optr_const ptr_orig{ptr_owner};
+        test_optr ptr = oup::const_pointer_cast<test_object>(std::move(ptr_orig));
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr.get() == raw_ptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("const pointer cast observer move from null", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_optr_const ptr_orig;
+        test_optr ptr = oup::const_pointer_cast<test_object>(std::move(ptr_orig));
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("dynamic pointer cast unique from valid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_object_derived* raw_ptr = new test_object_derived;
+        test_ptr ptr_orig{raw_ptr};
+        test_ptr_derived ptr = oup::dynamic_pointer_cast<test_object_derived>(std::move(ptr_orig));
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr.get() == raw_ptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("dynamic pointer cast unique from invalid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_orig{new test_object_observer_from_this};
+
+        REQUIRE_THROWS_AS(
+            oup::dynamic_pointer_cast<test_object_derived>(std::move(ptr_orig)),
+            std::bad_cast);
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig != nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("dynamic pointer cast unique from null", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_orig;
+        test_ptr_derived ptr = oup::dynamic_pointer_cast<test_object_derived>(std::move(ptr_orig));
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("dynamic pointer cast sealed from valid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_derived ptr_init = oup::make_observable_sealed<test_object_derived>();
+        test_object_derived* raw_ptr = ptr_init.get();
+        test_sptr ptr_orig{std::move(ptr_init)};
+        test_sptr_derived ptr = oup::dynamic_pointer_cast<test_object_derived>(std::move(ptr_orig));
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr.get() == raw_ptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("dynamic pointer cast sealed from invalid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr_orig{oup::make_observable_sealed<test_object_observer_from_this>()};
+
+        REQUIRE_THROWS_AS(
+            oup::dynamic_pointer_cast<test_object_derived>(std::move(ptr_orig)),
+            std::bad_cast);
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig != nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("dynamic pointer cast sealed from null", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr ptr_orig;
+        test_sptr_derived ptr = oup::dynamic_pointer_cast<test_object_derived>(std::move(ptr_orig));
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("dynamic pointer cast observer copy from valid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_derived ptr_owner = oup::make_observable_sealed<test_object_derived>();
+        test_object_derived* raw_ptr = ptr_owner.get();
+        test_optr ptr_orig{ptr_owner};
+        test_optr_derived ptr = oup::dynamic_pointer_cast<test_object_derived>(ptr_orig);
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig.get() == raw_ptr);
+        REQUIRE(ptr.get() == raw_ptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("dynamic pointer cast observer copy from invalid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_from_this ptr_owner = oup::make_observable_sealed<test_object_observer_from_this>();
+        test_optr ptr_orig{ptr_owner};
+        test_optr_derived ptr = oup::dynamic_pointer_cast<test_object_derived>(ptr_orig);
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(ptr_orig.get() != nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("dynamic pointer cast observer copy from null", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr_orig;
+        test_optr_derived ptr = oup::dynamic_pointer_cast<test_object_derived>(ptr_orig);
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("dynamic pointer cast observer move from valid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_derived ptr_owner = oup::make_observable_sealed<test_object_derived>();
+        test_object_derived* raw_ptr = ptr_owner.get();
+        test_optr ptr_orig{ptr_owner};
+        test_optr_derived ptr = oup::dynamic_pointer_cast<test_object_derived>(std::move(ptr_orig));
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr.get() == raw_ptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("dynamic pointer cast observer move from invalid", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_from_this ptr_owner = oup::make_observable_sealed<test_object_observer_from_this>();
+        test_optr ptr_orig{ptr_owner};
+        test_optr_derived ptr = oup::dynamic_pointer_cast<test_object_derived>(std::move(ptr_orig));
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() == nullptr);
+        REQUIRE(ptr_orig.get() == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("dynamic pointer cast observer move from null", "[pointer_cast]") {
+    memory_tracker mem_track;
+
+    {
+        test_optr ptr_orig;
+        test_optr_derived ptr = oup::dynamic_pointer_cast<test_object_derived>(std::move(ptr_orig));
+
+        REQUIRE(instances == 0);
+        REQUIRE(ptr_orig == nullptr);
+        REQUIRE(ptr == nullptr);
     }
 
     REQUIRE(instances == 0);
