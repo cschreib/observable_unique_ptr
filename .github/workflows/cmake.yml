@@ -32,6 +32,10 @@ jobs:
       with:
         submodules: 'recursive'
 
+    - name: Setup Clang
+      if: matrix.platform.compiler == 'clang++' && matrix.platform.os == 'ubuntu-latest'
+      run: sudo apt install libc++-dev
+
     - name: Setup Emscripten cache
       if: matrix.platform.compiler == 'em++'
       id: cache-system-libraries
