@@ -3157,16 +3157,20 @@ TEST_CASE("observer from this after release", "[observer_from_this]") {
         test_object_observer_from_this* ptr2 = ptr1.release();
         const test_object_observer_from_this* cptr2 = ptr2;
 
-        test_optr_from_this optr_from_this = ptr2->observer_from_this();
-        test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
+        {
+            test_optr_from_this optr_from_this = ptr2->observer_from_this();
+            test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
 
-        REQUIRE(instances == 1);
-        REQUIRE(optr_from_this.expired() == true);
-        REQUIRE(optr_from_this_const.expired() == true);
-        REQUIRE(optr_from_this.get() == nullptr);
-        REQUIRE(optr_from_this_const.get() == nullptr);
+            REQUIRE(instances == 1);
+            REQUIRE(optr_from_this.expired() == true);
+            REQUIRE(optr_from_this_const.expired() == true);
+            REQUIRE(optr_from_this.get() == nullptr);
+            REQUIRE(optr_from_this_const.get() == nullptr);
+        }
 
+        // The object holds the last reference to the control block
         delete ptr2;
+        REQUIRE(instances == 0);
     }
 
     REQUIRE(instances == 0);
