@@ -530,7 +530,7 @@ public:
     *         pointer is set to null and looses ownership. The deleter
     *         is default constructed. The raw pointer `value`
     *         must be obtained by casting the raw pointer managed by `manager`
-    *         (const cast, dynamic cast, etc), such that calling `value` has
+    *         (const cast, dynamic cast, etc), such that deleting `value` has
     *         the same effect as deleting the pointer owned by `manager`.
     */
     template<typename U, typename D, typename V, typename enable =
