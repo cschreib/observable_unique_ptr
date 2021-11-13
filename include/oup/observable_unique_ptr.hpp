@@ -1490,6 +1490,63 @@ observer_ptr<U> const_pointer_cast(observer_ptr<T>&& ptr) {
     return observer_ptr<U>(std::move(ptr), const_cast<U*>(ptr.raw_get()));
 }
 
+/// Perform a `dynamic_cast` for an `observable_unique_ptr`.
+/** \param ptr The pointer to cast
+*   \note Ownership will be transfered to the returned pointer unless the cast
+*         fails, in which case ownership remains in the original pointer, std::bad_cast
+*         is thrown, and no memory is leaked. If the input pointer is null,
+*         the output pointer will also be null.
+*/
+template<typename U, typename T>
+observable_unique_ptr<U> dynamic_pointer_cast(observable_unique_ptr<T>&& ptr) {
+    if (ptr == nullptr) {
+        return observable_unique_ptr<U>{};
+    }
+
+    U& casted_object = dynamic_cast<U&>(*ptr.get());
+    return observable_unique_ptr<U>(std::move(ptr), &casted_object);
+}
+
+/// Perform a `dynamic_cast` for an `observable_unique_ptr`.
+/** \param ptr The pointer to cast
+*   \note Ownership will be transfered to the returned pointer unless the cast
+*         fails, in which case ownership remains in the original pointer, and
+*         no memory is leaked.
+*/
+template<typename U, typename T>
+observable_sealed_ptr<U> dynamic_pointer_cast(observable_sealed_ptr<T>&& ptr) {
+    if (ptr == nullptr) {
+        return observable_sealed_ptr<U>{};
+    }
+
+    U& casted_object = dynamic_cast<U&>(*ptr.get());
+    return observable_sealed_ptr<U>(std::move(ptr), &casted_object);
+}
+
+/// Perform a `dynamic_cast` for an `observer_ptr`.
+/** \param ptr The pointer to cast
+*   \note A new observer is returned, the input observer is not modified.
+          If the input pointer is null, or if the cast fails, the output pointer
+          will be null.
+*/
+template<typename U, typename T>
+observer_ptr<U> dynamic_pointer_cast(const observer_ptr<T>& ptr) {
+    // NB: must use get() as dynamic cast of an expired pointer is UB
+    return observer_ptr<U>(ptr, dynamic_cast<U*>(ptr.get()));
+}
+
+/// Perform a `dynamic_cast` for an `observer_ptr`.
+/** \param ptr The pointer to cast
+*   \note A new observer is returned, the input observer is set to null.
+          If the input pointer is null, or if the cast fails, the output pointer
+          will be null.
+*/
+template<typename U, typename T>
+observer_ptr<U> dynamic_pointer_cast(observer_ptr<T>&& ptr) {
+    // NB: must use get() as dynamic cast of an expired pointer is UB
+    return observer_ptr<U>(std::move(ptr), dynamic_cast<U*>(ptr.get()));
+}
+
 }
 
 #endif
