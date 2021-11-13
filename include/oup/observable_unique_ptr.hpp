@@ -79,9 +79,38 @@ struct placement_delete
     }
 };
 
+template<typename T>
+class enable_observer_from_this;
+
 namespace details {
 
-struct enable_observer_from_this_base {};
+struct enable_observer_from_this_base {
+    using control_block = details::control_block;
+
+    mutable control_block* this_control_block = nullptr;
+
+    void pop_ref_() noexcept {
+        --this_control_block->refcount;
+        if (this_control_block->refcount == 0) {
+            delete this_control_block;
+        }
+    }
+
+    void set_control_block_(control_block* b) noexcept {
+        if (this_control_block) {
+            pop_ref_();
+        }
+
+        this_control_block = b;
+        if (this_control_block) {
+            ++this_control_block->refcount;
+        }
+    }
+
+    // Friendship is required for assignment of the observer.
+    template<typename U, typename D>
+    friend class observable_unique_ptr_base;
+};
 
 template<typename T, typename Deleter = oup::default_delete<T>>
 class observable_unique_ptr_base {
@@ -122,13 +151,8 @@ protected:
     template<typename U>
     void set_this_observer_(U* p) noexcept {
         if constexpr (std::is_convertible_v<U*,const details::enable_observer_from_this_base*>) {
-            using input_observer_type = std::decay_t<decltype(p->this_observer)>;
-            using observer_element_type = typename input_observer_type::element_type;
-            static_assert(std::is_convertible_v<U*, observer_element_type*>,
-                "incompatible type specified in enable_observer_from_this");
-
             if (p) {
-                p->this_observer.set_data_(block, p);
+                p->this_control_block = block;
                 ++block->refcount;
             }
         }
@@ -876,6 +900,9 @@ private:
     // Friendship is required for enable_observer_from_this.
     template<typename U, typename D>
     friend class details::observable_unique_ptr_base;
+    // Friendship is required for enable_observer_from_this.
+    template<typename U>
+    friend class enable_observer_from_this;
 
     using control_block = details::control_block;
 
@@ -896,6 +923,13 @@ private:
 
         block = b;
         data = d;
+    }
+
+    // For enable_observer_from_this
+    observer_ptr(control_block* b, T* d) noexcept : block(b), data(d) {
+        if (block) {
+            ++block->refcount;
+        }
     }
 
 public:
@@ -1206,20 +1240,46 @@ bool operator!= (const observer_ptr<T>& first, const observer_ptr<U>& second) no
 *   **Corner cases.**
 *    - If a class A inherits from both another class B and enable_observer_from_this<A>,
 *      and it is owned by an observable_unique_ptr<B>. The function observer_from_this()
-*      will always return nullptr if ownership is taken from a pointer to B*, but will
-*      be a valid pointer if ownership is taken from a pointer to A*.
+*      will always return nullptr if ownership is acquired from a pointer to B*, but will
+*      return a valid pointer if ownership is acquired from a pointer to A*. Therefore,
+*      make sure to always acquire ownership on the most derived type, or simply use the
+*      factory function make_observable_unique() which will enforce this automatically.
 *
-*           observable_unique_ptr<B> p(new A); // observer pointer is valid
-*           observable_unique_ptr<B> p(static_cast<B*>(new A)); // observer pointer is nullptr
+*           struct B {
+*               virtual ~B() = default;
+*           };
+*
+*           struct A : B, enable_observer_from_this<A> {};
+*
+*
+*           observable_unique_ptr<B> good1(new A);
+*           dynamic_cast<A*>(good1.get())->observer_from_this(); // valid pointer
+*
+*           observable_unique_ptr<B> good2(make_observable_unique<A>());
+*           dynamic_cast<A*>(good2.get())->observer_from_this(); // valid pointer
+*
+*           // Bad: do not do this
+*           observable_unique_ptr<B> bad(static_cast<B*>(new A));
+*           dynamic_cast<A*>(bad.get())->observer_from_this(); // nullptr
+*
+*    - Multiple inheritance. If a class A inherits from both another class B and
+*      enable_observer_from_this<A>, and if B also inherits from
+*      enable_observer_from_this<B>, then observer_from_this() will be an ambiguous
+*      call. But it can be resolved, and (contrary to std::shared_ptr and
+*      std::enable_shared_from_this) will return a valid pointer:
+*
+*           struct B : enable_observer_from_this<B> {
+*               virtual ~B() = default;
+*           };
+*
+*           struct A : B, enable_observer_from_this<A> {};
+*
+*           observable_sealed_ptr<A> ptr = make_observable_sealed<A>();
+*           ptr->enable_observer_from_this<A>::observer_from_this(); // valid A* pointer
+*           ptr->enable_observer_from_this<B>::observer_from_this(); // valid B* pointer
 */
 template<typename T>
-class enable_observer_from_this : public details::enable_observer_from_this_base {
-    mutable observer_ptr<T> this_observer;
-
-    // Friendship is required for assignment of the observer.
-    template<typename U, typename D>
-    friend class details::observable_unique_ptr_base;
-
+class enable_observer_from_this : public virtual details::enable_observer_from_this_base {
 protected:
     enable_observer_from_this() noexcept = default;
 
@@ -1233,9 +1293,29 @@ protected:
         // invalid reference.
     };
 
-    ~enable_observer_from_this() noexcept = default;
+    ~enable_observer_from_this() noexcept {
+        if (this_control_block) {
+            pop_ref_();
+        }
+
+        this_control_block = nullptr;
+    }
+
+    enable_observer_from_this& operator=(const enable_observer_from_this&) noexcept {
+        // Do not copy the other object's observer, this would be an
+        // invalid reference.
+        return *this;
+    };
+
+    enable_observer_from_this& operator=(enable_observer_from_this&&) noexcept {
+        // Do not move the other object's observer, this would be an
+        // invalid reference.
+        return *this;
+    };
 
 public:
+
+    using observer_element_type = T;
 
     /// Return an observer pointer to 'this'.
     /** \return A new observer pointer pointing to 'this'.
@@ -1244,7 +1324,8 @@ public:
     *   type of smart pointer, then this function will return nullptr.
     */
     observer_ptr<T> observer_from_this() {
-        return this_observer;
+        return observer_ptr<T>{this_control_block,
+            this_control_block ? static_cast<T*>(this) : nullptr};
     }
 
     /// Return a const observer pointer to 'this'.
@@ -1254,7 +1335,8 @@ public:
     *   type of smart pointer, then this function will return nullptr.
     */
     observer_ptr<const T> observer_from_this() const {
-        return this_observer;
+        return observer_ptr<const T>{this_control_block,
+            this_control_block ? static_cast<const T*>(this) : nullptr};
     }
 };
 

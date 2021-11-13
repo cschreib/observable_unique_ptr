@@ -3245,3 +3245,29 @@ TEST_CASE("observer from this heap", "[observer_from_this]") {
     REQUIRE(mem_track.leaks() == 0u);
     REQUIRE(mem_track.double_del() == 0u);
 }
+
+TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        using this_base = oup::enable_observer_from_this<test_object_observer_from_this>;
+        using this_deriv = oup::enable_observer_from_this<test_object_observer_from_this_multi>;
+
+        test_object_observer_from_this_multi* raw_ptr_deriv = new test_object_observer_from_this_multi;
+        test_object_observer_from_this* raw_ptr_base = raw_ptr_deriv;
+        test_ptr_from_this_multi ptr(raw_ptr_deriv);
+
+        test_optr_from_this optr_from_this_base = ptr->this_base::observer_from_this();
+        test_optr_from_this_multi optr_from_this_deriv = ptr->this_deriv::observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this_base.expired() == false);
+        REQUIRE(optr_from_this_deriv.expired() == false);
+        REQUIRE(optr_from_this_base.get() == raw_ptr_base);
+        REQUIRE(optr_from_this_deriv.get() == raw_ptr_deriv);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
