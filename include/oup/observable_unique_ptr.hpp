@@ -528,7 +528,10 @@ public:
     *   \param value The casted pointer value to take ownership of
     *   \note After this observable_unique_ptr is created, the source
     *         pointer is set to null and looses ownership. The deleter
-    *         is default constructed.
+    *         is default constructed. The raw pointer `value`
+    *         must be obtained by casting the raw pointer managed by `manager`
+    *         (const cast, dynamic cast, etc), such that calling `value` has
+    *         the same effect as deleting the pointer owned by `manager`.
     */
     template<typename U, typename D, typename V, typename enable =
         std::enable_if_t<std::is_convertible_v<V*,T*>>>
@@ -542,7 +545,10 @@ public:
     *   \param value The casted pointer value to take ownership of
     *   \param del The deleter to use in the new pointer
     *   \note After this observable_unique_ptr is created, the source
-    *         pointer is set to null and looses ownership.
+    *         pointer is set to null and looses ownership. The raw pointer `value`
+    *         must be obtained by casting the raw pointer managed by `manager`
+    *         (const cast, dynamic cast, etc), such that deleting `value` has
+    *         the same effect as deleting the pointer owned by `manager`.
     */
     template<typename U, typename D, typename V, typename enable =
         std::enable_if_t<std::is_convertible_v<V*,T*>>>
@@ -736,7 +742,10 @@ public:
     /** \param manager The smart pointer to take ownership from
     *   \param value The casted pointer value to take ownership of
     *   \note After this `observable_sealed_ptr` is created, the source
-    *         pointer is set to null and looses ownership.
+    *         pointer is set to null and looses ownership. The raw pointer `value`
+    *         must be obtained by casting the raw pointer managed by `manager`
+    *         (const cast, dynamic cast, etc), such that deleting `value` has
+    *         the same effect as deleting the pointer owned by `manager`.
     */
     template<typename U, typename V, typename enable =
         std::enable_if_t<std::is_convertible_v<V*,T*>>>
