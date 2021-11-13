@@ -2983,6 +2983,78 @@ TEST_CASE("observer from this derived", "[observer_from_this]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("observer from this derived into base", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_object_observer_from_this* orig_ptr = new test_object_observer_from_this;
+        test_ptr ptr{orig_ptr};
+
+        test_optr_from_this optr_from_this = orig_ptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this derived into base after cast", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_object_observer_from_this* orig_ptr = new test_object_observer_from_this;
+        test_ptr ptr{static_cast<test_object*>(orig_ptr)};
+
+        test_optr_from_this optr_from_this = orig_ptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == true);
+        REQUIRE(optr_from_this.get() == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this const", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_cptr_from_this ptr{new test_object_observer_from_this};
+        test_optr_from_this_const optr_from_this = ptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this const sealed", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_csptr_from_this ptr = oup::make_observable_sealed<const test_object_observer_from_this>();
+        test_optr_from_this_const optr_from_this = ptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("observer from this after move", "[observer_from_this]") {
     memory_tracker mem_track;
 
@@ -3085,16 +3157,20 @@ TEST_CASE("observer from this after release", "[observer_from_this]") {
         test_object_observer_from_this* ptr2 = ptr1.release();
         const test_object_observer_from_this* cptr2 = ptr2;
 
-        test_optr_from_this optr_from_this = ptr2->observer_from_this();
-        test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
+        {
+            test_optr_from_this optr_from_this = ptr2->observer_from_this();
+            test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
 
-        REQUIRE(instances == 1);
-        REQUIRE(optr_from_this.expired() == true);
-        REQUIRE(optr_from_this_const.expired() == true);
-        REQUIRE(optr_from_this.get() == nullptr);
-        REQUIRE(optr_from_this_const.get() == nullptr);
+            REQUIRE(instances == 1);
+            REQUIRE(optr_from_this.expired() == true);
+            REQUIRE(optr_from_this_const.expired() == true);
+            REQUIRE(optr_from_this.get() == nullptr);
+            REQUIRE(optr_from_this_const.get() == nullptr);
+        }
 
+        // The object holds the last reference to the control block
         delete ptr2;
+        REQUIRE(instances == 0);
     }
 
     REQUIRE(instances == 0);
@@ -3143,6 +3219,56 @@ TEST_CASE("observer from this stack", "[observer_from_this]") {
         REQUIRE(optr_from_this_const.expired() == true);
         REQUIRE(optr_from_this.get() == nullptr);
         REQUIRE(optr_from_this_const.get() == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this heap", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_object_observer_from_this* obj = new test_object_observer_from_this;
+        const test_object_observer_from_this* cobj = obj;
+
+        test_optr_from_this optr_from_this = obj->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cobj->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == true);
+        REQUIRE(optr_from_this_const.expired() == true);
+        REQUIRE(optr_from_this.get() == nullptr);
+        REQUIRE(optr_from_this_const.get() == nullptr);
+
+        delete obj;
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        using this_base = oup::enable_observer_from_this<test_object_observer_from_this>;
+        using this_deriv = oup::enable_observer_from_this<test_object_observer_from_this_multi>;
+
+        test_object_observer_from_this_multi* raw_ptr_deriv = new test_object_observer_from_this_multi;
+        test_object_observer_from_this* raw_ptr_base = raw_ptr_deriv;
+        test_ptr_from_this_multi ptr(raw_ptr_deriv);
+
+        test_optr_from_this optr_from_this_base = ptr->this_base::observer_from_this();
+        test_optr_from_this_multi optr_from_this_deriv = ptr->this_deriv::observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this_base.expired() == false);
+        REQUIRE(optr_from_this_deriv.expired() == false);
+        REQUIRE(optr_from_this_base.get() == raw_ptr_base);
+        REQUIRE(optr_from_this_deriv.get() == raw_ptr_deriv);
     }
 
     REQUIRE(instances == 0);

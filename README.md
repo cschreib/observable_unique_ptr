@@ -83,7 +83,7 @@ int main() {
 }
 ```
 
-As with `std::shared_ptr`/`std::weak_ptr`, if you need to obtain an observer pointer to an object when you only have `this` (i.e., from a member function), you can inherit from `oup::enable_observer_from_this<T>` to gain access to the `observer_from_this()` member function. This function will return a valid observer pointer as long as the object is owned by a unique or sealed pointer, and will return `nullptr` in all other cases.
+As with `std::shared_ptr`/`std::weak_ptr`, if you need to obtain an observer pointer to an object when you only have `this` (i.e., from a member function), you can inherit from `oup::enable_observer_from_this<T>` to gain access to the `observer_from_this()` member function. This function will return a valid observer pointer as long as the object is owned by a unique or sealed pointer, and will return `nullptr` in all other cases. Contrary to `std::enable_shared_from_this<T>`, this feature naturally supports multiple inheritance.
 
 
 ## Limitations
