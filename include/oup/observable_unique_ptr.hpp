@@ -738,8 +738,9 @@ public:
     *   \note After this `observable_sealed_ptr` is created, the source
     *         pointer is set to null and looses ownership.
     */
-    template<typename U>
-    observable_sealed_ptr(observable_sealed_ptr<U>&& manager, T* value) noexcept :
+    template<typename U, typename V, typename enable =
+        std::enable_if_t<std::is_convertible_v<V*,T*>>>
+    observable_sealed_ptr(observable_sealed_ptr<U>&& manager, V* value) noexcept :
         base(std::move(manager), value) {}
 
     /// Transfer ownership by implicit casting
