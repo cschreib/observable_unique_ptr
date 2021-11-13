@@ -405,7 +405,7 @@ public:
     /// Check if this pointer points to a valid object.
     /** \return `true` if the pointed object is valid, 'false' otherwise
     */
-    explicit operator bool() noexcept {
+    explicit operator bool() const noexcept {
         return ptr_deleter.data != nullptr;
     }
 };
@@ -1233,7 +1233,7 @@ public:
     /// Check if this pointer points to a valid object.
     /** \return `true` if the pointed object is valid, 'false' otherwise
     */
-    explicit operator bool() noexcept {
+    explicit operator bool() const noexcept {
         return block != nullptr && !block->expired();
     }
 
