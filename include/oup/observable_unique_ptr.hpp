@@ -112,7 +112,7 @@ struct enable_observer_from_this_base {
     friend class observable_unique_ptr_base;
 };
 
-template<typename T, typename Deleter = oup::default_delete<T>>
+template<typename T, typename Deleter>
 class observable_unique_ptr_base {
 protected:
     using control_block_type = details::control_block;
