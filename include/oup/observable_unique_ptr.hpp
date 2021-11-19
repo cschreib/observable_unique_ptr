@@ -1131,10 +1131,6 @@ public:
     */
     template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
     observer_ptr& operator=(const observer_ptr<U>& value) noexcept {
-        if (&value == this) {
-            return *this;
-        }
-
         set_data_(value.block, value.data);
 
         if (block) {
