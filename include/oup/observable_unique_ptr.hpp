@@ -361,6 +361,8 @@ public:
     /** \param ptr A `nullptr_t` instance
     */
     void reset(std::nullptr_t ptr = nullptr) noexcept {
+        static_cast<void>(ptr); // silence "unused variable" warnings
+
         if (ptr_deleter.data) {
             delete_and_pop_ref_();
             block = nullptr;
