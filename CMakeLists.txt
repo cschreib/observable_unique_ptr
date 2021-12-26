@@ -1,18 +1,45 @@
 cmake_minimum_required(VERSION 3.8)
 
+# Setup main project
 project(oup LANGUAGES CXX VERSION 1.0)
 
+# Create library (header-only)
 add_library(oup INTERFACE)
 add_library(oup::oup ALIAS oup)
 set_target_properties(oup PROPERTIES EXPORT_NAME oup::oup)
 
-target_sources(oup INTERFACE ${PROJECT_SOURCE_DIR}/include/oup/observable_unique_ptr.hpp)
-target_include_directories(oup INTERFACE ${PROJECT_SOURCE_DIR}/include)
+target_sources(oup INTERFACE
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/oup/observable_unique_ptr.hpp>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/oup/observable_unique_ptr.hpp>)
+target_include_directories(oup INTERFACE
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_compile_features(oup INTERFACE cxx_std_17)
 
-install(FILES ${PROJECT_SOURCE_DIR}/include/oup/observable_unique_ptr.hpp DESTINATION include/oup)
-install(TARGETS oup EXPORT oup)
+# Setup install target and exports
+install(FILES ${PROJECT_SOURCE_DIR}/include/oup/observable_unique_ptr.hpp
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/oup)
+install(TARGETS oup EXPORT oup-targets)
 
+install(EXPORT oup-targets
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/oup COMPONENT Development)
+
+export(EXPORT oup-targets)
+
+# Setup CMake config file
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+  "${PROJECT_SOURCE_DIR}/cmake/oup-config.cmake.in"
+  "${PROJECT_BINARY_DIR}/oup-config.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO
+  NO_SET_AND_CHECK_MACRO)
+
+install(FILES
+  "${PROJECT_BINARY_DIR}/oup-config.cmake"
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/oup COMPONENT Development)
+
+# Setup tests
 if (OUP_DO_TEST)
     enable_testing()
     add_subdirectory(tests)

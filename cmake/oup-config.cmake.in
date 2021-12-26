@@ -1,0 +1,9 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/oup-targets.cmake")
+
+if (NOT TARGET oup)
+  add_library(oup INTERFACE IMPORTED)
+  # Equivalent to target_link_libraries INTERFACE, but compatible with CMake 3.10
+  set_target_properties(oup PROPERTIES INTERFACE_LINK_LIBRARIES oup::oup)
+endif ()
