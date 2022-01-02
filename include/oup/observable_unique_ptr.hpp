@@ -35,13 +35,15 @@ namespace details {
         refcount_type refcount = 1;
         int flags = flag_none;
 
-        void add_ref() noexcept { ++refcount; }
+        void push_ref() noexcept { ++refcount; }
 
-        void remove_ref() noexcept { --refcount; }
+        void pop_ref() noexcept { --refcount; }
 
         bool has_no_ref() const noexcept { return refcount == 0; }
 
-        bool expired() const noexcept { return flags & flag_expired; }
+        bool expired() const noexcept { return (flags & flag_expired) != 0; }
+
+        void set_not_expired() noexcept { flags = flags & ~flag_expired; }
 
         void set_expired() noexcept { flags = flags | flag_expired; }
     };
@@ -120,6 +122,12 @@ namespace details {
 
         mutable control_block* this_control_block = nullptr;
 
+        enable_observer_from_this_base() noexcept(!Policy::allow_release) {
+            if constexpr (Policy::allow_release) {
+                this_control_block = new control_block;
+            }
+        }
+
         virtual ~enable_observer_from_this_base() {
             if (this_control_block) {
                 clear_control_block_();
@@ -127,7 +135,7 @@ namespace details {
         }
 
         void pop_ref_() noexcept {
-            this_control_block->remove_ref();
+            this_control_block->pop_ref();
             if (this_control_block->has_no_ref()) {
                 delete this_control_block;
             }
@@ -141,11 +149,12 @@ namespace details {
             this_control_block = b;
 
             if (this_control_block) {
-                this_control_block->add_ref();
+                this_control_block->push_ref();
             }
         }
 
         void clear_control_block_() noexcept {
+            this_control_block->set_expired();
             pop_ref_();
             this_control_block = nullptr;
         }
@@ -191,7 +200,7 @@ protected:
     }
 
     static void pop_ref_(control_block_type* block) noexcept {
-        block->remove_ref();
+        block->pop_ref();
         if (block->has_no_ref()) {
             delete block;
         }
@@ -213,6 +222,27 @@ protected:
         delete_and_pop_ref_(block, ptr_deleter.data, ptr_deleter);
     }
 
+    /// Decide whether to allocate a new control block or not.
+    /** \note If the object inherits from enable_observer_from_this, and the policy allows
+    *         pointer release (by construction this will always be true when this function is called),
+    *         then we can just use the control block pointer stored in the enable_observer_from_this
+    *         base. Otherwise we need to allocate a new one.
+    */
+    template<typename U>
+    control_block_type* get_block_from_object_(U* p) {
+        if (p == nullptr) {
+            return nullptr;
+        }
+
+        if constexpr (Policy::allow_release && has_enable_from_this<U>) {
+            p->this_control_block->set_not_expired();
+            p->this_control_block->push_ref();
+            return p->this_control_block;
+        }
+
+        return allocate_block_();
+    }
+
     /// Fill in the observer pointer for objects inheriting from `basic_enable_observer_from_this`.
     /** \note It is important to preserve the type of the pointer as supplied by the user.
     *         It might be of a derived type that inherits from `basic_enable_observer_from_this`, while
@@ -224,13 +254,6 @@ protected:
             if (p) {
                 p->set_control_block_(block);
             }
-        }
-    }
-
-    /// Fill in the observer pointer for objects inheriting from `basic_enable_observer_from_this`.
-    void reset_this_observer_() noexcept {
-        if constexpr (!Policy::allow_release && has_enable_from_this<T>) {
-            ptr_deleter.data->clear_control_block_();
         }
     }
 
@@ -355,8 +378,7 @@ public:
     template<typename U, typename D, typename V, typename enable =
         std::enable_if_t<std::is_convertible_v<V*,T*>>>
     basic_observable_ptr(basic_observable_ptr<U,D,Policy>&& manager, V* value) noexcept :
-        basic_observable_ptr(details::acquire_tag{},
-            value != nullptr ? manager.block : nullptr, value) {
+        basic_observable_ptr(value != nullptr ? manager.block : nullptr, value) {
 
         if (manager.ptr_deleter.data != nullptr && value == nullptr) {
             manager.delete_and_pop_ref_();
@@ -376,8 +398,7 @@ public:
     template<typename U, typename D, typename V, typename enable =
         std::enable_if_t<std::is_convertible_v<V*,T*>>>
     basic_observable_ptr(basic_observable_ptr<U,D,Policy>&& manager, V* value, Deleter del) noexcept :
-        basic_observable_ptr(details::acquire_tag{},
-            value != nullptr ? manager.block : nullptr, value, std::move(del)) {
+        basic_observable_ptr(value != nullptr ? manager.block : nullptr, value, std::move(del)) {
 
         if (manager.ptr_deleter.data != nullptr && value == nullptr) {
             manager.delete_and_pop_ref_();
@@ -396,8 +417,7 @@ public:
     template<typename U, typename enable =
         std::enable_if_t<std::is_convertible_v<U*,T*> && Policy::allow_release>>
     explicit basic_observable_ptr(U* value) :
-        basic_observable_ptr(details::acquire_tag{},
-            value != nullptr ? allocate_block_() : nullptr, value) {}
+        basic_observable_ptr(get_block_from_object_(value), value) {}
 
     /// Explicit ownership capture of a raw pointer, with customer deleter.
     /** \param value The raw pointer to take ownership of
@@ -409,8 +429,7 @@ public:
     template<typename U, typename enable =
         std::enable_if_t<std::is_convertible_v<U*,T*> && Policy::allow_release>>
     explicit basic_observable_ptr(U* value, Deleter del) :
-        basic_observable_ptr(details::acquire_tag{},
-            value != nullptr ? allocate_block_() : nullptr, value, std::move(del)) {}
+        basic_observable_ptr(get_block_from_object_(value), value, std::move(del)) {}
 
     /// Transfer ownership by implicit casting
     /** \param value The pointer to take ownership from
@@ -496,7 +515,7 @@ public:
         control_block_type* old_block = block;
 
         // Assign the new one
-        block = ptr != nullptr ? allocate_block_() : nullptr;
+        block = get_block_from_object_(ptr);
         ptr_deleter.data = ptr;
 
         // Delete the old pointer
@@ -504,8 +523,6 @@ public:
         if (old_ptr) {
             delete_and_pop_ref_(old_block, old_ptr, ptr_deleter);
         }
-
-        set_this_observer_(ptr);
     }
 
     /// Replaces the managed object with a null pointer.
@@ -532,7 +549,6 @@ public:
     T* release() noexcept {
         T* old_ptr = ptr_deleter.data;
         if (ptr_deleter.data) {
-            reset_this_observer_();
             block->set_expired();
 
             pop_ref_();
@@ -542,7 +558,6 @@ public:
 
         return old_ptr;
     }
-
 
     /// Get a non-owning raw pointer to the pointed object, or `nullptr` if deleted.
     /** \return `nullptr` if `expired()` is `true`, or the pointed object otherwise
@@ -590,16 +605,16 @@ public:
 };
 
 
-/// Create a new `observable_unique_ptr` with a newly constructed object.
+/// Create a new `basic_observable_ptr` with a newly constructed object.
 /** \param args Arguments to construct the new object
-*   \return The new observable_unique_ptr
+*   \return The new basic_observable_ptr
 *   \note Custom deleters are not supported by this function. If you require
-*         a custom deleter, please use the `observable_unique_ptr` constructors
-*         directly. Compared to `make_observable_sealed()`, this function
-*         does not allocate the pointed object and the control block in a single
-*         buffer, as that would prevent writing `observable_unique_ptr::release()`.
-*         If releasing the pointer is not needed, consider using `observable_sealed_ptr`
-*         instead.
+*         a custom deleter, please use the `basic_observable_ptr` constructors
+*         directly. If `Policy::allow_release` is false, this function will allocate the
+*         pointed object and the control block in a single buffer. Otherwise, they will be
+*         allocated in separate buffers, as that would prevent writing
+*         `basic_observable_ptr::release()`. If releasing the pointer is not needed, consider
+*         setting `Policy::allow_release` to false.
 */
 template<typename T, typename Policy, typename ... Args>
 auto make_observable(Args&& ... args) {
@@ -685,7 +700,7 @@ private:
     T* data = nullptr;
 
     void pop_ref_() noexcept {
-        block->remove_ref();
+        block->pop_ref();
         if (block->has_no_ref()) {
             delete block;
         }
@@ -703,7 +718,7 @@ private:
     // For basic_enable_observer_from_this
     basic_observer_ptr(control_block* b, T* d) noexcept : block(b), data(d) {
         if (block) {
-            block->add_ref();
+            block->push_ref();
         }
     }
 
@@ -734,7 +749,7 @@ public:
     basic_observer_ptr(const basic_observable_ptr<U,D,P>& owner) noexcept :
         block(owner.block), data(owner.ptr_deleter.data) {
         if (block) {
-            block->add_ref();
+            block->push_ref();
         }
     }
 
@@ -744,7 +759,7 @@ public:
     basic_observer_ptr(const basic_observer_ptr& value) noexcept :
         block(value.block), data(value.data) {
         if (block) {
-            block->add_ref();
+            block->push_ref();
         }
     }
 
@@ -755,7 +770,7 @@ public:
     basic_observer_ptr(const basic_observer_ptr<U,Policy>& value) noexcept :
         block(value.block), data(value.data) {
         if (block) {
-            block->add_ref();
+            block->push_ref();
         }
     }
 
@@ -773,7 +788,7 @@ public:
     basic_observer_ptr(const basic_observer_ptr<U,Policy>& manager, T* value) noexcept :
         block(value != nullptr ? manager.block : nullptr), data(value) {
         if (block) {
-            block->add_ref();
+            block->push_ref();
         }
     }
 
@@ -830,7 +845,7 @@ public:
         set_data_(owner.block, owner.ptr_deleter.data);
 
         if (block) {
-            block->add_ref();
+            block->push_ref();
         }
 
         return *this;
@@ -847,7 +862,7 @@ public:
         set_data_(value.block, value.data);
 
         if (block) {
-            block->add_ref();
+            block->push_ref();
         }
 
         return *this;
@@ -863,7 +878,7 @@ public:
         set_data_(value.block, value.data);
 
         if (block) {
-            block->add_ref();
+            block->push_ref();
         }
 
         return *this;
@@ -1016,19 +1031,19 @@ bool operator!= (const basic_observer_ptr<T,Policy>& first, const basic_observer
 *   then the object's class can inherit from basic_enable_observer_from_this.
 *   This provides the `observer_from_this()` member function, which returns
 *   a new observer pointer to the object. For this mechanism to work,
-*   the class must inherit publicly from basic_enable_observer_from_this,
-*   and the object must be owned by a unique or sealed pointer when
-*   calling observer_from_this(). If the latter condition is not satisfied,
-*   i.e., the object was allocated on the stack, or is owned by another
-*   type of smart pointer, then `observer_from_this()` will return nullptr.
+*   the class must inherit publicly from basic_enable_observer_from_this.
+*   If the policy has `Policy::allow_release` as false, then the object must
+*   be owned by a `basic_observable_ptr` instance when calling observer_from_this().
+*   If the latter condition is not satisfied, then `observer_from_this()` will
+*   throw `oup::bad_observer_from_this`.
 *
 *   **Corner cases.**
-*    - If a class `A` inherits from both another class `B` and `basic_enable_observer_from_this<A,...>`,
-*      and it is owned by a `basic_observable_ptr<B,...>`. The function `observer_from_this()`
-*      return a valid pointer if ownership is acquired from a raw `A*`, but will throw
-*      if ownership is acquired from a raw `B*`. Therefore, make sure to always acquire ownership
-*      on the most derived type, or simply use the factory function `make_observable()` which will
-*      enforce this automatically.
+*    - If `Policy::allow_release` is false, and a class `A` inherits from both another class `B`
+*      and `basic_enable_observer_from_this<A,...>`, and it is owned by a
+*      `basic_observable_ptr<B,...>`. The function `observer_from_this()` returns a valid pointer
+*      if ownership is acquired from a raw `A*`, but will throw if ownership is acquired from a raw
+*      `B*`. Therefore, make sure to always acquire ownership on the most derived type, or simply
+*      use the factory function `make_observable()` which will enforce this automatically.
 *
 *      ```
 *           struct B {
@@ -1068,13 +1083,17 @@ bool operator!= (const basic_observer_ptr<T,Policy>& first, const basic_observer
 *           ptr->basic_enable_observer_from_this<A,Policy>::observer_from_this(); // valid A*
 *           ptr->basic_enable_observer_from_this<B,Policy>::observer_from_this(); // valid B*
 *      ```
+*
+*     - Calling `observer_from_this()` from the object's constructor. If `Policy::allow_release` is
+*       true, this is allowed and will return a valid observer pointer. Otherwise,
+*       `oup::bad_observer_from_this` will be thrown.
 */
 template<typename T, typename Policy>
 class basic_enable_observer_from_this : public virtual details::enable_observer_from_this_base<Policy> {
     using control_block_policy = typename Policy::control_block_policy;
 
 protected:
-    basic_enable_observer_from_this() noexcept = default;
+    basic_enable_observer_from_this() noexcept(!Policy::allow_release) = default;
 
     basic_enable_observer_from_this(const basic_enable_observer_from_this&) noexcept {
         // Do not copy the other object's observer, this would be an
@@ -1110,12 +1129,14 @@ public:
     *   the object was allocated on the stack, or if it is owned by another
     *   type of smart pointer, then this function will return nullptr.
     */
-    observer_type observer_from_this() {
+    observer_type observer_from_this() noexcept(Policy::allow_release) {
         static_assert(std::is_base_of_v<basic_enable_observer_from_this,std::decay_t<T>>,
             "T must inherit from basic_enable_observer_from_this<T>");
 
-        if (!this->this_control_block) {
-            throw bad_observer_from_this{};
+        if constexpr (!Policy::allow_release) {
+            if (!this->this_control_block) {
+                throw bad_observer_from_this{};
+            }
         }
 
         return observer_type{this->this_control_block, static_cast<T*>(this)};
@@ -1127,12 +1148,14 @@ public:
     *   the object was allocated on the stack, or if it is owned by another
     *   type of smart pointer, then this function will return nullptr.
     */
-    const_observer_type observer_from_this() const {
+    const_observer_type observer_from_this() const noexcept(Policy::allow_release) {
         static_assert(std::is_base_of_v<basic_enable_observer_from_this,std::decay_t<T>>,
             "T must inherit from basic_enable_observer_from_this<T>");
 
-        if (!this->this_control_block) {
-            throw bad_observer_from_this{};
+        if constexpr (!Policy::allow_release) {
+            if (!this->this_control_block) {
+                throw bad_observer_from_this{};
+            }
         }
 
         return const_observer_type{this->this_control_block, static_cast<const T*>(this)};

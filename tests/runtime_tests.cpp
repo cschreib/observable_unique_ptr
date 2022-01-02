@@ -3245,15 +3245,14 @@ TEST_CASE("observer from this derived into base after cast", "[observer_from_thi
 
         const test_object_observer_from_this_unique* orig_cptr = orig_ptr;
 
-        REQUIRE_THROWS_AS(
-            orig_ptr->observer_from_this(),
-            oup::bad_observer_from_this);
-
-        REQUIRE_THROWS_AS(
-            orig_cptr->observer_from_this(),
-            oup::bad_observer_from_this);
+        test_optr_from_this optr_from_this = orig_ptr->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = orig_cptr->observer_from_this();
 
         REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this_const.get() == ptr.get());
     }
 
     REQUIRE(instances == 0);
@@ -3398,15 +3397,14 @@ TEST_CASE("observer from this after release", "[observer_from_this]") {
         const test_object_observer_from_this_unique* cptr2 = ptr2;
 
         {
-            REQUIRE_THROWS_AS(
-                ptr2->observer_from_this(),
-                oup::bad_observer_from_this);
-
-            REQUIRE_THROWS_AS(
-                cptr2->observer_from_this(),
-                oup::bad_observer_from_this);
+            test_optr_from_this optr_from_this = ptr2->observer_from_this();
+            test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
 
             REQUIRE(instances == 1);
+            REQUIRE(optr_from_this.expired() == true);
+            REQUIRE(optr_from_this.get() == nullptr);
+            REQUIRE(optr_from_this_const.expired() == true);
+            REQUIRE(optr_from_this_const.get() == nullptr);
         }
 
         // The object holds the last reference to the control block
@@ -3452,15 +3450,14 @@ TEST_CASE("observer from this stack", "[observer_from_this]") {
         test_object_observer_from_this_unique obj;
         const test_object_observer_from_this_unique& cobj = obj;
 
-        REQUIRE_THROWS_AS(
-            obj.observer_from_this(),
-            oup::bad_observer_from_this);
-
-        REQUIRE_THROWS_AS(
-            cobj.observer_from_this(),
-            oup::bad_observer_from_this);
+        test_optr_from_this optr_from_this = obj.observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cobj.observer_from_this();
 
         REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == &obj);
+        REQUIRE(optr_from_this_const.get() == &cobj);
     }
 
     REQUIRE(instances == 0);
@@ -3475,15 +3472,14 @@ TEST_CASE("observer from this heap", "[observer_from_this]") {
         test_object_observer_from_this_unique* obj = new test_object_observer_from_this_unique;
         const test_object_observer_from_this_unique* cobj = obj;
 
-        REQUIRE_THROWS_AS(
-            obj->observer_from_this(),
-            oup::bad_observer_from_this);
-
-        REQUIRE_THROWS_AS(
-            cobj->observer_from_this(),
-            oup::bad_observer_from_this);
+        test_optr_from_this optr_from_this = obj->observer_from_this();
+        test_optr_from_this_const optr_from_this_const = cobj->observer_from_this();
 
         REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == obj);
+        REQUIRE(optr_from_this_const.get() == cobj);
 
         delete obj;
     }
@@ -3570,9 +3566,14 @@ TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
 TEST_CASE("observer from this in constructor", "[observer_from_this]") {
     memory_tracker mem_track;
 
-    REQUIRE_THROWS_AS(
-        oup::make_observable_unique<test_object_observer_from_this_constructor_unique>(),
-        oup::bad_observer_from_this);
+    {
+        test_ptr_from_this_constructor ptr =
+            oup::make_observable_unique<test_object_observer_from_this_constructor_unique>();
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr->ptr.expired() == false);
+        REQUIRE(ptr->ptr.get() == ptr.get());
+    }
 
     REQUIRE(instances == 0);
     REQUIRE(mem_track.leaks() == 0u);
@@ -3594,9 +3595,14 @@ TEST_CASE("observer from this in constructor sealed", "[observer_from_this]") {
 TEST_CASE("observer from this in constructor multiple inheritance", "[observer_from_this]") {
     memory_tracker mem_track;
 
-    REQUIRE_THROWS_AS(
-        oup::make_observable_unique<test_object_observer_from_this_constructor_multi_unique>(),
-        oup::bad_observer_from_this);
+    {
+        test_ptr_from_this_constructor_multi ptr =
+            oup::make_observable_unique<test_object_observer_from_this_constructor_multi_unique>();
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr->ptr.expired() == false);
+        REQUIRE(ptr->ptr.get() == ptr.get());
+    }
 
     REQUIRE(instances == 0);
     REQUIRE(mem_track.leaks() == 0u);
