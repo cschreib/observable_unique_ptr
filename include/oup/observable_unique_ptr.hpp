@@ -122,8 +122,7 @@ namespace details {
 
         virtual ~enable_observer_from_this_base() {
             if (this_control_block) {
-                pop_ref_();
-                this_control_block = nullptr;
+                clear_control_block_();
             }
         }
 
@@ -144,6 +143,11 @@ namespace details {
             if (this_control_block) {
                 this_control_block->add_ref();
             }
+        }
+
+        void clear_control_block_() noexcept {
+            pop_ref_();
+            this_control_block = nullptr;
         }
 
         // Friendship is required for assignment of the observer.
@@ -226,7 +230,7 @@ protected:
     */
     void reset_this_observer_() noexcept {
         if constexpr (std::is_convertible_v<T*,const details::enable_observer_from_this_base<Policy>*>) {
-            ptr_deleter.data->set_control_block_(nullptr);
+            ptr_deleter.data->clear_control_block_();
         }
     }
 
