@@ -38,16 +38,71 @@ struct test_object_thrower {
     test_object_thrower& operator=(test_object_thrower&&) = delete;
 };
 
-struct test_object_observer_from_this :
+struct test_object_observer_from_this_unique :
     public test_object,
-    public oup::enable_observer_from_this<test_object_observer_from_this> {};
+    public oup::enable_observer_from_this_unique<test_object_observer_from_this_unique> {};
 
-struct test_object_observer_from_this_derived :
-    public test_object_observer_from_this {};
+struct test_object_observer_from_this_sealed :
+    public test_object,
+    public oup::enable_observer_from_this_sealed<test_object_observer_from_this_sealed> {};
 
-struct test_object_observer_from_this_multi :
-    public test_object_observer_from_this,
-    public oup::enable_observer_from_this<test_object_observer_from_this_multi> {};
+struct test_object_observer_from_this_derived_unique :
+    public test_object_observer_from_this_unique {};
+
+struct test_object_observer_from_this_derived_sealed :
+    public test_object_observer_from_this_sealed {};
+
+struct test_object_observer_from_this_multi_unique :
+    public test_object_observer_from_this_unique,
+    public oup::enable_observer_from_this_unique<test_object_observer_from_this_multi_unique> {};
+
+struct test_object_observer_from_this_multi_sealed :
+    public test_object_observer_from_this_sealed,
+    public oup::enable_observer_from_this_sealed<test_object_observer_from_this_multi_sealed> {};
+
+struct test_object_observer_from_this_constructor_unique :
+    public test_object,
+    public oup::enable_observer_from_this_unique<test_object_observer_from_this_constructor_unique> {
+
+    oup::observer_ptr<test_object_observer_from_this_constructor_unique> ptr;
+
+    test_object_observer_from_this_constructor_unique() {
+        ptr = observer_from_this();
+    }
+};
+
+struct test_object_observer_from_this_constructor_sealed :
+    public test_object,
+    public oup::enable_observer_from_this_sealed<test_object_observer_from_this_constructor_sealed> {
+
+    oup::observer_ptr<test_object_observer_from_this_constructor_sealed> ptr;
+
+    test_object_observer_from_this_constructor_sealed() {
+        ptr = observer_from_this();
+    }
+};
+
+struct test_object_observer_from_this_constructor_multi_unique :
+    public test_object_observer_from_this_constructor_unique,
+    public oup::enable_observer_from_this_unique<test_object_observer_from_this_constructor_multi_unique> {
+
+    oup::observer_ptr<test_object_observer_from_this_constructor_multi_unique> ptr;
+
+    test_object_observer_from_this_constructor_multi_unique() {
+        ptr = oup::enable_observer_from_this_unique<test_object_observer_from_this_constructor_multi_unique>::observer_from_this();
+    }
+};
+
+struct test_object_observer_from_this_constructor_multi_sealed :
+    public test_object_observer_from_this_constructor_sealed,
+    public oup::enable_observer_from_this_sealed<test_object_observer_from_this_constructor_multi_sealed> {
+
+    oup::observer_ptr<test_object_observer_from_this_constructor_multi_sealed> ptr;
+
+    test_object_observer_from_this_constructor_multi_sealed() {
+        ptr = oup::enable_observer_from_this_sealed<test_object_observer_from_this_constructor_multi_sealed>::observer_from_this();
+    }
+};
 
 struct test_deleter {
     int state_ = 0;
@@ -86,22 +141,32 @@ using test_ptr_derived_with_deleter = oup::observable_unique_ptr<test_object_der
 using test_ptr_thrower = oup::observable_unique_ptr<test_object_thrower>;
 using test_sptr_thrower = oup::observable_sealed_ptr<test_object_thrower>;
 using test_ptr_thrower_with_deleter = oup::observable_unique_ptr<test_object_thrower,test_deleter>;
-using test_ptr_from_this = oup::observable_unique_ptr<test_object_observer_from_this>;
-using test_sptr_from_this = oup::observable_sealed_ptr<test_object_observer_from_this>;
-using test_cptr_from_this = oup::observable_unique_ptr<const test_object_observer_from_this>;
-using test_csptr_from_this = oup::observable_sealed_ptr<const test_object_observer_from_this>;
-using test_ptr_from_this_derived = oup::observable_unique_ptr<test_object_observer_from_this_derived>;
-using test_sptr_from_this_derived = oup::observable_sealed_ptr<test_object_observer_from_this_derived>;
-using test_ptr_from_this_multi = oup::observable_unique_ptr<test_object_observer_from_this_multi>;
-using test_sptr_from_this_multi = oup::observable_sealed_ptr<test_object_observer_from_this_multi>;
+using test_ptr_from_this = oup::observable_unique_ptr<test_object_observer_from_this_unique>;
+using test_sptr_from_this = oup::observable_sealed_ptr<test_object_observer_from_this_sealed>;
+using test_cptr_from_this = oup::observable_unique_ptr<const test_object_observer_from_this_unique>;
+using test_csptr_from_this = oup::observable_sealed_ptr<const test_object_observer_from_this_sealed>;
+using test_ptr_from_this_derived = oup::observable_unique_ptr<test_object_observer_from_this_derived_unique>;
+using test_sptr_from_this_derived = oup::observable_sealed_ptr<test_object_observer_from_this_derived_sealed>;
+using test_ptr_from_this_multi = oup::observable_unique_ptr<test_object_observer_from_this_multi_unique>;
+using test_sptr_from_this_multi = oup::observable_sealed_ptr<test_object_observer_from_this_multi_sealed>;
+using test_ptr_from_this_constructor = oup::observable_unique_ptr<test_object_observer_from_this_constructor_unique>;
+using test_sptr_from_this_constructor = oup::observable_sealed_ptr<test_object_observer_from_this_constructor_sealed>;
+using test_ptr_from_this_constructor_multi = oup::observable_unique_ptr<test_object_observer_from_this_constructor_multi_unique>;
+using test_sptr_from_this_constructor_multi = oup::observable_sealed_ptr<test_object_observer_from_this_constructor_multi_sealed>;
 
 using test_optr = oup::observer_ptr<test_object>;
 using test_optr_const = oup::observer_ptr<const test_object>;
 using test_optr_derived = oup::observer_ptr<test_object_derived>;
-using test_optr_from_this = oup::observer_ptr<test_object_observer_from_this>;
-using test_optr_from_this_const = oup::observer_ptr<const test_object_observer_from_this>;
-using test_optr_from_this_derived = oup::observer_ptr<test_object_observer_from_this_derived>;
-using test_optr_from_this_derived_const = oup::observer_ptr<const test_object_observer_from_this_derived>;
-using test_optr_from_this_multi = oup::observer_ptr<test_object_observer_from_this_multi>;
-using test_optr_from_this_multi_const = oup::observer_ptr<const test_object_observer_from_this_multi>;
+using test_optr_from_this = oup::observer_ptr<test_object_observer_from_this_unique>;
+using test_optr_from_this_const = oup::observer_ptr<const test_object_observer_from_this_unique>;
+using test_optr_from_this_derived = oup::observer_ptr<test_object_observer_from_this_derived_unique>;
+using test_optr_from_this_derived_const = oup::observer_ptr<const test_object_observer_from_this_derived_unique>;
+using test_optr_from_this_multi = oup::observer_ptr<test_object_observer_from_this_multi_unique>;
+using test_optr_from_this_multi_const = oup::observer_ptr<const test_object_observer_from_this_multi_unique>;
+using test_optr_from_this_sealed = oup::observer_ptr<test_object_observer_from_this_sealed>;
+using test_optr_from_this_const_sealed = oup::observer_ptr<const test_object_observer_from_this_sealed>;
+using test_optr_from_this_derived_sealed = oup::observer_ptr<test_object_observer_from_this_derived_sealed>;
+using test_optr_from_this_derived_const_sealed = oup::observer_ptr<const test_object_observer_from_this_derived_sealed>;
+using test_optr_from_this_multi_sealed = oup::observer_ptr<test_object_observer_from_this_multi_sealed>;
+using test_optr_from_this_multi_const_sealed = oup::observer_ptr<const test_object_observer_from_this_multi_sealed>;
 using int_optr = oup::observer_ptr<int>;
