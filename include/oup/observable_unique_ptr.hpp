@@ -179,6 +179,10 @@ protected:
     using control_block_policy = typename Policy::control_block_policy;
     using control_block_type = details::control_block<control_block_policy>;
 
+    template<typename U>
+    static constexpr bool has_enable_from_this = std::is_convertible_v<
+        U*, const details::enable_observer_from_this_base<Policy>*>;
+
     control_block_type* block = nullptr;
     details::ptr_and_deleter<T, Deleter> ptr_deleter;
 
@@ -216,7 +220,7 @@ protected:
     */
     template<typename U>
     void set_this_observer_(U* p) noexcept {
-        if constexpr (std::is_convertible_v<U*,const details::enable_observer_from_this_base<Policy>*>) {
+        if constexpr (has_enable_from_this<U>) {
             if (p) {
                 p->set_control_block_(block);
             }
@@ -224,12 +228,8 @@ protected:
     }
 
     /// Fill in the observer pointer for objects inheriting from `basic_enable_observer_from_this`.
-    /** \note It is important to preserve the type of the pointer as supplied by the user.
-    *         It might be of a derived type that inherits from `basic_enable_observer_from_this`, while
-    *         the base type `T` might not. We still want to fill in the observer pointer if we can.
-    */
     void reset_this_observer_() noexcept {
-        if constexpr (std::is_convertible_v<T*,const details::enable_observer_from_this_base<Policy>*>) {
+        if constexpr (!Policy::allow_release && has_enable_from_this<T>) {
             ptr_deleter.data->clear_control_block_();
         }
     }
