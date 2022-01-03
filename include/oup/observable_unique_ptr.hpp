@@ -645,17 +645,17 @@ auto make_observable(Args&& ... args) {
             new T(std::forward<Args>(args)...));
     } else {
         using control_block_policy = typename Policy::control_block_policy;
-        using block_type = details::control_block<control_block_policy>;
+        using control_block_type = details::control_block<control_block_policy>;
         using decayed_type = std::decay_t<T>;
 
         // Allocate memory
-        constexpr std::size_t block_size = sizeof(block_type);
+        constexpr std::size_t block_size = sizeof(control_block_type);
         constexpr std::size_t object_size = sizeof(T);
         std::byte* buffer = reinterpret_cast<std::byte*>(operator new(block_size + object_size));
 
         try {
             // Construct control block and object
-            block_type* block = new (buffer) block_type;
+            control_block_type* block = new (buffer) control_block_type;
             decayed_type* ptr = new (buffer + block_size) decayed_type(std::forward<Args>(args)...);
 
             // Make owner pointer
@@ -721,9 +721,9 @@ private:
     template<typename U, typename P>
     friend class basic_enable_observer_from_this;
 
-    using control_block = details::control_block<Policy>;
+    using control_block_type = details::control_block<Policy>;
 
-    control_block* block = nullptr;
+    control_block_type* block = nullptr;
     T* data = nullptr;
 
     void pop_ref_() noexcept {
@@ -733,7 +733,7 @@ private:
         }
     }
 
-    void set_data_(control_block* b, T* d) noexcept {
+    void set_data_(control_block_type* b, T* d) noexcept {
         if (data) {
             pop_ref_();
         }
@@ -743,7 +743,7 @@ private:
     }
 
     // For basic_enable_observer_from_this
-    basic_observer_ptr(control_block* b, T* d) noexcept : block(b), data(d) {
+    basic_observer_ptr(control_block_type* b, T* d) noexcept : block(b), data(d) {
         if (block) {
             block->push_ref();
         }
