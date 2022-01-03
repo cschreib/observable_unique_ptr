@@ -182,15 +182,8 @@ namespace details {
         }
 
         void set_control_block_(control_block_type* b) noexcept {
-            if (b == this_control_block || this_control_block != nullptr) {
-                return;
-            }
-
             this_control_block = b;
-
-            if (this_control_block) {
-                this_control_block->push_ref();
-            }
+            this_control_block->push_ref();
         }
 
         void clear_control_block_() noexcept {
