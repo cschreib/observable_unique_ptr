@@ -74,6 +74,13 @@ struct test_object_observer_from_this_non_virtual_unique :
         oup::basic_enable_observer_from_this<test_object_observer_from_this_non_virtual_unique, unique_non_virtual_policy>(block) {}
 };
 
+struct test_object_thrower_observer_from_this_non_virtual_unique :
+    public oup::basic_enable_observer_from_this<test_object_thrower_observer_from_this_non_virtual_unique, unique_non_virtual_policy>,
+    test_object_thrower {
+    test_object_thrower_observer_from_this_non_virtual_unique(control_block_type& block) :
+        oup::basic_enable_observer_from_this<test_object_thrower_observer_from_this_non_virtual_unique, unique_non_virtual_policy>(block) {}
+};
+
 struct test_object_observer_from_this_derived_unique :
     public test_object_observer_from_this_unique {};
 

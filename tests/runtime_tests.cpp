@@ -1761,6 +1761,18 @@ TEST_CASE("make observable unique throw in constructor", "[make_observable_uniqu
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("make observable non virtual unique throw in constructor", "[make_observable_unique]") {
+    memory_tracker mem_track;
+
+    REQUIRE_THROWS_AS(
+        (oup::make_observable<test_object_thrower_observer_from_this_non_virtual_unique, unique_non_virtual_policy>()),
+        throw_constructor);
+
+    REQUIRE(instances_thrower == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("make observable sealed", "[make_observable_sealed]") {
     memory_tracker mem_track;
 
