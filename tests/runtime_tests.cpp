@@ -3489,54 +3489,6 @@ TEST_CASE("observer from this heap", "[observer_from_this]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
-TEST_CASE("observer from this stack sealed", "[observer_from_this]") {
-    memory_tracker mem_track;
-
-    {
-        test_object_observer_from_this_sealed obj;
-        const test_object_observer_from_this_sealed& cobj = obj;
-
-        REQUIRE_THROWS_AS(
-            obj.observer_from_this(),
-            oup::bad_observer_from_this);
-
-        REQUIRE_THROWS_AS(
-            cobj.observer_from_this(),
-            oup::bad_observer_from_this);
-
-        REQUIRE(instances == 1);
-    }
-
-    REQUIRE(instances == 0);
-    REQUIRE(mem_track.leaks() == 0u);
-    REQUIRE(mem_track.double_del() == 0u);
-}
-
-TEST_CASE("observer from this heap sealed", "[observer_from_this]") {
-    memory_tracker mem_track;
-
-    {
-        test_object_observer_from_this_sealed* obj = new test_object_observer_from_this_sealed;
-        const test_object_observer_from_this_sealed* cobj = obj;
-
-        REQUIRE_THROWS_AS(
-            obj->observer_from_this(),
-            oup::bad_observer_from_this);
-
-        REQUIRE_THROWS_AS(
-            cobj->observer_from_this(),
-            oup::bad_observer_from_this);
-
-        REQUIRE(instances == 1);
-
-        delete obj;
-    }
-
-    REQUIRE(instances == 0);
-    REQUIRE(mem_track.leaks() == 0u);
-    REQUIRE(mem_track.double_del() == 0u);
-}
-
 TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
     memory_tracker mem_track;
 
@@ -3583,9 +3535,14 @@ TEST_CASE("observer from this in constructor", "[observer_from_this]") {
 TEST_CASE("observer from this in constructor sealed", "[observer_from_this]") {
     memory_tracker mem_track;
 
-    REQUIRE_THROWS_AS(
-        oup::make_observable_sealed<test_object_observer_from_this_constructor_sealed>(),
-        oup::bad_observer_from_this);
+    {
+        test_sptr_from_this_constructor ptr =
+            oup::make_observable_sealed<test_object_observer_from_this_constructor_sealed>();
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr->ptr.expired() == false);
+        REQUIRE(ptr->ptr.get() == ptr.get());
+    }
 
     REQUIRE(instances == 0);
     REQUIRE(mem_track.leaks() == 0u);
@@ -3612,9 +3569,14 @@ TEST_CASE("observer from this in constructor multiple inheritance", "[observer_f
 TEST_CASE("observer from this in constructor multiple inheritance sealed", "[observer_from_this]") {
     memory_tracker mem_track;
 
-    REQUIRE_THROWS_AS(
-        oup::make_observable_sealed<test_object_observer_from_this_constructor_multi_sealed>(),
-        oup::bad_observer_from_this);
+    {
+        test_sptr_from_this_constructor_multi ptr =
+            oup::make_observable_sealed<test_object_observer_from_this_constructor_multi_sealed>();
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr->ptr.expired() == false);
+        REQUIRE(ptr->ptr.get() == ptr.get());
+    }
 
     REQUIRE(instances == 0);
     REQUIRE(mem_track.leaks() == 0u);

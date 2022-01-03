@@ -16,15 +16,38 @@ struct bad_observer_from_this : std::exception {
     }
 };
 
+template<typename T, typename Deleter, typename Policy>
+class basic_observable_ptr;
+
 template<typename T, typename Policy>
 class basic_observer_ptr;
 
 template<typename T, typename Policy>
 class basic_enable_observer_from_this;
 
+template<typename T, typename Policy, typename ... Args>
+auto make_observable(Args&& ... args);
+
 namespace details {
+    /// Implementation-defined class holding reference counts and expired flag.
+    /** All the details about this class are private, and only accessible to
+    *   `oup::` classes. As a user, you may only use this class to forward it
+    *   to `oup::` classes as required.
+    */
     template<typename Policy>
-    struct control_block {
+    class control_block {
+        template<typename T, typename D, typename P>
+        friend class oup::basic_observable_ptr;
+
+        template<typename T, typename P>
+        friend class oup::basic_observer_ptr;
+
+        template<typename P>
+        friend struct enable_observer_from_this_base;
+
+        template<typename U, typename P, typename ... Args>
+        friend auto oup::make_observable(Args&& ... args);
+
         using refcount_type = typename Policy::refcount_type;
 
         enum flag_elements {
@@ -34,6 +57,12 @@ namespace details {
 
         refcount_type refcount = 1;
         int flags = flag_none;
+
+        control_block() noexcept = default;
+        control_block(const control_block&) = delete;
+        control_block(control_block&&) = delete;
+        control_block& operator=(const control_block&) = delete;
+        control_block& operator=(control_block&&) = delete;
 
         void push_ref() noexcept { ++refcount; }
 
@@ -56,9 +85,6 @@ namespace details {
     struct ptr_and_deleter : Deleter {
         T* data = nullptr;
     };
-
-    // Constructor tag.
-    struct acquire_tag {};
 }
 
 /// Simple default deleter
@@ -101,6 +127,7 @@ struct default_control_block_policy {
 */
 struct unique_policy {
     static constexpr bool is_sealed = false;
+    static constexpr bool is_enable_observer_base_virtual = true;
     using control_block_policy = default_control_block_policy;
 };
 
@@ -109,24 +136,36 @@ struct unique_policy {
 */
 struct sealed_policy {
     static constexpr bool is_sealed = true;
+    static constexpr bool is_enable_observer_base_virtual = false;
     using control_block_policy = default_control_block_policy;
 };
-
-template<typename T, typename Policy>
-class basic_enable_observer_from_this;
 
 namespace details {
     template<typename Policy>
     struct enable_observer_from_this_base {
-        using control_block = details::control_block<typename Policy::control_block_policy>;
+        /// Policy for the control block
+        using control_block_policy = typename Policy::control_block_policy;
 
-        mutable control_block* this_control_block = nullptr;
+        /// Type of the control block
+        using control_block_type = details::control_block<control_block_policy>;
+
+        mutable control_block_type* this_control_block = nullptr;
 
         enable_observer_from_this_base() noexcept(Policy::is_sealed) {
-            if constexpr (!Policy::is_sealed) {
-                this_control_block = new control_block;
+            if constexpr (!Policy::is_sealed && Policy::is_enable_observer_base_virtual) {
+                this_control_block = new control_block_type;
             }
         }
+
+        explicit enable_observer_from_this_base(control_block_type& block) noexcept :
+            this_control_block(&block) {
+            block.push_ref();
+        }
+
+        enable_observer_from_this_base(const enable_observer_from_this_base&) = delete;
+        enable_observer_from_this_base(enable_observer_from_this_base&&) = delete;
+        enable_observer_from_this_base& operator=(const enable_observer_from_this_base&) = delete;
+        enable_observer_from_this_base& operator=(enable_observer_from_this_base&&) = delete;
 
         virtual ~enable_observer_from_this_base() {
             if (this_control_block) {
@@ -141,7 +180,7 @@ namespace details {
             }
         }
 
-        void set_control_block_(control_block* b) noexcept {
+        void set_control_block_(control_block_type* b) noexcept {
             if (b == this_control_block || this_control_block != nullptr) {
                 return;
             }
@@ -164,6 +203,14 @@ namespace details {
         friend class basic_observable_ptr;
     };
 }
+
+/// Check if a given type T inherits from basic_enable_observer_from_this
+// template<typename T, typename Policy>
+// constexpr bool has_enable_observer_from_this = std::is_convertible_v<
+//     T*, const details::enable_observer_from_this_base<Policy>*>;
+template<typename T, typename Policy>
+constexpr bool has_enable_observer_from_this = std::is_base_of_v<
+    details::enable_observer_from_this_base<Policy>, T>;
 
 /// Generic class for observable owning pointers.
 /** This is a generic class, configurable with policies. See @ref observable_unique_ptr and
@@ -194,13 +241,34 @@ namespace details {
 */
 template<typename T, typename Deleter, typename Policy>
 class basic_observable_ptr {
-protected:
+public:
+    static_assert(!std::is_array_v<T>, "T[] is not supported");
+
+    /// Policy for this smart pointer
+    using policy = Policy;
+
+    /// Policy for the control block
     using control_block_policy = typename Policy::control_block_policy;
+
+    /// Type of the control block
     using control_block_type = details::control_block<control_block_policy>;
 
+    /// Type of the pointed object
+    using element_type = T;
+
+    /// Type of the matching observer pointer
+    using observer_type = basic_observer_ptr<T, control_block_policy>;
+
+    /// Pointer type
+    using pointer = element_type*;
+
+    /// Deleter type
+    using deleter_type = Deleter;
+
+protected:
+
     template<typename U>
-    static constexpr bool has_enable_from_this = std::is_convertible_v<
-        U*, const details::enable_observer_from_this_base<Policy>*>;
+    static constexpr bool has_enable_observer_from_this = has_enable_observer_from_this<U, Policy>;
 
     control_block_type* block = nullptr;
     details::ptr_and_deleter<T, Deleter> ptr_deleter;
@@ -244,28 +312,13 @@ protected:
             return nullptr;
         }
 
-        if constexpr (!Policy::is_sealed && has_enable_from_this<U>) {
-            p->this_control_block->set_not_expired();
+        if constexpr (!Policy::is_sealed && Policy::is_enable_observer_base_virtual &&
+                      has_enable_observer_from_this<U>) {
             p->this_control_block->push_ref();
             return p->this_control_block;
         }
 
         return allocate_block_();
-    }
-
-    /// Fill in the observer pointer for objects inheriting from @ref basic_enable_observer_from_this.
-    /** \note It is important to preserve the type of the pointer as supplied by the user.
-    *         It might be of a derived type that inherits from @ref basic_enable_observer_from_this,
-    *         while the base type `T` might not. We still want to fill in the observer pointer if
-    *         we can.
-    */
-    template<typename U>
-    void set_this_observer_(U* p) noexcept {
-        if constexpr (has_enable_from_this<U>) {
-            if (p) {
-                p->set_control_block_(block);
-            }
-        }
     }
 
     /// Private constructor using pre-allocated control block.
@@ -285,27 +338,6 @@ protected:
     basic_observable_ptr(control_block_type* ctrl, U* value, Deleter del) noexcept :
         block(ctrl), ptr_deleter{std::move(del), value} {}
 
-    /// Private constructor using pre-allocated control block.
-    /** \param ctrl The control block pointer
-    *   \param value The pointer to own
-    */
-    template<typename U>
-    basic_observable_ptr(details::acquire_tag, control_block_type* ctrl, U* value) noexcept :
-        block(ctrl), ptr_deleter{Deleter{}, value} {
-        set_this_observer_(value);
-    }
-
-    /// Private constructor using pre-allocated control block.
-    /** \param ctrl The control block pointer
-    *   \param value The pointer to own
-    *   \param del The deleter to use
-    */
-    template<typename U>
-    basic_observable_ptr(details::acquire_tag, control_block_type* ctrl, U* value, Deleter del) noexcept :
-        block(ctrl), ptr_deleter{std::move(del), value} {
-        set_this_observer_(value);
-    }
-
     // Friendship is required for conversions.
     template<typename U, typename P>
     friend class basic_observer_ptr;
@@ -315,19 +347,6 @@ protected:
     friend class basic_observable_ptr;
 
 public:
-    static_assert(!std::is_array_v<T>, "T[] is not supported");
-
-    /// Type of the pointed object
-    using element_type = T;
-
-    /// Type of the matching observer pointer
-    using observer_type = basic_observer_ptr<T, control_block_policy>;
-
-    /// Pointer type
-    using pointer = element_type*;
-
-    /// Deleter type
-    using deleter_type = Deleter;
 
     /// Default constructor (null pointer).
     basic_observable_ptr() noexcept = default;
@@ -570,7 +589,7 @@ public:
     T* release() noexcept {
         T* old_ptr = ptr_deleter.data;
         if (ptr_deleter.data) {
-            if (!has_enable_from_this<T>) {
+            if (!has_enable_observer_from_this<T>) {
                 block->set_expired();
             }
 
@@ -643,27 +662,62 @@ public:
 */
 template<typename T, typename Policy, typename ... Args>
 auto make_observable(Args&& ... args) {
-    if constexpr (!Policy::is_sealed) {
-        return basic_observable_ptr<T, default_delete, Policy>(
-            new T(std::forward<Args>(args)...));
-    } else {
-        using control_block_policy = typename Policy::control_block_policy;
-        using control_block_type = details::control_block<control_block_policy>;
-        using decayed_type = std::decay_t<T>;
+    using control_block_policy = typename Policy::control_block_policy;
+    using control_block_type = details::control_block<control_block_policy>;
+    using decayed_type = std::decay_t<T>;
 
-        // Allocate memory
+    if constexpr (!Policy::is_sealed) {
+        if constexpr (has_enable_observer_from_this<T, Policy> &&
+                      !Policy::is_enable_observer_base_virtual) {
+            // Allocate control block first
+            control_block_type* block = new control_block_type;
+
+            // Allocate object
+            decayed_type* ptr = nullptr;
+            try {
+                ptr = new T(*block, std::forward<Args>(args)...);
+            } catch (...) {
+                delete block;
+                throw;
+            }
+
+            return basic_observable_ptr<T, default_delete, Policy>(block, ptr);
+        } else {
+            return basic_observable_ptr<T, default_delete, Policy>(
+                new T(std::forward<Args>(args)...));
+        }
+    } else {
+        // Pre-allocate memory
         constexpr std::size_t block_size = sizeof(control_block_type);
         constexpr std::size_t object_size = sizeof(T);
         std::byte* buffer = reinterpret_cast<std::byte*>(operator new(block_size + object_size));
 
         try {
-            // Construct control block and object
+            // Construct control block first
             control_block_type* block = new (buffer) control_block_type;
-            decayed_type* ptr = new (buffer + block_size) decayed_type(std::forward<Args>(args)...);
 
-            // Make owner pointer
-            return basic_observable_ptr<T, placement_delete, Policy>(
-                details::acquire_tag{}, block, ptr);
+            // Construct object
+            decayed_type* ptr = nullptr;
+            if constexpr (has_enable_observer_from_this<T, Policy> &&
+                          !Policy::is_enable_observer_base_virtual) {
+                // The object as a constructor that can take a control block; just give it
+                ptr = new (buffer + block_size) decayed_type(*block, std::forward<Args>(args)...);
+
+                // Make owner pointer
+                return basic_observable_ptr<T, placement_delete, Policy>(block, ptr);
+            } else {
+                ptr = new (buffer + block_size) decayed_type(std::forward<Args>(args)...);
+
+                // Make owner pointer
+                auto sptr = basic_observable_ptr<T, placement_delete, Policy>(block, ptr);
+
+                if constexpr (has_enable_observer_from_this<T, Policy>) {
+                    // Notify basic_enable_observer_from_this of the control
+                    ptr->set_control_block_(block);
+                }
+
+                return sptr;
+            }
         } catch (...) {
             // Exception thrown during object construction,
             // clean up memory and let exception propagate
@@ -713,6 +767,18 @@ bool operator!= (const basic_observable_ptr<T,Deleter,Policy>& first,
 */
 template<typename T, typename Policy>
 class basic_observer_ptr {
+public:
+    static_assert(!std::is_array_v<T>, "T[] is not supported");
+
+    /// Policy for the control block
+    using control_block_policy = Policy;
+
+    /// Type of the control block
+    using control_block_type = details::control_block<control_block_policy>;
+
+    /// Type of the pointed object
+    using element_type = T;
+
 private:
     // Friendship is required for conversions.
     template<typename U, typename P>
@@ -723,8 +789,6 @@ private:
     // Friendship is required for basic_enable_observer_from_this.
     template<typename U, typename P>
     friend class basic_enable_observer_from_this;
-
-    using control_block_type = details::control_block<Policy>;
 
     control_block_type* block = nullptr;
     T* data = nullptr;
@@ -753,11 +817,6 @@ private:
     }
 
 public:
-    static_assert(!std::is_array_v<T>, "T[] is not supported");
-
-    /// Type of the pointed object
-    using element_type = T;
-
     /// Default constructor (null pointer).
     basic_observer_ptr() = default;
 
@@ -1057,53 +1116,70 @@ bool operator!= (const basic_observer_ptr<T,Policy>& first, const basic_observer
     return first.get() != second.get();
 }
 
+namespace details {
+    template<bool Virtual, typename T>
+    struct inherit_as_virtual;
+
+    template<typename T>
+    struct inherit_as_virtual<true,T> : virtual T {
+        template<typename ... Args>
+        inherit_as_virtual(Args&& ... args) noexcept(noexcept(T(std::forward<Args>(args)...))) :
+            T(std::forward<Args>(args)...) {}
+    };
+
+    template<typename T>
+    struct inherit_as_virtual<false,T> : T {
+        template<typename ... Args>
+        inherit_as_virtual(Args&& ... args) noexcept(noexcept(T(std::forward<Args>(args)...))) :
+            T(std::forward<Args>(args)...) {}
+    };
+}
 
 /// Enables creating an @ref observer_ptr from `this`.
-/** If an object must be able to create an observer pointer to itself,
-*   without having direct access to the owner pointer (unique or sealed),
-*   then the object's class can inherit from basic_enable_observer_from_this.
+/** If an object is owned by a @ref basic_observable_ptr and must be able to create an observer
+*   pointer to itself, without having direct access to the owner pointer,
+*   then the object's class can inherit from @ref basic_enable_observer_from_this.
 *   This provides the @ref observer_from_this() member function, which returns
 *   a new observer pointer to the object. For this mechanism to work,
 *   the class must inherit publicly from @ref basic_enable_observer_from_this.
-*   If the policy has `Policy::is_sealed` as true, then the object must
-*   be owned by a `basic_observable_ptr` instance when calling @ref observer_from_this().
-*   If the latter condition is not satisfied, then @ref observer_from_this() will
-*   throw @ref bad_observer_from_this.
+*
+*   If `Policy::is_sealed` is true, then the object must be owned by a @ref basic_observable_ptr
+*   instance when calling @ref observer_from_this(). If the latter condition is not satisfied,
+*   then @ref observer_from_this() will throw @ref bad_observer_from_this.
+*
+*   If `Policy::is_enable_observer_base_virtual` is true, then:
+*    - if `Policy::is_sealed` is false, @ref basic_enable_observer_from_this will
+*      allocate its own control block in the default constructor, and this control
+*      block will be used by @ref basic_observable_ptr. This enables using
+*      @ref observer_from_this() at all times, even during the object's constructor,
+*      and even if the object is not owned by an instance of @ref basic_observable_ptr.
+*      The downside is that the default constructor allocates, and thus cannot be noexcept.
+*      The object `T` can have a default constructor.
+*    - if `Policy::is_sealed` is true, the control block will already be created by
+*      @ref make_observable, so @ref basic_enable_observer_from_this will not allocate its own
+*      control block in the default constructor, which is thus noexcept. The object `T` can have a
+*      default constructor. This means, however, that @ref observer_from_this() may only be called
+*      if `T` was created by @ref make_observable, and only after @ref make_observable has returned,
+*      otherwise @ref bad_observer_from_this will be thrown. In paticular, @ref observer_from_this()
+*      may not be called from within `T`'s constructor. If this is an issue, consider setting
+*      `Policy::is_enable_observer_base_virtual` to false.
+*
+*   If `Policy::is_enable_observer_base_virtual` is false, then `T`'s constructor must take
+*   a non-const reference to a control block object as first argument, and forward it to
+*   this class. Instances of `T` are then only constructible through @ref make_observable,
+*   which will take care of creating one control block and forwarding it to `T`'s constructor.
+*   This enables using @ref observer_from_this() at all times, even during the object's constructor,
+*   and (if `Policy::is_sealed` is false) even if `T` is later released from its
+*   @ref basic_observable_ptr. The downside is that the object `T` cannot have a default
+*   constructor, and that child classes of `T` must forward the control block reference in their
+*   own constructor. Likewise, for this reason, `T` cannot be copied nor moved.
 *
 *   **Corner cases.**
-*    - If `Policy::is_sealed` is true, and a class `A` inherits from both another class `B`
-*      and `basic_enable_observer_from_this<A,...>`, and it is owned by a
-*      `basic_observable_ptr<B,...>`. The function @ref observer_from_this() returns a valid pointer
-*      if ownership is acquired from a raw `A*`, but will throw if ownership is acquired from a raw
-*      `B*`. Therefore, make sure to always acquire ownership on the most derived type, or simply
-*      use the factory function @ref make_observable() which will enforce this automatically.
-*
-*      ```
-*           struct B {
-*               virtual ~B() = default;
-*           };
-*
-*           struct A : B, basic_enable_observer_from_this<A,Policy> {};
-*
-*
-*           basic_observable_ptr<B,Deleter,Policy> good1(new A);
-*           dynamic_cast<A*>(good1.get())->observer_from_this(); // valid A*
-*
-*           observable_unique_ptr<B> good2(make_observable_unique<A>());
-*           dynamic_cast<A*>(good2.get())->observer_from_this(); // valid A*
-*
-*           // Bad: do not do this
-*           A* a = new A;
-*           B* b = a;
-*           observable_unique_ptr<B> bad(b);
-*           dynamic_cast<A*>(bad.get())->observer_from_this(); // throws bad_observer_from_this
-*      ```
-*
 *    - Multiple inheritance. If a class `A` inherits from both another class `B` and
 *      `basic_enable_observer_from_this<A,...>`, and if `B` also inherits from
 *      `basic_enable_observer_from_this<B,...>`, then @ref observer_from_this() will be an
 *      ambiguous call. But it can be resolved, and (contrary to `std::shared_ptr` and
-*      `std::enable_shared_from_this`) will return a valid pointer:
+*      `std::enable_shared_from_this`) will return a valid pointer regardless of the policy:
 *
 *      ```
 *           struct B : basic_enable_observer_from_this<B,Policy> {
@@ -1117,9 +1193,10 @@ bool operator!= (const basic_observer_ptr<T,Policy>& first, const basic_observer
 *           ptr->basic_enable_observer_from_this<B,Policy>::observer_from_this(); // valid B*
 *      ```
 *
-*     - Calling `observer_from_this()` from the object's constructor. If `Policy::is_sealed` is
-*       false, this is allowed and will return a valid observer pointer. Otherwise,
-*       @ref bad_observer_from_this will be thrown.
+*     - Calling `observer_from_this()` from the object's constructor. Contrary to `std::shared_ptr`,
+*       this is valid in all cases, except if both `Policy::is_sealed` and
+*       `Policy::is_enable_observer_base_virtual` are true. Then, @ref bad_observer_from_this will
+*       be thrown.
 *
 *   \see enable_observer_from_this_unique
 *   \see enable_observer_from_this_sealed
@@ -1127,28 +1204,79 @@ bool operator!= (const basic_observer_ptr<T,Policy>& first, const basic_observer
 *   \see basic_observer_ptr
 */
 template<typename T, typename Policy>
-class basic_enable_observer_from_this : public virtual details::enable_observer_from_this_base<Policy> {
-    using control_block_policy = typename Policy::control_block_policy;
+class basic_enable_observer_from_this : public
+    details::inherit_as_virtual<Policy::is_enable_observer_base_virtual,
+        details::enable_observer_from_this_base<Policy>> {
+
+    using base = details::inherit_as_virtual<Policy::is_enable_observer_base_virtual,
+        details::enable_observer_from_this_base<Policy>>;
+
+    static constexpr bool base_allocates =
+        !Policy::is_sealed && Policy::is_enable_observer_base_virtual;
 
 protected:
-    basic_enable_observer_from_this() noexcept(Policy::is_sealed) = default;
+    /// Policy for the control block
+    using control_block_policy = typename Policy::control_block_policy;
 
-    basic_enable_observer_from_this(const basic_enable_observer_from_this&) noexcept {
+    /// Type of the control block
+    using control_block_type = details::control_block<control_block_policy>;
+
+    /// Default constructor.
+    /** \note This constructor is only enabled if `Policy::is_enable_observer_base_virtual` is true.
+    *         If `Policy::is_sealed` is false, this will allocate the control block,
+    *         which prevents this constructor from being `noexcept`.
+    */
+    template<typename U = T, typename enable =
+        std::enable_if_t<std::is_same_v<U,T> && Policy::is_enable_observer_base_virtual>>
+    basic_enable_observer_from_this() noexcept(!base_allocates) {};
+
+    /// Early assignment of control block.
+    /** \param block The pre-allocated control block
+    *   \note This constructor allows setting the control block pointer early
+    *         in the creation of the object. This enables calling @ref observer_from_this
+    *         from the object's constructor. This may only be used if `Policy::is_sealed` is
+    *         true, and with @ref make_observable. @ref make_observable will allocate the control
+    *         block and, if the object's constructor can take the control block as its first
+    *         constructor argument, the control block will be forwarded to the constructor.
+    */
+    explicit basic_enable_observer_from_this(control_block_type& block) noexcept : base(block) {}
+
+    /// Copy constructor.
+    /** \note This constructor is only enabled if `Policy::is_enable_observer_base_virtual` is true.
+    */
+    template<typename U = T, typename enable =
+        std::enable_if_t<std::is_same_v<U,T> && Policy::is_enable_observer_base_virtual>>
+    basic_enable_observer_from_this(const basic_enable_observer_from_this&) noexcept(!base_allocates) {
         // Do not copy the other object's observer, this would be an
         // invalid reference.
     };
 
-    basic_enable_observer_from_this(basic_enable_observer_from_this&&) noexcept {
+    /// Move constructor.
+    /** \note This constructor is only enabled if `Policy::is_enable_observer_base_virtual` is true.
+    */
+    template<typename U = T, typename enable =
+        std::enable_if_t<std::is_same_v<U,T> && Policy::is_enable_observer_base_virtual>>
+    basic_enable_observer_from_this(basic_enable_observer_from_this&&) noexcept(!base_allocates) {
         // Do not move the other object's observer, this would be an
         // invalid reference.
     };
 
+    /// Copy assignment operator.
+    /** \note This operator is only enabled if `Policy::is_enable_observer_base_virtual` is true.
+    */
+    template<typename U = T, typename enable =
+        std::enable_if_t<std::is_same_v<U,T> && Policy::is_enable_observer_base_virtual>>
     basic_enable_observer_from_this& operator=(const basic_enable_observer_from_this&) noexcept {
         // Do not copy the other object's observer, this would be an
         // invalid reference.
         return *this;
     };
 
+    /// Move assignment operator.
+    /** \note This operator is only enabled if `Policy::is_enable_observer_base_virtual` is true.
+    */
+    template<typename U = T, typename enable =
+        std::enable_if_t<std::is_same_v<U,T> && Policy::is_enable_observer_base_virtual>>
     basic_enable_observer_from_this& operator=(basic_enable_observer_from_this&&) noexcept {
         // Do not move the other object's observer, this would be an
         // invalid reference.
@@ -1167,11 +1295,11 @@ public:
     *   the object was allocated on the stack, or if it is owned by another
     *   type of smart pointer, then this function will return nullptr.
     */
-    observer_type observer_from_this() noexcept(!Policy::is_sealed) {
+    observer_type observer_from_this() noexcept(base_allocates) {
         static_assert(std::is_base_of_v<basic_enable_observer_from_this,std::decay_t<T>>,
             "T must inherit from basic_enable_observer_from_this<T>");
 
-        if constexpr (Policy::is_sealed) {
+        if constexpr (!base_allocates) {
             if (!this->this_control_block) {
                 throw bad_observer_from_this{};
             }
@@ -1186,11 +1314,11 @@ public:
     *   the object was allocated on the stack, or if it is owned by another
     *   type of smart pointer, then this function will return nullptr.
     */
-    const_observer_type observer_from_this() const noexcept(!Policy::is_sealed) {
+    const_observer_type observer_from_this() const noexcept(base_allocates) {
         static_assert(std::is_base_of_v<basic_enable_observer_from_this,std::decay_t<T>>,
             "T must inherit from basic_enable_observer_from_this<T>");
 
-        if constexpr (Policy::is_sealed) {
+        if constexpr (!base_allocates) {
             if (!this->this_control_block) {
                 throw bad_observer_from_this{};
             }
@@ -1389,9 +1517,34 @@ template<typename T>
 using observer_ptr = basic_observer_ptr<T, default_control_block_policy>;
 
 /// Enables creating an @ref observer_ptr from `this`.
+/** If an object owned by a @ref observable_unique_ptr must be able to create an observer
+*   pointer to itself, without having direct access to the owner pointer,
+*   then the object's class can inherit from @ref enable_observer_from_this_unique.
+*   This provides the @ref observer_from_this() member function, which returns
+*   a new observer pointer to the object. For this mechanism to work,
+*   the class must inherit publicly from @ref enable_observer_from_this_unique.
+*
+*   \see basic_enable_observer_from_this
+*   \see observable_unique_ptr
+*   \see observer_ptr
+*/
 template<typename T>
 using enable_observer_from_this_unique = basic_enable_observer_from_this<T, unique_policy>;
 
+/// Enables creating an @ref observer_ptr from `this`.
+/** If an object owned by a @ref observable_unique_ptr must be able to create an observer
+*   pointer to itself, without having direct access to the owner pointer,
+*   then the object's class can inherit from @ref enable_observer_from_this_unique.
+*   This provides the @ref observer_from_this() member function, which returns
+*   a new observer pointer to the object. For this mechanism to work,
+*   the class must inherit publicly from @ref enable_observer_from_this_unique.
+*
+*   TODO: add "Because of limitations from the "sealed" memory, the object `T` ..."
+*
+*   \see basic_enable_observer_from_this
+*   \see observable_sealed_ptr
+*   \see observer_ptr
+*/
 template<typename T>
 using enable_observer_from_this_sealed = basic_enable_observer_from_this<T, sealed_policy>;
 
@@ -1418,6 +1571,10 @@ observable_unique_ptr<T> make_observable_unique(Args&& ... args) {
 *   \note This function is the only way to create an @ref observable_sealed_ptr.
 *         It will allocate the pointed object and the control block in a
 *         single buffer for better performance.
+*   \note If `T` inherits from `enable_observer_from_this_sealed`, then `T`'s
+*         constructor must take a non-const reference to a control block as first argument,
+*         and the control block will be created and provided by this function.
+*         See @ref enable_observer_from_this_sealed.
 *   \see observable_sealed_ptr
 */
 template<typename T, typename ... Args>

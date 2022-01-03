@@ -44,13 +44,21 @@ struct test_object_observer_from_this_unique :
 
 struct test_object_observer_from_this_sealed :
     public test_object,
-    public oup::enable_observer_from_this_sealed<test_object_observer_from_this_sealed> {};
+    public oup::enable_observer_from_this_sealed<test_object_observer_from_this_sealed> {
+
+    explicit test_object_observer_from_this_sealed(control_block_type& block) :
+        oup::enable_observer_from_this_sealed<test_object_observer_from_this_sealed>(block) {}
+};
 
 struct test_object_observer_from_this_derived_unique :
     public test_object_observer_from_this_unique {};
 
 struct test_object_observer_from_this_derived_sealed :
-    public test_object_observer_from_this_sealed {};
+    public test_object_observer_from_this_sealed {
+
+    explicit test_object_observer_from_this_derived_sealed(control_block_type& block) :
+        test_object_observer_from_this_sealed(block) {}
+};
 
 struct test_object_observer_from_this_multi_unique :
     public test_object_observer_from_this_unique,
@@ -58,7 +66,14 @@ struct test_object_observer_from_this_multi_unique :
 
 struct test_object_observer_from_this_multi_sealed :
     public test_object_observer_from_this_sealed,
-    public oup::enable_observer_from_this_sealed<test_object_observer_from_this_multi_sealed> {};
+    public oup::enable_observer_from_this_sealed<test_object_observer_from_this_multi_sealed> {
+
+    using control_block_type = oup::enable_observer_from_this_sealed<test_object_observer_from_this_multi_sealed>::control_block_type;
+
+    explicit test_object_observer_from_this_multi_sealed(control_block_type& block) :
+        test_object_observer_from_this_sealed(block),
+        oup::enable_observer_from_this_sealed<test_object_observer_from_this_multi_sealed>(block) {}
+};
 
 struct test_object_observer_from_this_constructor_unique :
     public test_object,
@@ -77,7 +92,8 @@ struct test_object_observer_from_this_constructor_sealed :
 
     oup::observer_ptr<test_object_observer_from_this_constructor_sealed> ptr;
 
-    test_object_observer_from_this_constructor_sealed() {
+    explicit test_object_observer_from_this_constructor_sealed(control_block_type& block) :
+        oup::enable_observer_from_this_sealed<test_object_observer_from_this_constructor_sealed>(block) {
         ptr = observer_from_this();
     }
 };
@@ -97,9 +113,13 @@ struct test_object_observer_from_this_constructor_multi_sealed :
     public test_object_observer_from_this_constructor_sealed,
     public oup::enable_observer_from_this_sealed<test_object_observer_from_this_constructor_multi_sealed> {
 
+    using control_block_type = oup::enable_observer_from_this_sealed<test_object_observer_from_this_constructor_multi_sealed>::control_block_type;
+
     oup::observer_ptr<test_object_observer_from_this_constructor_multi_sealed> ptr;
 
-    test_object_observer_from_this_constructor_multi_sealed() {
+    explicit test_object_observer_from_this_constructor_multi_sealed(control_block_type& block) :
+        test_object_observer_from_this_constructor_sealed(block),
+        oup::enable_observer_from_this_sealed<test_object_observer_from_this_constructor_multi_sealed>(block) {
         ptr = oup::enable_observer_from_this_sealed<test_object_observer_from_this_constructor_multi_sealed>::observer_from_this();
     }
 };
