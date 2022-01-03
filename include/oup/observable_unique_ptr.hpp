@@ -1517,8 +1517,8 @@ using observer_ptr = basic_observer_ptr<T, default_control_block_policy>;
 /** If an object owned by a @ref observable_unique_ptr must be able to create an observer
 *   pointer to itself, without having direct access to the owner pointer,
 *   then the object's class can inherit from @ref enable_observer_from_this_unique.
-*   This provides the @ref observer_from_this() member function, which returns
-*   a new observer pointer to the object. For this mechanism to work,
+*   This provides the @ref basic_enable_observer_from_this::observer_from_this() member function,
+*   which returns a new observer pointer to the object. For this mechanism to work,
 *   the class must inherit publicly from @ref enable_observer_from_this_unique.
 *
 *   \see basic_enable_observer_from_this
@@ -1531,12 +1531,15 @@ using enable_observer_from_this_unique = basic_enable_observer_from_this<T, uniq
 /// Enables creating an @ref observer_ptr from `this`.
 /** If an object owned by a @ref observable_unique_ptr must be able to create an observer
 *   pointer to itself, without having direct access to the owner pointer,
-*   then the object's class can inherit from @ref enable_observer_from_this_unique.
-*   This provides the @ref observer_from_this() member function, which returns
-*   a new observer pointer to the object. For this mechanism to work,
-*   the class must inherit publicly from @ref enable_observer_from_this_unique.
+*   then the object's class can inherit from @ref enable_observer_from_this_sealed.
+*   This provides the @ref basic_enable_observer_from_this::observer_from_this() member function,
+*   which returns a new observer pointer to the object. For this mechanism to work,
+*   the class must inherit publicly from @ref enable_observer_from_this_sealed.
 *
-*   TODO: add "Because of limitations from the "sealed" memory, the object `T` ..."
+*   Because of limitations from the "sealed" memory, for this mechanism to work, all constructors
+*   of `T` must take a non-constant reference to a control block object, which will be provided
+*   automatically by @ref make_observable_sealed. This means that `T` cannot have a default
+*   constructor, nor can it have a copy or move constructor / assignment operator.
 *
 *   \see basic_enable_observer_from_this
 *   \see observable_sealed_ptr
