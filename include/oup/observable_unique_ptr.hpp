@@ -537,10 +537,18 @@ public:
     void reset(std::nullptr_t ptr = nullptr) noexcept {
         static_cast<void>(ptr); // silence "unused variable" warnings
 
-        if (ptr_deleter.data) {
-            delete_and_pop_ref_();
-            block = nullptr;
-            ptr_deleter.data = nullptr;
+        // Copy old pointer
+        T* old_ptr = ptr_deleter.data;
+        control_block_type* old_block = block;
+
+        // Assign the new one
+        block = nullptr;
+        ptr_deleter.data = nullptr;
+
+        // Delete the old pointer
+        // (this follows `std::unique_ptr` specs)
+        if (old_ptr) {
+            delete_and_pop_ref_(old_block, old_ptr, ptr_deleter);
         }
     }
 
