@@ -100,7 +100,7 @@ struct default_control_block_policy {
 /** \see observable_unique_ptr
 */
 struct unique_policy {
-    static constexpr bool allow_release = true;
+    static constexpr bool is_sealed = false;
     using control_block_policy = default_control_block_policy;
 };
 
@@ -108,7 +108,7 @@ struct unique_policy {
 /** \see observable_sealed_ptr
 */
 struct sealed_policy {
-    static constexpr bool allow_release = false;
+    static constexpr bool is_sealed = true;
     using control_block_policy = default_control_block_policy;
 };
 
@@ -122,8 +122,8 @@ namespace details {
 
         mutable control_block* this_control_block = nullptr;
 
-        enable_observer_from_this_base() noexcept(!Policy::allow_release) {
-            if constexpr (Policy::allow_release) {
+        enable_observer_from_this_base() noexcept(Policy::is_sealed) {
+            if constexpr (!Policy::is_sealed) {
                 this_control_block = new control_block;
             }
         }
@@ -169,11 +169,14 @@ namespace details {
 /** This is a generic class, configurable with policies. See @ref observable_unique_ptr and
 *   @ref observable_sealed_ptr for more user-friendly usage and pre-configured policies.
 *   The available policies are:
-*    - `Policy::allow_release`: This must evaluate to a constexpr boolean value, which is
-*       `true` if a raw pointer can be acquired and released from this smart pointer, or
-*       `false` if a raw pointer is forever "sealed" into this smart pointer. When this
-*       policy is set to `false`, the control block and the managed object are allocated
-*       separately into a single buffer.
+*    - `Policy::is_sealed`: This must evaluate to a constexpr boolean value, which is
+*       `false` if a raw pointer can be acquired and released from this smart pointer, or
+*       `true` if a raw pointer is forever "sealed" into this smart pointer. When this
+*       policy is set to `true`, the control block and the managed object are allocated
+*       separately into a single buffer. This allows memory optimisations, but introduces
+*       multiple limitations on the API (no @ref release or @ref reset, and cannot create
+*       @ref observer_ptr from the object's constructor if inheriting from
+*       @ref basic_enable_observer_from_this).
 *    -  `Policy::control_block_policy::refcount_type`: This must be an integer type
 *       (signed or unsigned) holding the number of observer references. The larger the
 *       type, the more concurrent references to the same object can exist, but the larger
@@ -231,7 +234,7 @@ protected:
 
     /// Decide whether to allocate a new control block or not.
     /** \note If the object inherits from @ref basic_enable_observer_from_this, and
-    *         `Policy::allow_release` is true (by construction this will always be true when this
+    *         `Policy::is_sealed` is false (by construction this will always be the case when this
     *         function is called), then we can just use the control block pointer stored in the
     *         @ref basic_enable_observer_from_this base. Otherwise, we need to allocate a new one.
     */
@@ -241,7 +244,7 @@ protected:
             return nullptr;
         }
 
-        if constexpr (Policy::allow_release && has_enable_from_this<U>) {
+        if constexpr (!Policy::is_sealed && has_enable_from_this<U>) {
             p->this_control_block->set_not_expired();
             p->this_control_block->push_ref();
             return p->this_control_block;
@@ -419,7 +422,7 @@ public:
     *         using @ref make_observable() instead of this constructor.
     */
     template<typename U, typename enable =
-        std::enable_if_t<std::is_convertible_v<U*,T*> && Policy::allow_release>>
+        std::enable_if_t<std::is_convertible_v<U*,T*> && !Policy::is_sealed>>
     explicit basic_observable_ptr(U* value) :
         basic_observable_ptr(get_block_from_object_(value), value) {}
 
@@ -431,7 +434,7 @@ public:
     *         using @ref make_observable() instead of this constructor.
     */
     template<typename U, typename enable =
-        std::enable_if_t<std::is_convertible_v<U*,T*> && Policy::allow_release>>
+        std::enable_if_t<std::is_convertible_v<U*,T*> && !Policy::is_sealed>>
     explicit basic_observable_ptr(U* value, Deleter del) :
         basic_observable_ptr(get_block_from_object_(value), value, std::move(del)) {}
 
@@ -511,10 +514,10 @@ public:
     /// Replaces the managed object.
     /** \param ptr The new object to manage (can be `nullptr`, then this is equivalent to
     *              @ref reset())
-    *   \note This function is enabled only if `Policy::allow_release` is true.
+    *   \note This function is enabled only if `Policy::is_sealed` is false.
     */
     template<typename U, typename enable =
-        std::enable_if_t<std::is_convertible_v<U*,T*> && Policy::allow_release>>
+        std::enable_if_t<std::is_convertible_v<U*,T*> && !Policy::is_sealed>>
     void reset(U* ptr) {
         // Copy old pointer
         T* old_ptr = ptr_deleter.data;
@@ -556,14 +559,14 @@ public:
     /** \return A pointer to the un-managed object
     *   \note The returned pointer, if not `nullptr`, becomes owned by the caller and
     *         must be either manually deleted, or managed by another shared pointer.
-    *         This function is enabled only if `Policy::allow_release` is true.
+    *         This function is enabled only if `Policy::is_sealed` is false.
     *         If the type `T` inherits from @ref basic_enable_observer_from_this,
     *         then existing existing observer pointers will still see the object as
     *         valid until the object is actually deleted by the caller. Otherwise,
     *         existing observer pointers will be immediately marked as expired.
     */
     template<typename U = T, typename enable =
-        std::enable_if_t<std::is_same_v<U,T> && Policy::allow_release>>
+        std::enable_if_t<std::is_same_v<U,T> && !Policy::is_sealed>>
     T* release() noexcept {
         T* old_ptr = ptr_deleter.data;
         if (ptr_deleter.data) {
@@ -630,17 +633,17 @@ public:
 *   \return The new basic_observable_ptr
 *   \note Custom deleters are not supported by this function. If you require
 *         a custom deleter, please use the `basic_observable_ptr` constructors
-*         directly. If `Policy::allow_release` is false, this function will allocate the
+*         directly. If `Policy::is_sealed` is true, this function will allocate the
 *         pointed object and the control block in a single buffer. Otherwise, they will be
 *         allocated in separate buffers, as that would prevent writing
 *         @ref basic_observable_ptr::release(). If releasing the pointer is not needed, consider
-*         setting `Policy::allow_release` to false.
+*         setting `Policy::is_sealed` to true.
 *   \see make_observable_unique
 *   \see make_observable_sealed
 */
 template<typename T, typename Policy, typename ... Args>
 auto make_observable(Args&& ... args) {
-    if constexpr (Policy::allow_release) {
+    if constexpr (!Policy::is_sealed) {
         return basic_observable_ptr<T, default_delete, Policy>(
             new T(std::forward<Args>(args)...));
     } else {
@@ -1062,13 +1065,13 @@ bool operator!= (const basic_observer_ptr<T,Policy>& first, const basic_observer
 *   This provides the @ref observer_from_this() member function, which returns
 *   a new observer pointer to the object. For this mechanism to work,
 *   the class must inherit publicly from @ref basic_enable_observer_from_this.
-*   If the policy has `Policy::allow_release` as false, then the object must
+*   If the policy has `Policy::is_sealed` as true, then the object must
 *   be owned by a `basic_observable_ptr` instance when calling @ref observer_from_this().
 *   If the latter condition is not satisfied, then @ref observer_from_this() will
 *   throw @ref bad_observer_from_this.
 *
 *   **Corner cases.**
-*    - If `Policy::allow_release` is false, and a class `A` inherits from both another class `B`
+*    - If `Policy::is_sealed` is true, and a class `A` inherits from both another class `B`
 *      and `basic_enable_observer_from_this<A,...>`, and it is owned by a
 *      `basic_observable_ptr<B,...>`. The function @ref observer_from_this() returns a valid pointer
 *      if ownership is acquired from a raw `A*`, but will throw if ownership is acquired from a raw
@@ -1114,8 +1117,8 @@ bool operator!= (const basic_observer_ptr<T,Policy>& first, const basic_observer
 *           ptr->basic_enable_observer_from_this<B,Policy>::observer_from_this(); // valid B*
 *      ```
 *
-*     - Calling `observer_from_this()` from the object's constructor. If `Policy::allow_release` is
-*       true, this is allowed and will return a valid observer pointer. Otherwise,
+*     - Calling `observer_from_this()` from the object's constructor. If `Policy::is_sealed` is
+*       false, this is allowed and will return a valid observer pointer. Otherwise,
 *       @ref bad_observer_from_this will be thrown.
 *
 *   \see enable_observer_from_this_unique
@@ -1128,7 +1131,7 @@ class basic_enable_observer_from_this : public virtual details::enable_observer_
     using control_block_policy = typename Policy::control_block_policy;
 
 protected:
-    basic_enable_observer_from_this() noexcept(!Policy::allow_release) = default;
+    basic_enable_observer_from_this() noexcept(Policy::is_sealed) = default;
 
     basic_enable_observer_from_this(const basic_enable_observer_from_this&) noexcept {
         // Do not copy the other object's observer, this would be an
@@ -1164,11 +1167,11 @@ public:
     *   the object was allocated on the stack, or if it is owned by another
     *   type of smart pointer, then this function will return nullptr.
     */
-    observer_type observer_from_this() noexcept(Policy::allow_release) {
+    observer_type observer_from_this() noexcept(!Policy::is_sealed) {
         static_assert(std::is_base_of_v<basic_enable_observer_from_this,std::decay_t<T>>,
             "T must inherit from basic_enable_observer_from_this<T>");
 
-        if constexpr (!Policy::allow_release) {
+        if constexpr (Policy::is_sealed) {
             if (!this->this_control_block) {
                 throw bad_observer_from_this{};
             }
@@ -1183,11 +1186,11 @@ public:
     *   the object was allocated on the stack, or if it is owned by another
     *   type of smart pointer, then this function will return nullptr.
     */
-    const_observer_type observer_from_this() const noexcept(Policy::allow_release) {
+    const_observer_type observer_from_this() const noexcept(!Policy::is_sealed) {
         static_assert(std::is_base_of_v<basic_enable_observer_from_this,std::decay_t<T>>,
             "T must inherit from basic_enable_observer_from_this<T>");
 
-        if constexpr (!Policy::allow_release) {
+        if constexpr (Policy::is_sealed) {
             if (!this->this_control_block) {
                 throw bad_observer_from_this{};
             }
