@@ -3489,6 +3489,54 @@ TEST_CASE("observer from this heap", "[observer_from_this]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("observer from this stack virtual sealed", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_object_observer_from_this_virtual_sealed obj;
+        const test_object_observer_from_this_virtual_sealed& cobj = obj;
+
+        REQUIRE_THROWS_AS(
+            obj.observer_from_this(),
+            oup::bad_observer_from_this);
+
+        REQUIRE_THROWS_AS(
+            cobj.observer_from_this(),
+            oup::bad_observer_from_this);
+
+        REQUIRE(instances == 1);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this heap virtual sealed", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_object_observer_from_this_virtual_sealed* obj = new test_object_observer_from_this_virtual_sealed;
+        const test_object_observer_from_this_virtual_sealed* cobj = obj;
+
+        REQUIRE_THROWS_AS(
+            obj->observer_from_this(),
+            oup::bad_observer_from_this);
+
+        REQUIRE_THROWS_AS(
+            cobj->observer_from_this(),
+            oup::bad_observer_from_this);
+
+        REQUIRE(instances == 1);
+
+        delete obj;
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
     memory_tracker mem_track;
 
@@ -3576,6 +3624,22 @@ TEST_CASE("observer from this in constructor multiple inheritance sealed", "[obs
         REQUIRE(instances == 1);
         REQUIRE(ptr->ptr.expired() == false);
         REQUIRE(ptr->ptr.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this in constructor sealed virtual throws", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        REQUIRE_THROWS_AS(
+            (oup::make_observable<test_object_observer_from_this_constructor_bad,sealed_virtual_policy>()),
+            oup::bad_observer_from_this);
+
+        REQUIRE(instances == 0);
     }
 
     REQUIRE(instances == 0);

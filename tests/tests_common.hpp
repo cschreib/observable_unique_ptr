@@ -50,6 +50,16 @@ struct test_object_observer_from_this_sealed :
         oup::enable_observer_from_this_sealed<test_object_observer_from_this_sealed>(block) {}
 };
 
+struct sealed_virtual_policy  {
+    static constexpr bool is_sealed = true;
+    static constexpr bool is_enable_observer_base_virtual = true;
+    using control_block_policy = oup::default_control_block_policy;
+};
+
+struct test_object_observer_from_this_virtual_sealed :
+    public test_object,
+    public oup::basic_enable_observer_from_this<test_object_observer_from_this_virtual_sealed, sealed_virtual_policy> {};
+
 struct test_object_observer_from_this_derived_unique :
     public test_object_observer_from_this_unique {};
 
@@ -94,6 +104,17 @@ struct test_object_observer_from_this_constructor_sealed :
 
     explicit test_object_observer_from_this_constructor_sealed(control_block_type& block) :
         oup::enable_observer_from_this_sealed<test_object_observer_from_this_constructor_sealed>(block) {
+        ptr = observer_from_this();
+    }
+};
+
+struct test_object_observer_from_this_constructor_bad :
+    public test_object,
+    public oup::basic_enable_observer_from_this<test_object_observer_from_this_constructor_bad, sealed_virtual_policy> {
+
+    oup::observer_ptr<test_object_observer_from_this_constructor_bad> ptr;
+
+    explicit test_object_observer_from_this_constructor_bad() {
         ptr = observer_from_this();
     }
 };
