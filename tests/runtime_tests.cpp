@@ -3195,6 +3195,52 @@ TEST_CASE("observer from this sealed", "[observer_from_this]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("observer from this non virtual unique", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_from_this_non_virtual ptr = oup::make_observable<
+            test_object_observer_from_this_non_virtual_unique, unique_non_virtual_policy>();
+        const test_ptr_from_this_non_virtual& cptr = ptr;
+
+        test_optr_from_this_non_virtual_unique optr_from_this = ptr->observer_from_this();
+        test_optr_from_this_const_non_virtual_unique optr_from_this_const = cptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this_const.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this virtual sealed", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_sptr_from_this_virtual ptr = oup::make_observable<
+            test_object_observer_from_this_virtual_sealed, sealed_virtual_policy>();
+        const test_sptr_from_this_virtual& cptr = ptr;
+
+        test_optr_from_this_virtual_sealed optr_from_this = ptr->observer_from_this();
+        test_optr_from_this_const_virtual_sealed optr_from_this_const = cptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this_const.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("observer from this derived", "[observer_from_this]") {
     memory_tracker mem_track;
 

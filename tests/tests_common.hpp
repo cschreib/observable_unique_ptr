@@ -56,9 +56,23 @@ struct sealed_virtual_policy  {
     using control_block_policy = oup::default_control_block_policy;
 };
 
+struct unique_non_virtual_policy  {
+    static constexpr bool is_sealed = false;
+    static constexpr bool is_enable_observer_base_virtual = false;
+    using control_block_policy = oup::default_control_block_policy;
+};
+
 struct test_object_observer_from_this_virtual_sealed :
     public test_object,
     public oup::basic_enable_observer_from_this<test_object_observer_from_this_virtual_sealed, sealed_virtual_policy> {};
+
+struct test_object_observer_from_this_non_virtual_unique :
+    public test_object,
+    public oup::basic_enable_observer_from_this<test_object_observer_from_this_non_virtual_unique, unique_non_virtual_policy> {
+
+    explicit test_object_observer_from_this_non_virtual_unique(control_block_type& block) :
+        oup::basic_enable_observer_from_this<test_object_observer_from_this_non_virtual_unique, unique_non_virtual_policy>(block) {}
+};
 
 struct test_object_observer_from_this_derived_unique :
     public test_object_observer_from_this_unique {};
@@ -184,6 +198,8 @@ using test_sptr_thrower = oup::observable_sealed_ptr<test_object_thrower>;
 using test_ptr_thrower_with_deleter = oup::observable_unique_ptr<test_object_thrower,test_deleter>;
 using test_ptr_from_this = oup::observable_unique_ptr<test_object_observer_from_this_unique>;
 using test_sptr_from_this = oup::observable_sealed_ptr<test_object_observer_from_this_sealed>;
+using test_ptr_from_this_non_virtual = oup::basic_observable_ptr<test_object_observer_from_this_non_virtual_unique, oup::default_delete, unique_non_virtual_policy>;
+using test_sptr_from_this_virtual = oup::basic_observable_ptr<test_object_observer_from_this_virtual_sealed, oup::placement_delete, sealed_virtual_policy>;
 using test_cptr_from_this = oup::observable_unique_ptr<const test_object_observer_from_this_unique>;
 using test_csptr_from_this = oup::observable_sealed_ptr<const test_object_observer_from_this_sealed>;
 using test_ptr_from_this_derived = oup::observable_unique_ptr<test_object_observer_from_this_derived_unique>;
@@ -206,6 +222,10 @@ using test_optr_from_this_multi = oup::observer_ptr<test_object_observer_from_th
 using test_optr_from_this_multi_const = oup::observer_ptr<const test_object_observer_from_this_multi_unique>;
 using test_optr_from_this_sealed = oup::observer_ptr<test_object_observer_from_this_sealed>;
 using test_optr_from_this_const_sealed = oup::observer_ptr<const test_object_observer_from_this_sealed>;
+using test_optr_from_this_non_virtual_unique = oup::observer_ptr<test_object_observer_from_this_non_virtual_unique>;
+using test_optr_from_this_const_non_virtual_unique = oup::observer_ptr<const test_object_observer_from_this_non_virtual_unique>;
+using test_optr_from_this_virtual_sealed = oup::observer_ptr<test_object_observer_from_this_virtual_sealed>;
+using test_optr_from_this_const_virtual_sealed = oup::observer_ptr<const test_object_observer_from_this_virtual_sealed>;
 using test_optr_from_this_derived_sealed = oup::observer_ptr<test_object_observer_from_this_derived_sealed>;
 using test_optr_from_this_derived_const_sealed = oup::observer_ptr<const test_object_observer_from_this_derived_sealed>;
 using test_optr_from_this_multi_sealed = oup::observer_ptr<test_object_observer_from_this_multi_sealed>;
