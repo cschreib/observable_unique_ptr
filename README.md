@@ -13,6 +13,7 @@ Built and tested on:
 
 - [Introduction](#introduction)
 - [Usage](#usage)
+- [enable_observer_from_this](#enable_observer_from_this)
 - [Limitations](#limitations)
 - [Comparison spreadsheet](#comparison-spreadsheet)
 - [Speed benchmarks](#speed-benchmarks)
@@ -83,7 +84,14 @@ int main() {
 }
 ```
 
-As with `std::shared_ptr`/`std::weak_ptr`, if you need to obtain an observer pointer to an object when you only have `this` (i.e., from a member function), you can inherit from `oup::enable_observer_from_this<T>` to gain access to the `observer_from_this()` member function. This function will return a valid observer pointer as long as the object is owned by a unique or sealed pointer, and will return `nullptr` in all other cases. Contrary to `std::enable_shared_from_this<T>`, this feature naturally supports multiple inheritance.
+
+## enable_observer_from_this
+
+As with `std::shared_ptr`/`std::weak_ptr`, if you need to obtain an observer pointer to an object when you only have `this` (i.e., from a member function), you can inherit from `oup::enable_observer_from_this_unique<T>` or `oup::enable_observer_from_this_sealed<T>` (depending on the type of the owner pointer) to gain access to the `observer_from_this()` member function. Contrary to `std::enable_shared_from_this<T>`, this function is able to return a valid observer pointer at all times, even if the object is being constructed or is not owned by a unique or sealed pointer. Also contrary to `std::enable_shared_from_this<T>`, this feature naturally supports multiple inheritance.
+
+To achieve this, the price to pay is that `oup::enable_observer_from_this_unique<T>` uses virtual inheritance, while `oup::enable_observer_from_this_sealed<T>` requires `T`'s constructor to take a control block as input (thereby preventing `T` from being default-constructible, copiable, or movable).
+
+If these trade-offs are not appropriate for your use cases, they can be fine-tuned using the generic classes `basic_observable_pointer<T,Deleter,Policy>`, `basic_observer_ptr<T,Policy>`, and `basic_enable_observer_from_this<T,Policy>`. Please see the documentation for more information on policies.
 
 
 ## Limitations
@@ -151,6 +159,8 @@ Detail of the benchmarks:
  - Create observer: construct an observer pointer from an owner pointer.
  - Create observer copy: construct a new observer pointer from another observer pointer.
  - Dereference observer: get a reference to the underlying object from an observer pointer.
+
+The benchmarks were last ran for v0.4.0.
 
 *Compiler: gcc 9.3.0, std: libstdc++, OS: linux 5.1.0, CPU: Ryzen 5 2600:*
 
