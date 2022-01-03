@@ -266,10 +266,6 @@ public:
     using deleter_type = Deleter;
 
 protected:
-
-    template<typename U>
-    static constexpr bool has_enable_observer_from_this = has_enable_observer_from_this<U, Policy>;
-
     control_block_type* block = nullptr;
     details::ptr_and_deleter<T, Deleter> ptr_deleter;
 
@@ -313,7 +309,7 @@ protected:
         }
 
         if constexpr (!Policy::is_sealed && Policy::is_enable_observer_base_virtual &&
-                      has_enable_observer_from_this<U>) {
+                      has_enable_observer_from_this<U, Policy>) {
             p->this_control_block->push_ref();
             return p->this_control_block;
         }
@@ -589,7 +585,7 @@ public:
     T* release() noexcept {
         T* old_ptr = ptr_deleter.data;
         if (ptr_deleter.data) {
-            if (!has_enable_observer_from_this<T>) {
+            if (!has_enable_observer_from_this<T, Policy>) {
                 block->set_expired();
             }
 
