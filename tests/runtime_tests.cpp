@@ -3647,6 +3647,17 @@ TEST_CASE("observer from this in constructor sealed virtual throws", "[observer_
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("bad_observer_from_this", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    oup::bad_observer_from_this e;
+    REQUIRE(e.what() != nullptr);
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("static pointer cast unique from valid", "[pointer_cast]") {
     memory_tracker mem_track;
 
