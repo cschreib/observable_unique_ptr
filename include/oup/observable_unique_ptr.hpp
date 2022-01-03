@@ -200,8 +200,8 @@ namespace details {
         }
 
         // Friendship is required for assignment of the observer.
-        template<typename U, typename D, typename P>
-        friend class oup::basic_observable_ptr;
+        template<typename U, typename P, typename ... Args>
+        friend auto oup::make_observable(Args&& ... args);
     };
 }
 
