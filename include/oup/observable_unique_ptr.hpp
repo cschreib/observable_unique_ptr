@@ -559,7 +559,9 @@ public:
     T* release() noexcept {
         T* old_ptr = ptr_deleter.data;
         if (ptr_deleter.data) {
-            block->set_expired();
+            if (!has_enable_from_this<T>) {
+                block->set_expired();
+            }
 
             pop_ref_();
             block = nullptr;

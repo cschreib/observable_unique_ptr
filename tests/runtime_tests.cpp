@@ -3401,10 +3401,10 @@ TEST_CASE("observer from this after release", "[observer_from_this]") {
             test_optr_from_this_const optr_from_this_const = cptr2->observer_from_this();
 
             REQUIRE(instances == 1);
-            REQUIRE(optr_from_this.expired() == true);
-            REQUIRE(optr_from_this.get() == nullptr);
-            REQUIRE(optr_from_this_const.expired() == true);
-            REQUIRE(optr_from_this_const.get() == nullptr);
+            REQUIRE(optr_from_this.expired() == false);
+            REQUIRE(optr_from_this.get() == ptr2);
+            REQUIRE(optr_from_this_const.expired() == false);
+            REQUIRE(optr_from_this_const.get() == cptr2);
         }
 
         // The object holds the last reference to the control block
@@ -3435,7 +3435,7 @@ TEST_CASE("observer from this after release and reset", "[observer_from_this]") 
         REQUIRE(optr_from_this.expired() == false);
         REQUIRE(optr_from_this_const.expired() == false);
         REQUIRE(optr_from_this.get() == ptr2);
-        REQUIRE(optr_from_this_const.get() == ptr2);
+        REQUIRE(optr_from_this_const.get() == cptr2);
     }
 
     REQUIRE(instances == 0);
