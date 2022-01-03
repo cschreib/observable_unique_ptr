@@ -173,6 +173,7 @@ namespace details {
             }
         }
 
+    private:
         void pop_ref_() noexcept {
             this_control_block->pop_ref();
             if (this_control_block->has_no_ref()) {
@@ -199,8 +200,8 @@ namespace details {
         }
 
         // Friendship is required for assignment of the observer.
-        template<typename U, typename D>
-        friend class basic_observable_ptr;
+        template<typename U, typename D, typename P>
+        friend class oup::basic_observable_ptr;
     };
 }
 
