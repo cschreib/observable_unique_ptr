@@ -169,18 +169,25 @@ namespace details {
 /** This is a generic class, configurable with policies. See @ref observable_unique_ptr and
 *   @ref observable_sealed_ptr for more user-friendly usage and pre-configured policies.
 *   The available policies are:
-*    - Policy::allow_release: This must evaluate to a constexpr boolean value, which is
+*    - `Policy::allow_release`: This must evaluate to a constexpr boolean value, which is
 *       `true` if a raw pointer can be acquired and released from this smart pointer, or
 *       `false` if a raw pointer is forever "sealed" into this smart pointer. When this
 *       policy is set to `false`, the control block and the managed object are allocated
 *       separately into a single buffer.
-*    - Policy::control_block_policy::refcount_type: This must be an integer type
+*    -  `Policy::control_block_policy::refcount_type`: This must be an integer type
 *       (signed or unsigned) holding the number of observer references. The larger the
 *       type, the more concurrent references to the same object can exist, but the larger
 *       the memory overhead.
 *
 *   This smart pointer is meant to be used alongside @ref basic_observer_ptr, which is able
 *   to observe the lifetime of the stored raw pointer, without ownership.
+*
+*   \see observable_unique_ptr
+*   \see observable_sealed_ptr
+*   \see observer_ptr
+*   \see basic_enable_observer_from_this
+*   \see enable_observer_from_this_unique
+*   \see enable_observer_from_this_sealed
 */
 template<typename T, typename Deleter, typename Policy>
 class basic_observable_ptr {
@@ -223,10 +230,10 @@ protected:
     }
 
     /// Decide whether to allocate a new control block or not.
-    /** \note If the object inherits from enable_observer_from_this, and the policy allows
-    *         pointer release (by construction this will always be true when this function is called),
-    *         then we can just use the control block pointer stored in the enable_observer_from_this
-    *         base. Otherwise we need to allocate a new one.
+    /** \note If the object inherits from @ref basic_enable_observer_from_this, and
+    *         `Policy::allow_release` is true (by construction this will always be true when this
+    *         function is called), then we can just use the control block pointer stored in the
+    *         @ref basic_enable_observer_from_this base. Otherwise, we need to allocate a new one.
     */
     template<typename U>
     control_block_type* get_block_from_object_(U* p) {
@@ -243,10 +250,11 @@ protected:
         return allocate_block_();
     }
 
-    /// Fill in the observer pointer for objects inheriting from `basic_enable_observer_from_this`.
+    /// Fill in the observer pointer for objects inheriting from @ref basic_enable_observer_from_this.
     /** \note It is important to preserve the type of the pointer as supplied by the user.
-    *         It might be of a derived type that inherits from `basic_enable_observer_from_this`, while
-    *         the base type `T` might not. We still want to fill in the observer pointer if we can.
+    *         It might be of a derived type that inherits from @ref basic_enable_observer_from_this,
+    *         while the base type `T` might not. We still want to fill in the observer pointer if
+    *         we can.
     */
     template<typename U>
     void set_this_observer_(U* p) noexcept {
@@ -260,7 +268,6 @@ protected:
     /// Private constructor using pre-allocated control block.
     /** \param ctrl The control block pointer
     *   \param value The pointer to own
-    *   \note This is used by make_observable_unique().
     */
     template<typename U>
     basic_observable_ptr(control_block_type* ctrl, U* value) noexcept :
@@ -270,7 +277,6 @@ protected:
     /** \param ctrl The control block pointer
     *   \param value The pointer to own
     *   \param del The deleter to use
-    *   \note This is used by make_observable_sealed().
     */
     template<typename U>
     basic_observable_ptr(control_block_type* ctrl, U* value, Deleter del) noexcept :
@@ -279,7 +285,6 @@ protected:
     /// Private constructor using pre-allocated control block.
     /** \param ctrl The control block pointer
     *   \param value The pointer to own
-    *   \note This is used by make_observable_unique().
     */
     template<typename U>
     basic_observable_ptr(details::acquire_tag, control_block_type* ctrl, U* value) noexcept :
@@ -291,7 +296,6 @@ protected:
     /** \param ctrl The control block pointer
     *   \param value The pointer to own
     *   \param del The deleter to use
-    *   \note This is used by make_observable_sealed().
     */
     template<typename U>
     basic_observable_ptr(details::acquire_tag, control_block_type* ctrl, U* value, Deleter del) noexcept :
@@ -411,8 +415,8 @@ public:
     /// Explicit ownership capture of a raw pointer.
     /** \param value The raw pointer to take ownership of
     *   \note Do *not* manually delete this raw pointer after the
-    *         `observable_unique_ptr` is created. If possible, prefer
-    *         using `make_observable_unique()` instead of this constructor.
+    *         @ref observable_unique_ptr is created. If possible, prefer
+    *         using @ref make_observable() instead of this constructor.
     */
     template<typename U, typename enable =
         std::enable_if_t<std::is_convertible_v<U*,T*> && Policy::allow_release>>
@@ -423,8 +427,8 @@ public:
     /** \param value The raw pointer to take ownership of
     *   \param del The deleter object to use
     *   \note Do *not* manually delete this raw pointer after the
-    *         `basic_observable_ptr` is created. If possible, prefer
-    *         using `make_observable_unique()` instead of this constructor.
+    *         @ref basic_observable_ptr is created. If possible, prefer
+    *         using @ref make_observable() instead of this constructor.
     */
     template<typename U, typename enable =
         std::enable_if_t<std::is_convertible_v<U*,T*> && Policy::allow_release>>
@@ -505,7 +509,9 @@ public:
     }
 
     /// Replaces the managed object.
-    /** \param ptr The new object to manage (can be `nullptr`, then this is equivalent to `reset()`)
+    /** \param ptr The new object to manage (can be `nullptr`, then this is equivalent to
+    *              @ref reset())
+    *   \note This function is enabled only if `Policy::allow_release` is true.
     */
     template<typename U, typename enable =
         std::enable_if_t<std::is_convertible_v<U*,T*> && Policy::allow_release>>
@@ -538,11 +544,15 @@ public:
         }
     }
 
-    /// Releases ownership of the managed object and mark observers as expired.
+    /// Releases ownership of the managed object.
     /** \return A pointer to the un-managed object
     *   \note The returned pointer, if not `nullptr`, becomes owned by the caller and
     *         must be either manually deleted, or managed by another shared pointer.
-    *         Existing observer pointers will see the object as expired.
+    *         This function is enabled only if `Policy::allow_release` is true.
+    *         If the type `T` inherits from @ref basic_enable_observer_from_this,
+    *         then existing existing observer pointers will still see the object as
+    *         valid until the object is actually deleted by the caller. Otherwise,
+    *         existing observer pointers will be immediately marked as expired.
     */
     template<typename U = T, typename enable =
         std::enable_if_t<std::is_same_v<U,T> && Policy::allow_release>>
@@ -560,10 +570,10 @@ public:
     }
 
     /// Get a non-owning raw pointer to the pointed object, or `nullptr` if deleted.
-    /** \return `nullptr` if `expired()` is `true`, or the pointed object otherwise
+    /** \return A pointer to the owned object (or `nullptr` if none)
     *   \note This does not extend the lifetime of the pointed object.
     *         Therefore, when calling this function, you must
-    *         make sure that the owning pointer will not be reset until
+    *         make sure that the owning pointer will not be reset or destroyed until
     *         you are done using the raw pointer.
     */
     T* get() const noexcept {
@@ -572,10 +582,10 @@ public:
 
     /// Get a reference to the pointed object (undefined behavior if deleted).
     /** \return A reference to the pointed object
-    *   \note Using this function if `expired()` is `true` will lead to undefined behavior.
-    *         This does not extend the lifetime of the pointed object.
+    *   \note Using this function if this pointer owns no object will lead to undefined behavior.
+    *   \note This does not extend the lifetime of the pointed object.
     *         Therefore, when calling this function, you must
-    *         make sure that the owning pointer will not be reset until
+    *         make sure that the owning pointer will not be reset or destroyed until
     *         you are done using the raw pointer.
     */
     T& operator*() const noexcept {
@@ -583,18 +593,18 @@ public:
     }
 
     /// Get a non-owning raw pointer to the pointed object, or `nullptr` if deleted.
-    /** \return `nullptr` if no object is owned, or the pointed object otherwise
+    /** \return A pointer to the owned object (or `nullptr` if none)
     *   \note This does not extend the lifetime of the pointed object.
     *         Therefore, when calling this function, you must
-    *         make sure that the owning pointer will not be reset until
+    *         make sure that the owning pointer will not be reset or destroyed until
     *         you are done using the raw pointer.
     */
     T* operator->() const noexcept {
         return ptr_deleter.data;
     }
 
-    /// Check if this pointer points to a valid object.
-    /** \return `true` if the pointed object is valid, 'false' otherwise
+    /// Check if this pointer currently owns an object.
+    /** \return `true` if an object is owned, 'false' otherwise
     */
     explicit operator bool() const noexcept {
         return ptr_deleter.data != nullptr;
@@ -605,7 +615,7 @@ public:
 };
 
 
-/// Create a new `basic_observable_ptr` with a newly constructed object.
+/// Create a new @ref basic_observable_ptr with a newly constructed object.
 /** \param args Arguments to construct the new object
 *   \return The new basic_observable_ptr
 *   \note Custom deleters are not supported by this function. If you require
@@ -613,8 +623,10 @@ public:
 *         directly. If `Policy::allow_release` is false, this function will allocate the
 *         pointed object and the control block in a single buffer. Otherwise, they will be
 *         allocated in separate buffers, as that would prevent writing
-*         `basic_observable_ptr::release()`. If releasing the pointer is not needed, consider
+*         @ref basic_observable_ptr::release(). If releasing the pointer is not needed, consider
 *         setting `Policy::allow_release` to false.
+*   \see make_observable_unique
+*   \see make_observable_sealed
 */
 template<typename T, typename Policy, typename ... Args>
 auto make_observable(Args&& ... args) {
@@ -681,6 +693,11 @@ bool operator!= (const basic_observable_ptr<T,Deleter,Policy>& first,
 }
 
 /// Non-owning smart pointer that observes a @ref basic_observable_ptr.
+/** \see observer_ptr
+*   \see basic_observable_ptr
+*   \see observable_unique_ptr
+*   \see observable_sealed_ptr
+*/
 template<typename T, typename Policy>
 class basic_observer_ptr {
 private:
@@ -753,7 +770,7 @@ public:
         }
     }
 
-    /// Copy an existing `basic_observer_ptr` instance
+    /// Copy an existing @ref basic_observer_ptr instance
     /** \param value The existing observer pointer to copy
     */
     basic_observer_ptr(const basic_observer_ptr& value) noexcept :
@@ -763,7 +780,7 @@ public:
         }
     }
 
-    /// Copy an existing `basic_observer_ptr` instance
+    /// Copy an existing @ref basic_observer_ptr instance
     /** \param value The existing observer pointer to copy
     */
     template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
@@ -774,7 +791,7 @@ public:
         }
     }
 
-    /// Copy an existing `basic_observer_ptr` instance with explicit casting
+    /// Copy an existing @ref basic_observer_ptr instance with explicit casting
     /** \param manager The observer pointer to copy the observed data from
     *   \param value The casted pointer value to observe
     *   \note After this smart pointer is created, the source
@@ -792,9 +809,9 @@ public:
         }
     }
 
-    /// Move from an existing `basic_observer_ptr` instance
+    /// Move from an existing @ref basic_observer_ptr instance
     /** \param value The existing observer pointer to move from
-    *   \note After this `basic_observer_ptr` is created, the source
+    *   \note After this @ref basic_observer_ptr is created, the source
     *         pointer is set to null.
     */
     basic_observer_ptr(basic_observer_ptr&& value) noexcept : block(value.block), data(value.data) {
@@ -802,9 +819,9 @@ public:
         value.data = nullptr;
     }
 
-    /// Move from an existing `basic_observer_ptr` instance
+    /// Move from an existing @ref basic_observer_ptr instance
     /** \param value The existing observer pointer to move from
-    *   \note After this `basic_observer_ptr` is created, the source
+    *   \note After this @ref basic_observer_ptr is created, the source
     *         pointer is set to null. This constructor only takes part in
     *         overload resolution if U* is convertible to T*.
     */
@@ -814,7 +831,7 @@ public:
         value.data = nullptr;
     }
 
-    /// Move from an existing `basic_observer_ptr` instance with explicit casting
+    /// Move from an existing @ref basic_observer_ptr instance with explicit casting
     /** \param manager The observer pointer to copy the observed data from
     *   \param value The casted pointer value to observe
     *   \note After this smart pointer is created, the source
@@ -851,7 +868,7 @@ public:
         return *this;
     }
 
-    /// Copy an existing `basic_observer_ptr` instance
+    /// Copy an existing @ref basic_observer_ptr instance
     /** \param value The existing weak pointer to copy
     */
     basic_observer_ptr& operator=(const basic_observer_ptr& value) noexcept {
@@ -868,7 +885,7 @@ public:
         return *this;
     }
 
-    /// Copy an existing `basic_observer_ptr` instance
+    /// Copy an existing @ref basic_observer_ptr instance
     /** \param value The existing weak pointer to copy
     *   \note This operator only takes part in overload resolution if
     *         `U*` is convertible to `T*`.
@@ -884,7 +901,7 @@ public:
         return *this;
     }
 
-    /// Move from an existing `basic_observer_ptr` instance
+    /// Move from an existing @ref basic_observer_ptr instance
     /** \param value The existing weak pointer to move from
     *   \note After the assignment is complete, the source pointer is set to null.
     */
@@ -897,7 +914,7 @@ public:
         return *this;
     }
 
-    /// Move from an existing `basic_observer_ptr` instance
+    /// Move from an existing @ref basic_observer_ptr instance
     /** \param value The existing weak pointer to move from
     *   \note After the assignment is complete, the source pointer is set to null.
     *         This operator only takes part in overload resolution if
@@ -923,10 +940,10 @@ public:
     }
 
     /// Get a non-owning raw pointer to the pointed object, or `nullptr` if deleted.
-    /** \return `nullptr` if `expired()` is `true`, or the pointed object otherwise
+    /** \return `nullptr` if @ref expired() is `true`, or the pointed object otherwise
     *   \note This does not extend the lifetime of the pointed object. Therefore, when
     *         calling this function, you must make sure that the owning pointer
-    *         will not be reset until you are done using the raw pointer.
+    *         will not be reset or destroyed until you are done using the raw pointer.
     */
     T* get() const noexcept {
         return expired() ? nullptr : data;
@@ -947,17 +964,20 @@ public:
 
     /// Get a reference to the pointed object (undefined behavior if deleted).
     /** \return A reference to the pointed object
-    *   \note Using this function if `expired()` is `true` will lead to undefined behavior.
+    *   \note Using this function if @ref expired() is `true` will lead to undefined behavior.
+    *   \note This does not extend the lifetime of the pointed object. Therefore, when
+    *         calling this function, you must make sure that the owning pointer
+    *         will not be reset or destroyed until you are done using the raw pointer.
     */
     T& operator*() const noexcept {
         return *get();
     }
 
     /// Get a non-owning raw pointer to the pointed object, or `nullptr` if deleted.
-    /** \return `nullptr` if `expired()` is `true`, or the pointed object otherwise
+    /** \return `nullptr` if @ref expired() is `true`, or the pointed object otherwise
     *   \note This does not extend the lifetime of the pointed object. Therefore, when
     *         calling this function, you must make sure that the owning pointer
-    *         will not be reset until you are done using the raw pointer.
+    *         will not be reset or destroyed until you are done using the raw pointer.
     */
     T* operator->() const noexcept {
         return get();
@@ -1025,25 +1045,25 @@ bool operator!= (const basic_observer_ptr<T,Policy>& first, const basic_observer
 }
 
 
-/// Enables creating an observer pointer from `this`.
+/// Enables creating an @ref observer_ptr from `this`.
 /** If an object must be able to create an observer pointer to itself,
 *   without having direct access to the owner pointer (unique or sealed),
 *   then the object's class can inherit from basic_enable_observer_from_this.
-*   This provides the `observer_from_this()` member function, which returns
+*   This provides the @ref observer_from_this() member function, which returns
 *   a new observer pointer to the object. For this mechanism to work,
-*   the class must inherit publicly from basic_enable_observer_from_this.
+*   the class must inherit publicly from @ref basic_enable_observer_from_this.
 *   If the policy has `Policy::allow_release` as false, then the object must
-*   be owned by a `basic_observable_ptr` instance when calling observer_from_this().
-*   If the latter condition is not satisfied, then `observer_from_this()` will
-*   throw `oup::bad_observer_from_this`.
+*   be owned by a `basic_observable_ptr` instance when calling @ref observer_from_this().
+*   If the latter condition is not satisfied, then @ref observer_from_this() will
+*   throw @ref bad_observer_from_this.
 *
 *   **Corner cases.**
 *    - If `Policy::allow_release` is false, and a class `A` inherits from both another class `B`
 *      and `basic_enable_observer_from_this<A,...>`, and it is owned by a
-*      `basic_observable_ptr<B,...>`. The function `observer_from_this()` returns a valid pointer
+*      `basic_observable_ptr<B,...>`. The function @ref observer_from_this() returns a valid pointer
 *      if ownership is acquired from a raw `A*`, but will throw if ownership is acquired from a raw
 *      `B*`. Therefore, make sure to always acquire ownership on the most derived type, or simply
-*      use the factory function `make_observable()` which will enforce this automatically.
+*      use the factory function @ref make_observable() which will enforce this automatically.
 *
 *      ```
 *           struct B {
@@ -1068,8 +1088,8 @@ bool operator!= (const basic_observer_ptr<T,Policy>& first, const basic_observer
 *
 *    - Multiple inheritance. If a class `A` inherits from both another class `B` and
 *      `basic_enable_observer_from_this<A,...>`, and if `B` also inherits from
-*      `basic_enable_observer_from_this<B,...>`, then `observer_from_this()` will be an ambiguous
-*      call. But it can be resolved, and (contrary to `std::shared_ptr` and
+*      `basic_enable_observer_from_this<B,...>`, then @ref observer_from_this() will be an
+*      ambiguous call. But it can be resolved, and (contrary to `std::shared_ptr` and
 *      `std::enable_shared_from_this`) will return a valid pointer:
 *
 *      ```
@@ -1086,7 +1106,12 @@ bool operator!= (const basic_observer_ptr<T,Policy>& first, const basic_observer
 *
 *     - Calling `observer_from_this()` from the object's constructor. If `Policy::allow_release` is
 *       true, this is allowed and will return a valid observer pointer. Otherwise,
-*       `oup::bad_observer_from_this` will be thrown.
+*       @ref bad_observer_from_this will be thrown.
+*
+*   \see enable_observer_from_this_unique
+*   \see enable_observer_from_this_sealed
+*   \see basic_observable_ptr
+*   \see basic_observer_ptr
 */
 template<typename T, typename Policy>
 class basic_enable_observer_from_this : public virtual details::enable_observer_from_this_base<Policy> {
@@ -1163,7 +1188,7 @@ public:
 };
 
 
-/// Perform a `static_cast` for an `observable_unique_ptr`.
+/// Perform a `static_cast` for an @ref basic_observable_ptr.
 /** \param ptr The pointer to cast
 *   \note Ownership will be transfered to the returned pointer.
           If the input pointer is null, the output pointer will also be null.
@@ -1173,7 +1198,7 @@ basic_observable_ptr<U,D,P> static_pointer_cast(basic_observable_ptr<T,D,P>&& pt
     return basic_observable_ptr<U,D,P>(std::move(ptr), static_cast<U*>(ptr.get()));
 }
 
-/// Perform a `static_cast` for an `basic_observer_ptr`.
+/// Perform a `static_cast` for a @ref basic_observer_ptr.
 /** \param ptr The pointer to cast
 *   \note A new observer is returned, the input observer is not modified.
           If the input pointer is null, the output pointer will also be null.
@@ -1184,7 +1209,7 @@ basic_observer_ptr<U,Policy> static_pointer_cast(const basic_observer_ptr<T,Poli
     return basic_observer_ptr<U,Policy>(ptr, static_cast<U*>(ptr.raw_get()));
 }
 
-/// Perform a `static_cast` for an `basic_observer_ptr`.
+/// Perform a `static_cast` for a @ref basic_observer_ptr.
 /** \param ptr The pointer to cast
 *   \note A new observer is returned, the input observer is set to null.
           If the input pointer is null, the output pointer will also be null.
@@ -1195,7 +1220,7 @@ basic_observer_ptr<U,Policy> static_pointer_cast(basic_observer_ptr<T,Policy>&& 
     return basic_observer_ptr<U,Policy>(std::move(ptr), static_cast<U*>(ptr.raw_get()));
 }
 
-/// Perform a `const_cast` for an `observable_unique_ptr`.
+/// Perform a `const_cast` for an @ref basic_observable_ptr.
 /** \param ptr The pointer to cast
 *   \note Ownership will be transfered to the returned pointer.
           If the input pointer is null, the output pointer will also be null.
@@ -1205,7 +1230,7 @@ basic_observable_ptr<U,D,P> const_pointer_cast(basic_observable_ptr<T,D,P>&& ptr
     return basic_observable_ptr<U,D,P>(std::move(ptr), const_cast<U*>(ptr.get()));
 }
 
-/// Perform a `const_cast` for an `basic_observer_ptr`.
+/// Perform a `const_cast` for a @ref basic_observer_ptr.
 /** \param ptr The pointer to cast
 *   \note A new observer is returned, the input observer is not modified.
           If the input pointer is null, the output pointer will also be null.
@@ -1216,7 +1241,7 @@ basic_observer_ptr<U,Policy> const_pointer_cast(const basic_observer_ptr<T,Polic
     return basic_observer_ptr<U,Policy>(ptr, const_cast<U*>(ptr.raw_get()));
 }
 
-/// Perform a `const_cast` for an `basic_observer_ptr`.
+/// Perform a `const_cast` for a @ref basic_observer_ptr.
 /** \param ptr The pointer to cast
 *   \note A new observer is returned, the input observer is set to null.
           If the input pointer is null, the output pointer will also be null.
@@ -1227,7 +1252,7 @@ basic_observer_ptr<U,Policy> const_pointer_cast(basic_observer_ptr<T,Policy>&& p
     return basic_observer_ptr<U,Policy>(std::move(ptr), const_cast<U*>(ptr.raw_get()));
 }
 
-/// Perform a `dynamic_cast` for an `observable_unique_ptr`.
+/// Perform a `dynamic_cast` for a @ref basic_observable_ptr.
 /** \param ptr The pointer to cast
 *   \note Ownership will be transfered to the returned pointer unless the cast
 *         fails, in which case ownership remains in the original pointer, std::bad_cast
@@ -1244,7 +1269,7 @@ basic_observable_ptr<U,D,P> dynamic_pointer_cast(basic_observable_ptr<T,D,P>&& p
     return basic_observable_ptr<U,D,P>(std::move(ptr), &casted_object);
 }
 
-/// Perform a `dynamic_cast` for an `basic_observer_ptr`.
+/// Perform a `dynamic_cast` for a @ref basic_observer_ptr.
 /** \param ptr The pointer to cast
 *   \note A new observer is returned, the input observer is not modified.
           If the input pointer is null, or if the cast fails, the output pointer
@@ -1256,7 +1281,7 @@ basic_observer_ptr<U,Policy> dynamic_pointer_cast(const basic_observer_ptr<T,Pol
     return basic_observer_ptr<U,Policy>(ptr, dynamic_cast<U*>(ptr.get()));
 }
 
-/// Perform a `dynamic_cast` for an `basic_observer_ptr`.
+/// Perform a `dynamic_cast` for a @ref basic_observer_ptr.
 /** \param ptr The pointer to cast
 *   \note A new observer is returned, the input observer is set to null.
           If the input pointer is null, or if the cast fails, the output pointer
@@ -1275,21 +1300,33 @@ basic_observer_ptr<U,Policy> dynamic_pointer_cast(basic_observer_ptr<T,Policy>&&
 *   be released, e.g., to transfer the ownership to another owner.
 *
 *   The main difference with `std::unique_ptr` is that it allows creating
-*   `basic_observer_ptr` instances to observe the lifetime of the pointed object,
+*   @ref basic_observer_ptr instances to observe the lifetime of the pointed object,
 *   as one would do with `std::shared_ptr` and `std::weak_ptr`. The price to pay,
 *   compared to a standard `std::unique_ptr`, is the additional heap allocation
-*   of the reference-counting control block. Because `observable_unique_ptr`
-*   can be released (see `release()`), this cannot be optimized. If releasing
-*   is not a needed feature, consider using `observable_sealed_ptr` instead.
+*   of the reference-counting control block. Because @ref observable_unique_ptr
+*   can be released (see @ref basic_observable_ptr::release()), this cannot be
+*   optimized. If releasing is not a needed feature, consider using
+*   @ref observable_sealed_ptr instead.
+*
+*   If you need to create an @ref observer_ptr from a `this` pointer,
+*   consider making the object inheriting from @ref enable_observer_from_this_unique.
+*   This provides the same functionality as `std::enable_shared_from_this`, with
+*   a few additions. Please consult the documentation for @ref enable_observer_from_this_unique
+*   for more information.
 *
 *   Other notable points (either limitations imposed by the current
 *   implementation, or features not implemented simply because of lack of
 *   motivation):
-*    - because of the unique ownership, `observer_ptr` cannot extend
-*      the lifetime of the pointed object, hence `observable_unique_ptr` provides
+*    - because of the unique ownership, @ref observer_ptr cannot extend
+*      the lifetime of the pointed object, hence @ref observable_unique_ptr provides
 *      less thread-safety compared to std::shared_ptr.
-*    - `observable_unique_ptr` does not support arrays.
-*    - `observable_unique_ptr` does not allow custom allocators.
+*    - @ref observable_unique_ptr does not support arrays.
+*    - @ref observable_unique_ptr does not allow custom allocators.
+*
+*   \see basic_observable_ptr
+*   \see observer_ptr
+*   \see enable_observable_from_this_unique
+*   \see make_observable_unique
 */
 template<typename T, typename Deleter = default_delete>
 using observable_unique_ptr = basic_observable_ptr<T, Deleter, unique_policy>;
@@ -1302,57 +1339,73 @@ using observable_unique_ptr = basic_observable_ptr<T, Deleter, unique_policy>;
 *   instead.
 *
 *   The main difference with `std::unique_ptr` is that it allows creating
-*   `basic_observer_ptr` instances to observe the lifetime of the pointed object,
+*   @ref basic_observer_ptr instances to observe the lifetime of the pointed object,
 *   as one would do with `std::shared_ptr` and `std::weak_ptr`. The price to pay,
 *   compared to a standard `std::unique_ptr`, is the additional heap allocation
-*   of the reference-counting control block, which `make_observable_sealed()`
+*   of the reference-counting control block, which @ref make_observable_sealed()
 *   will optimize as a single heap allocation with the pointed object (as
 *   `std::make_shared()` does for `std::shared_ptr`).
+*
+*   If you need to create an @ref observer_ptr from a `this` pointer,
+*   consider making the object inheriting from @ref enable_observer_from_this_sealed.
+*   Compared to @ref enable_observer_from_this_unique, this has some additional
+*   limitations. Please consult the documenation for @ref enable_observer_from_this_sealed
+*   for more information.
 *
 *   Other notable points (either limitations imposed by the current
 *   implementation, or features not implemented simply because of lack of
 *   motivation):
-*    - because of the unique ownership, `observer_ptr` cannot extend
-*      the lifetime of the pointed object, hence `observable_sealed_ptr` provides
+*    - because of the unique ownership, @ref observer_ptr cannot extend
+*      the lifetime of the pointed object, hence @ref observable_sealed_ptr provides
 *      less thread-safety compared to `std::shared_ptr`.
-*    - `observable_sealed_ptr` does not support arrays.
-*    - `observable_sealed_ptr` does not allow custom allocators.
+*    - @ref observable_sealed_ptr does not support arrays.
+*    - @ref observable_sealed_ptr does not allow custom allocators.
+*
+*   \see basic_observable_ptr
+*   \see observer_ptr
+*   \see enable_observable_from_this_sealed
+*   \see make_observable_sealed
 */
 template<typename T>
 using observable_sealed_ptr = basic_observable_ptr<T, placement_delete, sealed_policy>;
 
 /// Non-owning smart pointer that observes a @ref observable_sealed_ptr or @ref observable_unique_ptr.
+/** \see basic_observer_ptr
+*/
 template<typename T>
 using observer_ptr = basic_observer_ptr<T, default_control_block_policy>;
 
+/// Enables creating an @ref observer_ptr from `this`.
 template<typename T>
 using enable_observer_from_this_unique = basic_enable_observer_from_this<T, unique_policy>;
 
 template<typename T>
 using enable_observer_from_this_sealed = basic_enable_observer_from_this<T, sealed_policy>;
 
-/// Create a new `observable_unique_ptr` with a newly constructed object.
+/// Create a new @ref observable_unique_ptr with a newly constructed object.
 /** \param args Arguments to construct the new object
 *   \return The new observable_unique_ptr
 *   \note Custom deleters are not supported by this function. If you require
-*         a custom deleter, please use the `observable_unique_ptr` constructors
-*         directly. Compared to `make_observable_sealed()`, this function
+*         a custom deleter, please use the @ref observable_unique_ptr constructors
+*         directly. Compared to @ref make_observable_sealed(), this function
 *         does not allocate the pointed object and the control block in a single
-*         buffer, as that would prevent writing `observable_unique_ptr::release()`.
-*         If releasing the pointer is not needed, consider using `observable_sealed_ptr`
+*         buffer, as that would prevent implementing @ref basic_observable_ptr::release().
+*         If releasing the pointer is not needed, consider using @ref observable_sealed_ptr
 *         instead.
+*   \see observable_unique_ptr
 */
 template<typename T, typename ... Args>
 observable_unique_ptr<T> make_observable_unique(Args&& ... args) {
     return make_observable<T, unique_policy>(std::forward<Args>(args)...);
 }
 
-/// Create a new `observable_sealed_ptr` with a newly constructed object.
+/// Create a new @ref observable_sealed_ptr with a newly constructed object.
 /** \param args Arguments to construct the new object
 *   \return The new observable_sealed_ptr
-*   \note This function is the only way to create an `observable_sealed_ptr`.
+*   \note This function is the only way to create an @ref observable_sealed_ptr.
 *         It will allocate the pointed object and the control block in a
 *         single buffer for better performance.
+*   \see observable_sealed_ptr
 */
 template<typename T, typename ... Args>
 observable_sealed_ptr<T> make_observable_sealed(Args&& ... args) {
