@@ -29,54 +29,6 @@ template<typename T, typename Policy, typename ... Args>
 auto make_observable(Args&& ... args);
 
 namespace details {
-    /// Implementation-defined class holding reference counts and expired flag.
-    /** All the details about this class are private, and only accessible to
-    *   `oup::` classes. As a user, you may only use this class to forward it
-    *   to `oup::` classes as required.
-    */
-    template<typename Policy>
-    class control_block {
-        template<typename T, typename D, typename P>
-        friend class oup::basic_observable_ptr;
-
-        template<typename T, typename P>
-        friend class oup::basic_observer_ptr;
-
-        template<typename P>
-        friend struct enable_observer_from_this_base;
-
-        template<typename U, typename P, typename ... Args>
-        friend auto oup::make_observable(Args&& ... args);
-
-        using refcount_type = typename Policy::refcount_type;
-
-        enum flag_elements {
-            flag_none = 0,
-            flag_expired = 1
-        };
-
-        refcount_type refcount = 1;
-        int flags = flag_none;
-
-        control_block() noexcept = default;
-        control_block(const control_block&) = delete;
-        control_block(control_block&&) = delete;
-        control_block& operator=(const control_block&) = delete;
-        control_block& operator=(control_block&&) = delete;
-
-        void push_ref() noexcept { ++refcount; }
-
-        void pop_ref() noexcept { --refcount; }
-
-        bool has_no_ref() const noexcept { return refcount == 0; }
-
-        bool expired() const noexcept { return (flags & flag_expired) != 0; }
-
-        void set_not_expired() noexcept { flags = flags & ~flag_expired; }
-
-        void set_expired() noexcept { flags = flags | flag_expired; }
-    };
-
     // This class enables optimizing the space taken by the Deleter object
     // when the deleter is stateless (has no member variable). It relies
     // on empty base class optimization. In C++20, this could be simplified
@@ -142,12 +94,65 @@ struct sealed_policy {
 
 namespace details {
     template<typename Policy>
+    struct enable_observer_from_this_base;
+}
+
+/// Implementation-defined class holding reference counts and expired flag.
+/** All the details about this class are private, and only accessible to
+*   `oup::` classes. As a user, you may only use this class to forward it
+*   to `oup::` classes as required.
+*/
+template<typename Policy>
+class basic_control_block {
+    template<typename T, typename D, typename P>
+    friend class oup::basic_observable_ptr;
+
+    template<typename T, typename P>
+    friend class oup::basic_observer_ptr;
+
+    template<typename P>
+    friend struct details::enable_observer_from_this_base;
+
+    template<typename U, typename P, typename ... Args>
+    friend auto oup::make_observable(Args&& ... args);
+
+    using refcount_type = typename Policy::refcount_type;
+
+    enum flag_elements {
+        flag_none = 0,
+        flag_expired = 1
+    };
+
+    refcount_type refcount = 1;
+    int flags = flag_none;
+
+    basic_control_block() noexcept = default;
+    basic_control_block(const basic_control_block&) = delete;
+    basic_control_block(basic_control_block&&) = delete;
+    basic_control_block& operator=(const basic_control_block&) = delete;
+    basic_control_block& operator=(basic_control_block&&) = delete;
+
+    void push_ref() noexcept { ++refcount; }
+
+    void pop_ref() noexcept { --refcount; }
+
+    bool has_no_ref() const noexcept { return refcount == 0; }
+
+    bool expired() const noexcept { return (flags & flag_expired) != 0; }
+
+    void set_not_expired() noexcept { flags = flags & ~flag_expired; }
+
+    void set_expired() noexcept { flags = flags | flag_expired; }
+};
+
+namespace details {
+    template<typename Policy>
     struct enable_observer_from_this_base {
         /// Policy for the control block
         using control_block_policy = typename Policy::control_block_policy;
 
         /// Type of the control block
-        using control_block_type = details::control_block<control_block_policy>;
+        using control_block_type = basic_control_block<control_block_policy>;
 
         mutable control_block_type* this_control_block = nullptr;
 
@@ -245,7 +250,7 @@ public:
     using control_block_policy = typename Policy::control_block_policy;
 
     /// Type of the control block
-    using control_block_type = details::control_block<control_block_policy>;
+    using control_block_type = basic_control_block<control_block_policy>;
 
     /// Type of the pointed object
     using element_type = T;
@@ -653,7 +658,7 @@ public:
 template<typename T, typename Policy, typename ... Args>
 auto make_observable(Args&& ... args) {
     using control_block_policy = typename Policy::control_block_policy;
-    using control_block_type = details::control_block<control_block_policy>;
+    using control_block_type = basic_control_block<control_block_policy>;
     using decayed_type = std::decay_t<T>;
 
     if constexpr (!Policy::is_sealed) {
@@ -764,7 +769,7 @@ public:
     using control_block_policy = Policy;
 
     /// Type of the control block
-    using control_block_type = details::control_block<control_block_policy>;
+    using control_block_type = basic_control_block<control_block_policy>;
 
     /// Type of the pointed object
     using element_type = T;
@@ -1209,7 +1214,7 @@ protected:
     using control_block_policy = typename Policy::control_block_policy;
 
     /// Type of the control block
-    using control_block_type = details::control_block<control_block_policy>;
+    using control_block_type = basic_control_block<control_block_policy>;
 
     /// Default constructor.
     /** \note This constructor is only enabled if `Policy::is_enable_observer_base_virtual` is true.
@@ -1423,6 +1428,13 @@ basic_observer_ptr<U,Policy> dynamic_pointer_cast(basic_observer_ptr<T,Policy>&&
     // NB: must use get() as dynamic cast of an expired pointer is UB
     return basic_observer_ptr<U,Policy>(std::move(ptr), dynamic_cast<U*>(ptr.get()));
 }
+
+/// Implementation-defined class holding reference counts and expired flag.
+/** All the details about this class are private, and only accessible to
+*   `oup::` classes. As a user, you may only use this class to forward it
+*   to `oup::` classes as required.
+*/
+using control_block = basic_control_block<default_control_block_policy>;
 
 /// Unique-ownership smart pointer, can be observed by @ref observer_ptr, ownership can be released.
 /** This smart pointer mimics the interface of `std::unique_ptr`, in that
