@@ -132,17 +132,32 @@ class basic_control_block {
     basic_control_block& operator=(const basic_control_block&) = delete;
     basic_control_block& operator=(basic_control_block&&) = delete;
 
-    void push_ref() noexcept { ++refcount; }
+    void push_ref() noexcept {
+        ++refcount;
+    }
 
-    void pop_ref() noexcept { --refcount; }
+    void pop_ref() noexcept {
+        --refcount;
+        if (has_no_ref()) {
+            delete this;
+        }
+    }
 
-    bool has_no_ref() const noexcept { return refcount == 0; }
+    bool has_no_ref() const noexcept {
+        return refcount == 0;
+    }
 
-    bool expired() const noexcept { return (flags & flag_expired) != 0; }
+    bool expired() const noexcept {
+        return (flags & flag_expired) != 0;
+    }
 
-    void set_not_expired() noexcept { flags = flags & ~flag_expired; }
+    void set_not_expired() noexcept {
+        flags = flags & ~flag_expired;
+    }
 
-    void set_expired() noexcept { flags = flags | flag_expired; }
+    void set_expired() noexcept {
+        flags = flags | flag_expired;
+    }
 };
 
 namespace details {
@@ -172,20 +187,13 @@ namespace details {
         enable_observer_from_this_base& operator=(const enable_observer_from_this_base&) = delete;
         enable_observer_from_this_base& operator=(enable_observer_from_this_base&&) = delete;
 
-        virtual ~enable_observer_from_this_base() {
+        virtual ~enable_observer_from_this_base() noexcept {
             if (this_control_block) {
                 clear_control_block_();
             }
         }
 
     private:
-        void pop_ref_() noexcept {
-            this_control_block->pop_ref();
-            if (this_control_block->has_no_ref()) {
-                delete this_control_block;
-            }
-        }
-
         void set_control_block_(control_block_type* b) noexcept {
             this_control_block = b;
             this_control_block->push_ref();
@@ -193,7 +201,7 @@ namespace details {
 
         void clear_control_block_() noexcept {
             this_control_block->set_expired();
-            pop_ref_();
+            this_control_block->pop_ref();
             this_control_block = nullptr;
         }
 
@@ -272,27 +280,14 @@ protected:
         return new control_block_type;
     }
 
-    static void pop_ref_(control_block_type* block) noexcept {
-        block->pop_ref();
-        if (block->has_no_ref()) {
-            delete block;
-        }
-    }
-
-    static void delete_and_pop_ref_(control_block_type* block, T* data, Deleter& deleter) noexcept {
+    static void delete_object_(control_block_type* block, T* data, Deleter& deleter) noexcept {
         deleter(data);
-
         block->set_expired();
-
-        pop_ref_(block);
+        block->pop_ref();
     }
 
-    void pop_ref_() noexcept {
-        pop_ref_(block);
-    }
-
-    void delete_and_pop_ref_() noexcept {
-        delete_and_pop_ref_(block, ptr_deleter.data, ptr_deleter);
+    void delete_object_() noexcept {
+        delete_object_(block, ptr_deleter.data, ptr_deleter);
     }
 
     /// Decide whether to allocate a new control block or not.
@@ -356,7 +351,7 @@ public:
     /// Destructor, releases owned object if any
     ~basic_observable_ptr() noexcept {
         if (ptr_deleter.data) {
-            delete_and_pop_ref_();
+            delete_object_();
             block = nullptr;
             ptr_deleter.data = nullptr;
         }
@@ -402,7 +397,7 @@ public:
         basic_observable_ptr(value != nullptr ? manager.block : nullptr, value) {
 
         if (manager.ptr_deleter.data != nullptr && value == nullptr) {
-            manager.delete_and_pop_ref_();
+            manager.delete_object_();
         }
 
         manager.block = nullptr;
@@ -422,7 +417,7 @@ public:
         basic_observable_ptr(value != nullptr ? manager.block : nullptr, value, std::move(del)) {
 
         if (manager.ptr_deleter.data != nullptr && value == nullptr) {
-            manager.delete_and_pop_ref_();
+            manager.delete_object_();
         }
 
         manager.block = nullptr;
@@ -459,7 +454,7 @@ public:
     */
     basic_observable_ptr& operator=(basic_observable_ptr&& value) noexcept {
         if (ptr_deleter.data) {
-            delete_and_pop_ref_();
+            delete_object_();
         }
 
         block = value.block;
@@ -482,7 +477,7 @@ public:
         std::enable_if_t<std::is_convertible_v<U*, T*> && std::is_convertible_v<D, Deleter>>>
     basic_observable_ptr& operator=(basic_observable_ptr<U,D,Policy>&& value) noexcept {
         if (ptr_deleter.data) {
-            delete_and_pop_ref_();
+            delete_object_();
         }
 
         block = value.block;
@@ -544,7 +539,7 @@ public:
         // Delete the old pointer
         // (this follows `std::unique_ptr` specs)
         if (old_ptr) {
-            delete_and_pop_ref_(old_block, old_ptr, ptr_deleter);
+            delete_object_(old_block, old_ptr, ptr_deleter);
         }
     }
 
@@ -565,7 +560,7 @@ public:
         // Delete the old pointer
         // (this follows `std::unique_ptr` specs)
         if (old_ptr) {
-            delete_and_pop_ref_(old_block, old_ptr, ptr_deleter);
+            delete_object_(old_block, old_ptr, ptr_deleter);
         }
     }
 
@@ -588,7 +583,7 @@ public:
                 block->set_expired();
             }
 
-            pop_ref_();
+            block->pop_ref();
             block = nullptr;
             ptr_deleter.data = nullptr;
         }
@@ -788,16 +783,9 @@ private:
     control_block_type* block = nullptr;
     T* data = nullptr;
 
-    void pop_ref_() noexcept {
-        block->pop_ref();
-        if (block->has_no_ref()) {
-            delete block;
-        }
-    }
-
     void set_data_(control_block_type* b, T* d) noexcept {
         if (data) {
-            pop_ref_();
+            block->pop_ref();
         }
 
         block = b;
@@ -821,7 +809,7 @@ public:
     /// Destructor
     ~basic_observer_ptr() noexcept {
         if (data) {
-            pop_ref_();
+            block->pop_ref();
             block = nullptr;
             data = nullptr;
         }
@@ -912,7 +900,7 @@ public:
     basic_observer_ptr(basic_observer_ptr<U,Policy>&& manager, T* value) noexcept :
         block(value != nullptr ? manager.block : nullptr), data(value) {
         if (manager.data != nullptr && value == nullptr) {
-            manager.pop_ref_();
+            manager.block->pop_ref();
         }
 
         manager.block = nullptr;
@@ -1000,7 +988,7 @@ public:
     /// Set this pointer to null.
     void reset() noexcept {
         if (data) {
-            pop_ref_();
+            block->pop_ref();
             block = nullptr;
             data = nullptr;
         }
