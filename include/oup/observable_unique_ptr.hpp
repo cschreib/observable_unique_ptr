@@ -119,10 +119,6 @@ struct policy_queries {
             !Policy::eoft_constructor_takes_control_block;
     }
 
-    static constexpr bool eoft_allow_default_constructor() noexcept {
-        return !eoft_base_constructor_needs_block();
-    }
-
     static constexpr bool owner_allow_release() noexcept {
         return !Policy::is_sealed;
     }
@@ -215,7 +211,7 @@ namespace details {
 
         mutable control_block_type* this_control_block = nullptr;
 
-        enable_observer_from_this_base() noexcept(queries::eoft_constructor_allocates()) {
+        enable_observer_from_this_base() noexcept(!queries::eoft_constructor_allocates()) {
             if constexpr (queries::eoft_constructor_allocates()) {
                 this_control_block = new control_block_type;
             }
@@ -263,31 +259,40 @@ template<typename T, typename Policy>
 constexpr bool has_enable_observer_from_this = std::is_base_of_v<
     details::enable_observer_from_this_base<Policy>, T>;
 
+    static constexpr bool allow_eoft_in_constructor = true;
+    static constexpr bool allow_eoft_multiple_inheritance = true;
+    static constexpr bool eoft_constructor_takes_control_block = true;
+
 /// Generic class for observable owning pointers.
 /** This is a generic class, configurable with policies. See @ref observable_unique_ptr and
 *   @ref observable_sealed_ptr for more user-friendly usage and pre-configured policies.
 *   The available policies are:
 *    - `Policy::is_sealed`: This must evaluate to a constexpr boolean value, which is
-*       `false` if a raw pointer can be acquired and released from this smart pointer, or
-*       `true` if a raw pointer is forever "sealed" into this smart pointer. When this
-*       policy is set to `true`, the control block and the managed object are allocated
-*       separately into a single buffer. This allows memory optimisations, but introduces
-*       multiple limitations on the API (no @ref release or @ref reset, and cannot create
-*       @ref observer_ptr from the object's constructor if inheriting from
-*       @ref basic_enable_observer_from_this).
-*    -  `Policy::is_eoft_base_virtual`: This must evaluate to a constexpr boolean value,
-*       which is `true` if @ref basic_enable_observer_from_this is allowed to use virtual
-*       inheritance in its implementation, and `false` otherwise. Using virtual inheritance
-*       offers more convenience, such as natural support for multiple inheritance of
-*       @ref basic_enable_observer_from_this.
-*       TODO: split this policy into:
-*         - allow_eoft_multiple_inheritance
-*         - allow_eoft_in_constructor
-*         - then define the rest from that; policies should dictate requirements on API, not impl
-*    -  `Policy::observer_policy::refcount_type`: This must be an integer type
-*       (signed or unsigned) holding the number of observer references. The larger the
-*       type, the more concurrent references to the same object can exist, but the larger
-*       the memory overhead.
+*      `false` if a raw pointer can be acquired and released from this smart pointer, or
+*      `true` if a raw pointer is forever "sealed" into this smart pointer. When this
+*      policy is set to `true`, the control block and the managed object are allocated
+*      separately into a single buffer. This allows memory optimisations, but introduces
+*      multiple limitations on the API (no @ref release or @ref reset, and cannot create
+*      @ref observer_ptr from the object's constructor if inheriting from
+*      @ref basic_enable_observer_from_this).
+*    - `Policy::allow_eoft_in_constructor`: This must evaluate to a constexpr boolean value,
+*      which is `true` if @ref basic_enable_observer_from_this::observer_from_this must return
+*      a valid observer pointer if called within the object's constructor. If 'false', the
+*      function is allowed to fail in this scenario (throw).
+*    - `Policy::allow_eoft_multiple_inheritance`: This must evaluate to a constexpr boolean value,
+*      which is `true` if @ref basic_enable_observer_from_this must support multiple inheritance,
+*      such that an object may inherit from @ref basic_enable_observer_from_this, directly or
+*      indirectly, from two or more of its base classes. If `false`, attempting to use multiple
+*      inheritance in this fashion will cause a compiler error.
+*    - `Policy::eoft_constructor_takes_control_block`: This must evaluate to a constexpr boolean
+*      value, which is `true` if @ref basic_enable_observer_from_this must request its control
+*      block through its constructor, forcing the object to accept a control block itself so it
+*      can be forwarded to @ref basic_enable_observer_from_this. If `false`,
+*      @ref basic_enable_observer_from_this only has a default constructor.
+*    - `Policy::observer_policy::refcount_type`: This must be an integer type
+*      (signed or unsigned) holding the number of observer references. The larger the
+*      type, the more concurrent references to the same object can exist, but the larger
+*      the memory overhead.
 *
 *   This smart pointer is meant to be used alongside @ref basic_observer_ptr, which is able
 *   to observe the lifetime of the stored raw pointer, without ownership.
@@ -1184,43 +1189,52 @@ namespace details {
 *   a new observer pointer to the object. For this mechanism to work,
 *   the class must inherit publicly from @ref basic_enable_observer_from_this.
 *
-*   If `Policy::is_sealed` is true, then the object must be owned by a @ref basic_observable_ptr
-*   instance when calling @ref observer_from_this(). If the latter condition is not satisfied,
-*   then @ref observer_from_this() will throw @ref bad_observer_from_this.
+*   The behavior and API of this class are dependent on the chosen policies.
+*   Using the following shortcuts:
+*    - `Policy::is_sealed` = `S`
+*    - `Policy::allow_eoft_in_constructor` = `C`
+*    - `Policy::allow_eoft_multiple_inheritance` = `M`
+*    - `Policy::eoft_constructor_takes_control_block` = `B`
 *
-*   If `Policy::is_eoft_base_virtual` is true, then:
-*    - if `Policy::is_sealed` is false, @ref basic_enable_observer_from_this will
-*      allocate its own control block in the default constructor, and this control
-*      block will be used by @ref basic_observable_ptr. This enables using
-*      @ref observer_from_this() at all times, even during the object's constructor,
-*      and even if the object is not owned by an instance of @ref basic_observable_ptr.
-*      The downside is that the default constructor allocates, and thus cannot be noexcept.
-*      The object `T` can have a default constructor.
-*    - if `Policy::is_sealed` is true, the control block will already be created by
-*      @ref make_observable, so @ref basic_enable_observer_from_this will not allocate its own
-*      control block in the default constructor, which is thus noexcept. The object `T` can have a
-*      default constructor. This means, however, that @ref observer_from_this() may only be called
-*      if `T` was created by @ref make_observable, and only after @ref make_observable has returned,
-*      otherwise @ref bad_observer_from_this will be thrown. In paticular, @ref observer_from_this()
-*      may not be called from within `T`'s constructor. If this is an issue, consider setting
-*      `Policy::is_eoft_base_virtual` to false.
+*   The behavior table is as follows:
+*   | S | C | M | B | API      | Notes             |
+*   |---|---|---|---|----------|-------------------|
+*   | 0 | 0 | 0 | 0 | a        |                   |
+*   | 1 | 0 | 0 | 0 | a        |                   |
+*   | 0 | 1 | 0 | 0 | b        |                   |
+*   | 1 | 1 | 0 | 0 | *error*  |                   |
+*   | 0 | 0 | 1 | 0 | c        |                   |
+*   | 1 | 0 | 1 | 0 | c        |                   |
+*   | 0 | 1 | 1 | 0 | d        | `unique_policy`   |
+*   | 1 | 1 | 1 | 0 | *error*  |                   |
+*   | 0 | 0 | 0 | 1 | e        |                   |
+*   | 1 | 0 | 0 | 1 | e        |                   |
+*   | 0 | 1 | 0 | 1 | e        |                   |
+*   | 1 | 1 | 0 | 1 | e        |                   |
+*   | 0 | 0 | 1 | 1 | e        |                   |
+*   | 1 | 0 | 1 | 1 | e        |                   |
+*   | 0 | 1 | 1 | 1 | e        |                   |
+*   | 1 | 1 | 1 | 1 | e        | `sealed_policy`   |
 *
-*   If `Policy::is_eoft_base_virtual` is false, then `T`'s constructor must take
-*   a non-const reference to a control block object as first argument, and forward it to
-*   this class. Instances of `T` are then only constructible through @ref make_observable,
-*   which will take care of creating one control block and forwarding it to `T`'s constructor.
-*   This enables using @ref observer_from_this() at all times, even during the object's constructor,
-*   and (if `Policy::is_sealed` is false) even if `T` is later released from its
-*   @ref basic_observable_ptr. The downside is that the object `T` cannot have a default
-*   constructor, and that child classes of `T` must forward the control block reference in their
-*   own constructor. Likewise, for this reason, `T` cannot be copied nor moved.
+*   APIs:
+*    - `a`: No virtual inheritance. Default constructor is allowed and is noexcept
+*           (does not allocate). @ref observer_from_this can fail is thus not noexcept.
+*    - `b`: No virtual inheritance. Default constructor is allowed and is not noexcept
+*           (allocates). @ref observer_from_this cannot fail is thus noexcept.
+*    - `c`: Same as `a`, but virtual inheritance is used.
+*    - `d`: Same as `b`, but virtual inheritance is used.
+*    - `e`: No virtual inheritance. Default constructor is not allowed. The object `T`
+*           must take a control block as its first argument for all its constructors,
+*           and forward it to @ref basic_enable_observer_from_this. This prevents making `T`
+*           copiable or movable. Instances of `T` must be created using @ref make_observable.
 *
 *   **Corner cases.**
 *    - Multiple inheritance. If a class `A` inherits from both another class `B` and
 *      `basic_enable_observer_from_this<A,...>`, and if `B` also inherits from
 *      `basic_enable_observer_from_this<B,...>`, then @ref observer_from_this() will be an
-*      ambiguous call. But it can be resolved, and (contrary to `std::shared_ptr` and
-*      `std::enable_shared_from_this`) will return a valid pointer regardless of the policy:
+*      ambiguous call. But, if `Policy::allow_eoft_multiple_inheritance` is true (and contrary to
+*      `std::shared_ptr` and `std::enable_shared_from_this`), this can be resolved and will return
+*      a valid pointer:
 *
 *      ```
 *           struct B : basic_enable_observer_from_this<B,Policy> {
@@ -1234,10 +1248,9 @@ namespace details {
 *           ptr->basic_enable_observer_from_this<B,Policy>::observer_from_this(); // valid B*
 *      ```
 *
-*     - Calling `observer_from_this()` from the object's constructor. Contrary to `std::shared_ptr`,
-*       this is valid in all cases, except if both `Policy::is_sealed` and
-*       `Policy::is_eoft_base_virtual` are true. Then, @ref bad_observer_from_this will
-*       be thrown.
+*     - Calling `observer_from_this()` from the object's constructor. If
+*       `Policy::allow_eoft_in_constructor` is true (and contrary to `std::shared_ptr`),
+*       this is possible. Otherwise, @ref bad_observer_from_this will be thrown.
 *
 *   \see enable_observer_from_this_unique
 *   \see enable_observer_from_this_sealed
@@ -1264,30 +1277,32 @@ protected:
     using control_block_type = basic_control_block<observer_policy>;
 
     /// Default constructor.
-    /** \note This constructor is only enabled if `Policy::is_eoft_base_virtual` is true.
-    *         If `Policy::is_sealed` is false, this will allocate the control block,
-    *         which prevents this constructor from being `noexcept`.
+    /** \note This constructor is only enabled if `Policy::eoft_constructor_takes_control_block` is
+    *         false. If `Policy::is_sealed` is false and `Policy::allow_eoft_in_constructor` is
+    *         true, this will allocate the control block, which prevents this constructor from being
+    *         `noexcept`.
     */
     template<typename U = T, typename enable =
-        std::enable_if_t<std::is_same_v<U,T> && queries::eoft_allow_default_constructor()>>
+        std::enable_if_t<std::is_same_v<U,T> && !queries::eoft_base_constructor_needs_block()>>
     basic_enable_observer_from_this() noexcept(!queries::eoft_constructor_allocates()) {};
 
     /// Early assignment of control block.
     /** \param block The pre-allocated control block
     *   \note This constructor allows setting the control block pointer early
     *         in the creation of the object. This enables calling @ref observer_from_this
-    *         from the object's constructor. This may only be used if `Policy::is_sealed` is
-    *         true, and with @ref make_observable. @ref make_observable will allocate the control
-    *         block and, if the object's constructor can take the control block as its first
-    *         constructor argument, the control block will be forwarded to the constructor.
+    *         from the object's constructor. This may only be used if
+    *         `Policy::eoft_constructor_takes_control_block` is true, and with @ref make_observable.
+    *         @ref make_observable will allocate the control block and, if the object's constructor
+    *         can take the control block as its first constructor argument, the control block will
+    *         be forwarded to the constructor.
     */
     explicit basic_enable_observer_from_this(control_block_type& block) noexcept : base(block) {}
 
     /// Copy constructor.
-    /** \note This constructor is only enabled if `Policy::is_eoft_base_virtual` is true.
+    /** \note This constructor is only enabled if `Policy::eoft_constructor_takes_control_block` is false.
     */
     template<typename U = T, typename enable =
-        std::enable_if_t<std::is_same_v<U,T> && queries::eoft_base_is_virtual()>>
+        std::enable_if_t<std::is_same_v<U,T> && !queries::eoft_base_constructor_needs_block()>>
     basic_enable_observer_from_this(const basic_enable_observer_from_this&)
         noexcept(!queries::eoft_constructor_allocates()) {
         // Do not copy the other object's observer, this would be an
@@ -1295,10 +1310,10 @@ protected:
     };
 
     /// Move constructor.
-    /** \note This constructor is only enabled if `Policy::is_eoft_base_virtual` is true.
+    /** \note This constructor is only enabled if `Policy::eoft_constructor_takes_control_block` is false.
     */
     template<typename U = T, typename enable =
-        std::enable_if_t<std::is_same_v<U,T> && queries::eoft_base_is_virtual()>>
+        std::enable_if_t<std::is_same_v<U,T> && !queries::eoft_base_constructor_needs_block()>>
     basic_enable_observer_from_this(basic_enable_observer_from_this&&)
         noexcept(!queries::eoft_constructor_allocates()) {
         // Do not move the other object's observer, this would be an
@@ -1306,10 +1321,6 @@ protected:
     };
 
     /// Copy assignment operator.
-    /** \note This operator is only enabled if `Policy::is_eoft_base_virtual` is true.
-    */
-    template<typename U = T, typename enable =
-        std::enable_if_t<std::is_same_v<U,T> && queries::eoft_base_is_virtual()>>
     basic_enable_observer_from_this& operator=(const basic_enable_observer_from_this&) noexcept {
         // Do not copy the other object's observer, this would be an
         // invalid reference.
@@ -1317,10 +1328,6 @@ protected:
     };
 
     /// Move assignment operator.
-    /** \note This operator is only enabled if `Policy::is_eoft_base_virtual` is true.
-    */
-    template<typename U = T, typename enable =
-        std::enable_if_t<std::is_same_v<U,T> && queries::eoft_base_is_virtual()>>
     basic_enable_observer_from_this& operator=(basic_enable_observer_from_this&&) noexcept {
         // Do not move the other object's observer, this would be an
         // invalid reference.
@@ -1339,13 +1346,18 @@ public:
     *   the object was allocated on the stack, or if it is owned by another
     *   type of smart pointer, then this function will return nullptr.
     */
-    observer_type observer_from_this() noexcept(queries::eoft_constructor_allocates()) {
+    observer_type observer_from_this()
+        noexcept(queries::eoft_constructor_allocates() ||
+                 queries::eoft_base_constructor_needs_block()) {
+
         static_assert(std::is_base_of_v<basic_enable_observer_from_this,std::decay_t<T>>,
             "T must inherit from basic_enable_observer_from_this<T>");
 
-        if constexpr (!queries::eoft_constructor_allocates()) {
-            // This check is not needed if the constructor allocates; then we
-            // always have a valid control block and this cannot fail.
+        if constexpr (!queries::eoft_constructor_allocates() &&
+                      !queries::eoft_base_constructor_needs_block()) {
+            // This check is not needed if the constructor allocates or if we ask for the
+            // control block in the constructor; then we always have a valid control block and
+            // this cannot fail.
             if (!this->this_control_block) {
                 throw bad_observer_from_this{};
             }
@@ -1360,14 +1372,18 @@ public:
     *   the object was allocated on the stack, or if it is owned by another
     *   type of smart pointer, then this function will return nullptr.
     */
-    const_observer_type observer_from_this() const noexcept(queries::eoft_constructor_allocates()) {
+    const_observer_type observer_from_this() const
+        noexcept(queries::eoft_constructor_allocates() ||
+                 queries::eoft_base_constructor_needs_block()) {
 
         static_assert(std::is_base_of_v<basic_enable_observer_from_this,std::decay_t<T>>,
             "T must inherit from basic_enable_observer_from_this<T>");
 
-        if constexpr (!queries::eoft_constructor_allocates()) {
-            // This check is not needed if the constructor allocates; then we
-            // always have a valid control block and this cannot fail.
+        if constexpr (!queries::eoft_constructor_allocates() &&
+                      !queries::eoft_base_constructor_needs_block()) {
+            // This check is not needed if the constructor allocates or if we ask for the
+            // control block in the constructor; then we always have a valid control block and
+            // this cannot fail.
             if (!this->this_control_block) {
                 throw bad_observer_from_this{};
             }
