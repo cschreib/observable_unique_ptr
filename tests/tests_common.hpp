@@ -52,14 +52,18 @@ struct test_object_observer_from_this_sealed :
 
 struct sealed_virtual_policy  {
     static constexpr bool is_sealed = true;
-    static constexpr bool is_enable_observer_base_virtual = true;
-    using control_block_policy = oup::default_control_block_policy;
+    static constexpr bool allow_eoft_in_constructor = false;
+    static constexpr bool allow_eoft_multiple_inheritance = true;
+    static constexpr bool eoft_constructor_takes_control_block = false;
+    using observer_policy = oup::default_observer_policy;
 };
 
 struct unique_non_virtual_policy  {
     static constexpr bool is_sealed = false;
-    static constexpr bool is_enable_observer_base_virtual = false;
-    using control_block_policy = oup::default_control_block_policy;
+    static constexpr bool allow_eoft_in_constructor = true;
+    static constexpr bool allow_eoft_multiple_inheritance = true;
+    static constexpr bool eoft_constructor_takes_control_block = true;
+    using observer_policy = oup::default_observer_policy;
 };
 
 struct test_object_observer_from_this_virtual_sealed :
