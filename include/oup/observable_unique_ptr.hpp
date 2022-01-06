@@ -103,7 +103,7 @@ namespace details {
 *   to `oup::` classes as required.
 */
 template<typename Policy>
-class basic_control_block {
+class basic_control_block final {
     template<typename T, typename D, typename P>
     friend class oup::basic_observable_ptr;
 
@@ -247,7 +247,7 @@ constexpr bool has_enable_observer_from_this = std::is_base_of_v<
 *   \see enable_observer_from_this_sealed
 */
 template<typename T, typename Deleter, typename Policy>
-class basic_observable_ptr {
+class basic_observable_ptr final {
 public:
     static_assert(!std::is_array_v<T>, "T[] is not supported");
 
@@ -756,7 +756,7 @@ bool operator!= (const basic_observable_ptr<T,Deleter,Policy>& first,
 *   \see observable_sealed_ptr
 */
 template<typename T, typename Policy>
-class basic_observer_ptr {
+class basic_observer_ptr final {
 public:
     static_assert(!std::is_array_v<T>, "T[] is not supported");
 
