@@ -290,6 +290,14 @@ protected:
         delete_object_(block, ptr_deleter.data, ptr_deleter);
     }
 
+    void delete_object_if_exists_() noexcept {
+        if (ptr_deleter.data) {
+            delete_object_();
+            block = nullptr;
+            ptr_deleter.data = nullptr;
+        }
+    }
+
     /// Decide whether to allocate a new control block or not.
     /** \note If the object inherits from @ref basic_enable_observer_from_this, and
     *         `Policy::is_sealed` is false (by construction this will always be the case when this
@@ -350,11 +358,7 @@ public:
 
     /// Destructor, releases owned object if any
     ~basic_observable_ptr() noexcept {
-        if (ptr_deleter.data) {
-            delete_object_();
-            block = nullptr;
-            ptr_deleter.data = nullptr;
-        }
+        delete_object_if_exists_();
     }
 
     /// Transfer ownership by implicit casting
@@ -396,8 +400,8 @@ public:
     basic_observable_ptr(basic_observable_ptr<U,D,Policy>&& manager, V* value) noexcept :
         basic_observable_ptr(value != nullptr ? manager.block : nullptr, value) {
 
-        if (manager.ptr_deleter.data != nullptr && value == nullptr) {
-            manager.delete_object_();
+        if (value == nullptr) {
+            manager.delete_object_if_exists_();
         }
 
         manager.block = nullptr;
@@ -416,8 +420,8 @@ public:
     basic_observable_ptr(basic_observable_ptr<U,D,Policy>&& manager, V* value, Deleter del) noexcept :
         basic_observable_ptr(value != nullptr ? manager.block : nullptr, value, std::move(del)) {
 
-        if (manager.ptr_deleter.data != nullptr && value == nullptr) {
-            manager.delete_object_();
+        if (value == nullptr) {
+            manager.delete_object_if_exists_();
         }
 
         manager.block = nullptr;
@@ -453,9 +457,7 @@ public:
     *         pointer is set to null and looses ownership.
     */
     basic_observable_ptr& operator=(basic_observable_ptr&& value) noexcept {
-        if (ptr_deleter.data) {
-            delete_object_();
-        }
+        delete_object_if_exists_();
 
         block = value.block;
         value.block = nullptr;
@@ -476,9 +478,7 @@ public:
     template<typename U, typename D, typename enable =
         std::enable_if_t<std::is_convertible_v<U*, T*> && std::is_convertible_v<D, Deleter>>>
     basic_observable_ptr& operator=(basic_observable_ptr<U,D,Policy>&& value) noexcept {
-        if (ptr_deleter.data) {
-            delete_object_();
-        }
+        delete_object_if_exists_();
 
         block = value.block;
         value.block = nullptr;
