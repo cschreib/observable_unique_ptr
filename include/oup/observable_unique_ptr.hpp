@@ -3,7 +3,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <cmath>
 #include <type_traits>
 #include <utility>
 #include <new>
@@ -47,6 +46,17 @@ namespace details {
         Bits <= 16, std::uint_least16_t, std::conditional_t<
         Bits <= 32, std::uint_least32_t, std::conditional_t<
         Bits <= 64, std::uint_least64_t, std::size_t>>>> {};
+
+    // courtesy of https://stackoverflow.com/a/23782939
+    constexpr std::size_t floor_log2(std::size_t x)
+    {
+        return x == 1 ? 0 : 1+floor_log2(x >> 1);
+    }
+
+    constexpr std::size_t ceil_log2(std::size_t x)
+    {
+        return x == 1 ? 0 : floor_log2(x - 1) + 1;
+    }
 }
 
 /// Simple default deleter
@@ -115,9 +125,8 @@ struct policy_queries {
         "enable_observer_from_this() must take a control block in its constructor if the "
         "policy is sealed and requires support for observer_from_this() in constructors.");
 
+    using policy = Policy;
     using observer_policy = typename Policy::observer_policy;
-    using control_block_storage_type = typename details::unsigned_least<
-        static_cast<std::size_t>(std::ceil(std::log2(observer_policy::max_observers)))>::type;
 
     static constexpr bool eoft_base_is_virtual() noexcept {
         return Policy::allow_eoft_multiple_inheritance &&
@@ -144,8 +153,10 @@ struct policy_queries {
 
 template<typename Policy>
 struct observer_policy_queries {
-    using control_block_storage_type = typename details::unsigned_least<1 +
-        static_cast<std::size_t>(std::ceil(std::log2(Policy::max_observers)))>::type;
+    using observer_policy = Policy;
+
+    using control_block_storage_type = typename details::unsigned_least<
+        1 + details::ceil_log2(observer_policy::max_observers)>::type;
 };
 
 namespace details {
