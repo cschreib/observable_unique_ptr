@@ -2,6 +2,8 @@
 #define OBSERVABLE_UNIQUE_PTR_INCLUDED
 
 #include <cstddef>
+#include <cstdint>
+#include <cmath>
 #include <type_traits>
 #include <utility>
 #include <new>
@@ -37,6 +39,14 @@ namespace details {
     struct ptr_and_deleter : Deleter {
         T* data = nullptr;
     };
+
+    // Struct providing an unsigned integer with at least `Bits` bits.
+    template<std::size_t Bits>
+    struct unsigned_least : std::conditional<
+        Bits <= 8, std::uint_least8_t, std::conditional_t<
+        Bits <= 16, std::uint_least16_t, std::conditional_t<
+        Bits <= 32, std::uint_least32_t, std::conditional_t<
+        Bits <= 64, std::uint_least64_t, std::size_t>>>> {};
 }
 
 /// Simple default deleter
@@ -72,7 +82,7 @@ struct placement_delete
 *   observed pointer has expired.
 */
 struct default_observer_policy {
-    using refcount_type = int; // TODO: change this into a request on max number of observer
+    static constexpr std::size_t max_observers = 2'000'000'000;
 };
 
 /// Unique ownership (with release) policy
@@ -105,6 +115,10 @@ struct policy_queries {
         "enable_observer_from_this() must take a control block in its constructor if the "
         "policy is sealed and requires support for observer_from_this() in constructors.");
 
+    using observer_policy = typename Policy::observer_policy;
+    using control_block_storage_type = typename details::unsigned_least<
+        static_cast<std::size_t>(std::ceil(std::log2(observer_policy::max_observers)))>::type;
+
     static constexpr bool eoft_base_is_virtual() noexcept {
         return Policy::allow_eoft_multiple_inheritance &&
             !Policy::eoft_constructor_takes_control_block;
@@ -126,6 +140,12 @@ struct policy_queries {
     static constexpr bool make_observer_single_allocation() noexcept {
         return Policy::is_sealed;
     }
+};
+
+template<typename Policy>
+struct observer_policy_queries {
+    using control_block_storage_type = typename details::unsigned_least<1 +
+        static_cast<std::size_t>(std::ceil(std::log2(Policy::max_observers)))>::type;
 };
 
 namespace details {
@@ -152,15 +172,12 @@ class basic_control_block final {
     template<typename U, typename P, typename ... Args>
     friend auto oup::make_observable(Args&& ... args);
 
-    using refcount_type = typename Policy::refcount_type;
+    using control_block_storage_type = typename observer_policy_queries<Policy>::control_block_storage_type;
 
-    enum flag_elements {
-        flag_none = 0,
-        flag_expired = 1
-    };
+    static constexpr control_block_storage_type highest_bit_mask =
+        1 << (sizeof(control_block_storage_type) * 8 - 1);
 
-    refcount_type refcount = 1;
-    int flags = flag_none;
+    control_block_storage_type storage = 1;
 
     basic_control_block() noexcept = default;
     basic_control_block(const basic_control_block&) = delete;
@@ -169,30 +186,30 @@ class basic_control_block final {
     basic_control_block& operator=(basic_control_block&&) = delete;
 
     void push_ref() noexcept {
-        ++refcount;
+        ++storage;
     }
 
     void pop_ref() noexcept {
-        --refcount;
+        --storage;
         if (has_no_ref()) {
             delete this;
         }
     }
 
     bool has_no_ref() const noexcept {
-        return refcount == 0;
+        return (storage ^ highest_bit_mask) == 0;
     }
 
     bool expired() const noexcept {
-        return (flags & flag_expired) != 0;
+        return (storage & highest_bit_mask) != 0;
     }
 
     void set_not_expired() noexcept {
-        flags = flags & ~flag_expired;
+        storage = storage & ~highest_bit_mask;
     }
 
     void set_expired() noexcept {
-        flags = flags | flag_expired;
+        storage = storage | highest_bit_mask;
     }
 };
 
@@ -271,9 +288,9 @@ constexpr bool has_enable_observer_from_this = std::is_base_of_v<
 *      `false` if a raw pointer can be acquired and released from this smart pointer, or
 *      `true` if a raw pointer is forever "sealed" into this smart pointer. When this
 *      policy is set to `true`, the control block and the managed object are allocated
-*      separately into a single buffer. This allows memory optimisations, but introduces
+*      separately into a single buffer. This allows memory optimizations, but introduces
 *      multiple limitations on the API (no @ref release or @ref reset, and cannot create
-*      @ref observer_ptr from the object's constructor if inheriting from
+*      @ref basic_observer_ptr from the object's constructor if inheriting from
 *      @ref basic_enable_observer_from_this).
 *    - `Policy::allow_eoft_in_constructor`: This must evaluate to a constexpr boolean value,
 *      which is `true` if @ref basic_enable_observer_from_this::observer_from_this must return
@@ -289,10 +306,11 @@ constexpr bool has_enable_observer_from_this = std::is_base_of_v<
 *      block through its constructor, forcing the object to accept a control block itself so it
 *      can be forwarded to @ref basic_enable_observer_from_this. If `false`,
 *      @ref basic_enable_observer_from_this only has a default constructor.
-*    - `Policy::observer_policy::refcount_type`: This must be an integer type
-*      (signed or unsigned) holding the number of observer references. The larger the
-*      type, the more concurrent references to the same object can exist, but the larger
-*      the memory overhead.
+*    - `Policy::observer_policy::max_observers`: This must evaluate to a constexpr integer value,
+*      representing the maximum number of observers for a given object that the library will
+*      support. This is used to define the integer type holding the number of observer references.
+*      The larger the type, the more concurrent references to the same object can exist, but the
+*      larger the memory overhead.
 *
 *   This smart pointer is meant to be used alongside @ref basic_observer_ptr, which is able
 *   to observe the lifetime of the stored raw pointer, without ownership.
