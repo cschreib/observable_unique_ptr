@@ -14,6 +14,7 @@ Built and tested on:
 - [Introduction](#introduction)
 - [Usage](#usage)
 - [enable_observer_from_this](#enable_observer_from_this)
+- [Policies](#policies)
 - [Limitations](#limitations)
 - [Comparison spreadsheet](#comparison-spreadsheet)
 - [Speed benchmarks](#speed-benchmarks)
@@ -89,9 +90,14 @@ int main() {
 
 As with `std::shared_ptr`/`std::weak_ptr`, if you need to obtain an observer pointer to an object when you only have `this` (i.e., from a member function), you can inherit from `oup::enable_observer_from_this_unique<T>` or `oup::enable_observer_from_this_sealed<T>` (depending on the type of the owner pointer) to gain access to the `observer_from_this()` member function. Contrary to `std::enable_shared_from_this<T>`, this function is `noexcept` and is able to return a valid observer pointer at all times, even if the object is being constructed or is not owned by a unique or sealed pointer. Also contrary to `std::enable_shared_from_this<T>`, this feature naturally supports multiple inheritance.
 
-To achieve this, the price to pay is that `oup::enable_observer_from_this_unique<T>` uses virtual inheritance, while `oup::enable_observer_from_this_sealed<T>` requires `T`'s constructor to take a control block as input (thereby preventing `T` from being default-constructible, copiable, or movable).
+To achieve this, the price to pay is that `oup::enable_observer_from_this_unique<T>` uses virtual inheritance, while `oup::enable_observer_from_this_sealed<T>` requires `T`'s constructor to take a control block as input (thereby preventing `T` from being default-constructible, copiable, or movable). If needed, these trade-offs can be controlled by policies, see below.
 
-If these trade-offs are not appropriate for your use cases, they can be fine-tuned using the generic classes `basic_observable_pointer<T,Deleter,Policy>`, `basic_observer_ptr<T,Policy>`, and `basic_enable_observer_from_this<T,Policy>`. Please refer to the API documentation for more information on policies.
+
+## Policies
+
+Similarly to `std::string` and `std::basic_string`, this library provides both "convenience" types (`oup::observable_unique_ptr<T,Deleter>`, `oup::observable_sealed_ptr<T>`, `oup::observer_ptr<T>`, `oup::enable_observable_from_this_unique<T>`, `oup::enable_observable_from_this_sealed<T>`) and "generic" types (`oup::basic_observable_ptr<T,Deleter,Policy>`, `oup::basic_observer_ptr<T,ObsPolicy>`, `oup::basic_enable_observable_from_this<T,Policy>`).
+
+If the trade-offs chosen to defined the "convenience" types are not appropriate for your use cases, they can be fine-tuned using the generic classes and providing your own choice of policies. Please refer to the documentation for more information on policies. In particular, policies will control most of the API and behavior of the `enable_observable_from_this` feature, as well as allowing you to tune the size of the reference counting object (speed/memory trade-off).
 
 
 ## Limitations
@@ -125,15 +131,16 @@ Labels:
 | Support arrays           | yes  | yes    | no       | yes    | yes    | no         | no         |
 | Support custom allocator | N/A  | yes    | no       | yes    | yes    | no         | no         |
 | Support custom deleter   | N/A  | N/A    | N/A      | yes    | yes(4) | yes        | no         |
-| Number of heap alloc.    | 0    | 0      | 0        | 1      | 1/2(5) | 2          | 1          |
+| Max number of observers  | inf. | ?(5)   | 2^31 - 1 | 1      | ?(5)   | 1          | 1          |
+| Number of heap alloc.    | 0    | 0      | 0        | 1      | 1/2(6) | 2          | 1          |
 | Size in bytes (64 bit)   |      |        |          |        |        |            |            |
 |  - Stack (per instance)  | 8    | 16     | 16       | 8      | 16     | 16         | 16         |
-|  - Heap (shared)         | 0    | 0      | 0        | 0      | 24     | 8          | 8          |
-|  - Total                 | 8    | 16     | 16       | 8      | 40     | 24         | 24         |
+|  - Heap (shared)         | 0    | 0      | 0        | 0      | 24     | 4          | 4          |
+|  - Total                 | 8    | 16     | 16       | 8      | 40     | 20         | 20         |
 | Size in bytes (32 bit)   |      |        |          |        |        |            |            |
 |  - Stack (per instance)  | 4    | 8      | 8        | 4      | 8      | 8          | 8          |
-|  - Heap (shared)         | 0    | 0      | 0        | 0      | 16     | 8          | 8          |
-|  - Total                 | 4    | 8      | 8        | 4      | 24     | 16         | 16         |
+|  - Heap (shared)         | 0    | 0      | 0        | 0      | 16     | 4          | 4          |
+|  - Total                 | 4    | 8      | 8        | 4      | 24     | 12         | 12         |
 
 Notes:
 
@@ -141,7 +148,8 @@ Notes:
  - (2) By construction, only one thread can own the pointer, therefore deletion is thread-safe.
  - (3) Yes if using `std::atomic<std::shared_ptr<T>>` and `std::atomic<std::weak_ptr<T>>`.
  - (4) Not if using `std::make_shared()`.
- - (5) 2 by default, or 1 if using `std::make_shared()`.
+ - (5) Not defined by the C++ standard. In practice, libstdc++ stores its reference count on an `_Atomic_word`, which for a common 64bit linux platform is a 4 byte signed integer, hence the limit will be 2^31 - 1. Microsoft's STL uses `_Atomic_counter_t`, which for a 64bit Windows platform is 4 bytes unsigned integer, hence the limit will be 2^32 - 1.
+ - (6) 2 by default, or 1 if using `std::make_shared()`.
 
 
 ## Speed benchmarks
