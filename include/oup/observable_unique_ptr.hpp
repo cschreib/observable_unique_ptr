@@ -47,15 +47,15 @@ namespace details {
         Bits <= 32, std::uint_least32_t, std::conditional_t<
         Bits <= 64, std::uint_least64_t, std::size_t>>>> {};
 
-    // courtesy of https://stackoverflow.com/a/23782939
+    // Courtesy of https://stackoverflow.com/a/23782939
     constexpr std::size_t floor_log2(std::size_t x)
     {
-        return x == 1 ? 0 : 1+floor_log2(x >> 1);
+        return x == 1 ? 0 : 1 + floor_log2(x >> 1);
     }
 
     constexpr std::size_t ceil_log2(std::size_t x)
     {
-        return x == 1 ? 0 : floor_log2(x - 1) + 1;
+        return x == 1 ? 0 : 1 + floor_log2(x - 1);
     }
 }
 
