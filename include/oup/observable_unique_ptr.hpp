@@ -117,6 +117,7 @@ struct sealed_policy {
     using observer_policy = default_observer_policy;
 };
 
+/// Metaprogramming class to query a policy for implementation choices
 template<typename Policy>
 struct policy_queries {
     // Check for incompatibilities in policy
@@ -128,33 +129,40 @@ struct policy_queries {
     using policy = Policy;
     using observer_policy = typename Policy::observer_policy;
 
+    /// Does @ref basic_enable_observer_from_this use virtual inheritance?
     static constexpr bool eoft_base_is_virtual() noexcept {
         return Policy::allow_eoft_multiple_inheritance &&
             !Policy::eoft_constructor_takes_control_block;
     }
 
+    /// Does @ref basic_enable_observer_from_this need a control block in its constructor?
     static constexpr bool eoft_base_constructor_needs_block() noexcept {
         return Policy::eoft_constructor_takes_control_block;
     }
 
+    /// Does @ref basic_enable_observer_from_this allocate in its constructor?
     static constexpr bool eoft_constructor_allocates() noexcept {
         return !Policy::is_sealed && Policy::allow_eoft_in_constructor &&
             !Policy::eoft_constructor_takes_control_block;
     }
 
+    /// Does @ref basic_observable_ptr allow releasing and acquiring raw pointers?
     static constexpr bool owner_allow_release() noexcept {
         return !Policy::is_sealed;
     }
 
+    /// Does @ref make_observable produce a single allocation?
     static constexpr bool make_observer_single_allocation() noexcept {
         return Policy::is_sealed;
     }
 };
 
+/// Metaprogramming class to query an observer policy for implementation choices
 template<typename Policy>
 struct observer_policy_queries {
     using observer_policy = Policy;
 
+    /// Storage type for the control block
     using control_block_storage_type = typename details::unsigned_least<
         1 + details::ceil_log2(observer_policy::max_observers)>::type;
 };
@@ -225,7 +233,6 @@ class basic_control_block final {
 };
 
 namespace details {
-
     template<typename Policy>
     struct enable_observer_from_this_base {
         /// Policy for the control block
@@ -362,7 +369,7 @@ public:
     /// Deleter type
     using deleter_type = Deleter;
 
-protected:
+private:
     control_block_type* block = nullptr;
     details::ptr_and_deleter<T, Deleter> ptr_deleter;
 
@@ -1210,7 +1217,7 @@ namespace details {
     };
 }
 
-/// Enables creating an @ref observer_ptr from `this`.
+/// Enables creating a @ref basic_observer_ptr from `this`.
 /** If an object is owned by a @ref basic_observable_ptr and must be able to create an observer
 *   pointer to itself, without having direct access to the owner pointer,
 *   then the object's class can inherit from @ref basic_enable_observer_from_this.
