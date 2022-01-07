@@ -1256,6 +1256,7 @@ namespace details {
 *           must take a control block as its first argument for all its constructors,
 *           and forward it to @ref basic_enable_observer_from_this. This prevents making `T`
 *           copiable or movable. Instances of `T` must be created using @ref make_observable.
+*           @ref observer_from_this cannot fail is thus noexcept.
 *
 *   **Corner cases.**
 *    - Multiple inheritance. If a class `A` inherits from both another class `B` and
