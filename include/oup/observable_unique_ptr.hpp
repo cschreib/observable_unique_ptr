@@ -1321,7 +1321,7 @@ protected:
     */
     template<typename U = T, typename enable =
         std::enable_if_t<std::is_same_v<U,T> && !queries::eoft_base_constructor_needs_block()>>
-    basic_enable_observer_from_this() noexcept(!queries::eoft_constructor_allocates()) {};
+    basic_enable_observer_from_this() noexcept(!queries::eoft_constructor_allocates()) {}
 
     /// Early assignment of control block.
     /** \param block The pre-allocated control block
@@ -1344,7 +1344,7 @@ protected:
         noexcept(!queries::eoft_constructor_allocates()) {
         // Do not copy the other object's observer, this would be an
         // invalid reference.
-    };
+    }
 
     /// Move constructor.
     /** \note This constructor is only enabled if `Policy::eoft_constructor_takes_control_block` is false.
@@ -1355,21 +1355,21 @@ protected:
         noexcept(!queries::eoft_constructor_allocates()) {
         // Do not move the other object's observer, this would be an
         // invalid reference.
-    };
+    }
 
     /// Copy assignment operator.
     basic_enable_observer_from_this& operator=(const basic_enable_observer_from_this&) noexcept {
         // Do not copy the other object's observer, this would be an
         // invalid reference.
         return *this;
-    };
+    }
 
     /// Move assignment operator.
     basic_enable_observer_from_this& operator=(basic_enable_observer_from_this&&) noexcept {
         // Do not move the other object's observer, this would be an
         // invalid reference.
         return *this;
-    };
+    }
 
 public:
     /// Type of observer pointers.
