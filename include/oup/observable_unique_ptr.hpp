@@ -191,10 +191,12 @@ class basic_control_block final {
     template<typename U, typename P, typename ... Args>
     friend auto oup::make_observable(Args&& ... args);
 
-    using control_block_storage_type = typename observer_policy_queries<Policy>::control_block_storage_type;
+    using control_block_storage_type =
+        typename observer_policy_queries<Policy>::control_block_storage_type;
 
     static constexpr control_block_storage_type highest_bit_mask =
-        1 << (sizeof(control_block_storage_type) * 8 - 1);
+        control_block_storage_type{1} <<
+            control_block_storage_type{sizeof(control_block_storage_type) * 8 - 1};
 
     control_block_storage_type storage = 1;
 
@@ -916,7 +918,8 @@ public:
 
     /// Create an observer pointer from an owning pointer.
     template<typename U, typename D, typename P, typename enable =
-        std::enable_if_t<std::is_convertible_v<U*, T*> && std::is_same_v<Policy, typename P::observer_policy>>>
+        std::enable_if_t<std::is_convertible_v<U*, T*> &&
+                         std::is_same_v<Policy, typename P::observer_policy>>>
     basic_observer_ptr(const basic_observable_ptr<U,D,P>& owner) noexcept :
         block(owner.block), data(owner.ptr_deleter.data) {
         if (block) {
@@ -980,7 +983,8 @@ public:
     *         overload resolution if U* is convertible to T*.
     */
     template<typename U, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
-    basic_observer_ptr(basic_observer_ptr<U,Policy>&& value) noexcept : block(value.block), data(value.data) {
+    basic_observer_ptr(basic_observer_ptr<U,Policy>&& value) noexcept :
+        block(value.block), data(value.data) {
         value.block = nullptr;
         value.data = nullptr;
     }
@@ -1011,7 +1015,8 @@ public:
     *   \note This operator only takes part in  overload resolution if
     *         `U*` is convertible to `T*`.
     */
-    template<typename U, typename D, typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
+    template<typename U, typename D, typename enable =
+        std::enable_if_t<std::is_convertible_v<U*, T*>>>
     basic_observer_ptr& operator=(const basic_observable_ptr<U,D,Policy>& owner) noexcept {
         set_data_(owner.block, owner.ptr_deleter.data);
 
