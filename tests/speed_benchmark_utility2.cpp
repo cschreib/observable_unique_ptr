@@ -49,19 +49,19 @@ void benchmark<T>::dereference_weak() {
 template struct benchmark<std::unique_ptr<int>>;
 template struct benchmark<std::unique_ptr<float>>;
 template struct benchmark<std::unique_ptr<std::string>>;
-template struct benchmark<std::unique_ptr<std::array<int,65'536>>>;
+template struct benchmark<std::unique_ptr<std::array<int, 65'536>>>;
 
 template struct benchmark<std::shared_ptr<int>>;
 template struct benchmark<std::shared_ptr<float>>;
 template struct benchmark<std::shared_ptr<std::string>>;
-template struct benchmark<std::shared_ptr<std::array<int,65'536>>>;
+template struct benchmark<std::shared_ptr<std::array<int, 65'536>>>;
 
 template struct benchmark<oup::observable_unique_ptr<int>>;
 template struct benchmark<oup::observable_unique_ptr<float>>;
 template struct benchmark<oup::observable_unique_ptr<std::string>>;
-template struct benchmark<oup::observable_unique_ptr<std::array<int,65'536>>>;
+template struct benchmark<oup::observable_unique_ptr<std::array<int, 65'536>>>;
 
 template struct benchmark<oup::observable_sealed_ptr<int>>;
 template struct benchmark<oup::observable_sealed_ptr<float>>;
 template struct benchmark<oup::observable_sealed_ptr<std::string>>;
-template struct benchmark<oup::observable_sealed_ptr<std::array<int,65'536>>>;
+template struct benchmark<oup::observable_sealed_ptr<std::array<int, 65'536>>>;
