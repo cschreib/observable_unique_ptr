@@ -198,9 +198,14 @@ class basic_control_block final {
     using control_block_storage_type =
         typename observer_policy_queries<Policy>::control_block_storage_type;
 
-    static constexpr control_block_storage_type highest_bit_mask =
-        control_block_storage_type{1}
-        << control_block_storage_type{sizeof(control_block_storage_type) * 8 - 1};
+    static constexpr control_block_storage_type get_highest_bit_mask() {
+        // NB: This is put in a function to avoid a spurious MSVC warning.
+        return static_cast<control_block_storage_type>(1)
+               << static_cast<control_block_storage_type>(
+                      sizeof(control_block_storage_type) * 8 - 1);
+    }
+
+    static constexpr control_block_storage_type highest_bit_mask = get_highest_bit_mask();
 
     control_block_storage_type storage = 1;
 
