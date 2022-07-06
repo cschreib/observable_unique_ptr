@@ -987,6 +987,26 @@ public:
     }
 
     /**
+     * \brief Create an observer pointer from an owning pointer of a different type.
+     * \param manager The owner pointer to copy the observed data from
+     * \param value The casted pointer value to observe
+     * \note The raw pointer `value` may or may not be related to the raw pointer
+     * owner by `manager`. This could be a pointer to any other object which is known
+     * to have the same lifetime.
+     */
+    template<
+        typename U,
+        typename D,
+        typename P,
+        typename enable = std::enable_if_t<std::is_same_v<Policy, typename P::observer_policy>>>
+    basic_observer_ptr(const basic_observable_ptr<U, D, P>& manager, T* value) noexcept :
+        block(manager.block), data(value) {
+        if (block) {
+            block->push_ref();
+        }
+    }
+
+    /**
      * \brief Copy an existing @ref basic_observer_ptr instance
      * \param value The existing observer pointer to copy
      */

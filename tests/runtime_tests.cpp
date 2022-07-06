@@ -1949,6 +1949,94 @@ TEST_CASE("observer explicit conversion copy constructor subobject", "[observer_
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("observer from null owner constructor", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner;
+        {
+            test_optr ptr{ptr_owner};
+            REQUIRE(instances == 0);
+            REQUIRE(ptr.get() == ptr_owner.get());
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from owner constructor", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object};
+        {
+            test_optr ptr{ptr_owner};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == ptr_owner.get());
+            REQUIRE(ptr.expired() == false);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from null owner casting constructor", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner;
+        {
+            test_optr ptr{ptr_owner, static_cast<test_object*>(nullptr)};
+            REQUIRE(instances == 0);
+            REQUIRE(ptr.get() == ptr_owner.get());
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from owner casting constructor", "[observer_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr ptr_owner{new test_object_derived};
+        {
+            test_optr ptr{ptr_owner, dynamic_cast<test_object_derived*>(ptr_owner.get())};
+            REQUIRE(instances == 1);
+            REQUIRE(ptr.get() == ptr_owner.get());
+            REQUIRE(ptr.expired() == false);
+
+            ptr_owner.reset();
+            REQUIRE(ptr.get() == nullptr);
+            REQUIRE(ptr.expired() == true);
+        }
+
+        REQUIRE(instances == 0);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("observer move constructor", "[observer_construction]") {
     memory_tracker mem_track;
 
