@@ -969,7 +969,10 @@ public:
         }
     }
 
-    /// Create an observer pointer from an owning pointer.
+    /**
+     * \brief Create an observer pointer from an owning pointer of a convertible type.
+     * \param owner The owner pointer to observe (can be null)
+     */
     template<
         typename U,
         typename D,
@@ -1010,12 +1013,9 @@ public:
      * \brief Copy an existing @ref basic_observer_ptr instance with explicit casting
      * \param manager The observer pointer to copy the observed data from
      * \param value The casted pointer value to observe
-     * \note After this smart pointer is created, the source
-     * pointer is set to null and looses ownership. The deleter
-     * is default constructed. The raw pointer `value` may or may
-     * not be related to the raw pointer observed by `manager`.
-     * This could be a pointer to any other object which is known to
-     * have the same lifetime.
+     * \note The raw pointer `value` may or may not be related to the raw pointer
+     * observed by `manager`. This could be a pointer to any other object which is known
+     * to have the same lifetime.
      */
     template<typename U>
     basic_observer_ptr(const basic_observer_ptr<U, Policy>& manager, T* value) noexcept :
@@ -1054,11 +1054,9 @@ public:
      * \brief Move from an existing @ref basic_observer_ptr instance with explicit casting
      * \param manager The observer pointer to copy the observed data from
      * \param value The casted pointer value to observe
-     * \note After this smart pointer is created, the source
-     * pointer is set to null and looses ownership. The deleter
-     * is default constructed. The raw pointer `value` may or may
-     * not be related to the raw pointer observed by `manager`.
-     * This could be a pointer to any other object which is known to
+     * \note After this smart pointer is created, the source pointer `manager` is set to
+     * null. The raw pointer `value` may or may not be related to the raw pointer observed
+     * by `manager`. This could be a pointer to any other object which is known to
      * have the same lifetime.
      */
     template<typename U>
