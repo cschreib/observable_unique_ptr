@@ -16,6 +16,7 @@ Built and tested on:
 - [enable_observer_from_this](#enable_observer_from_this)
 - [Policies](#policies)
 - [Limitations](#limitations)
+- [Thread safety](#thread-safety)
 - [Comparison spreadsheet](#comparison-spreadsheet)
 - [Speed benchmarks](#speed-benchmarks)
 - [Alternative implementation](#alternative-implementation)
@@ -31,7 +32,7 @@ The only difference between `observable_unique_ptr` and `observable_sealed_ptr` 
 
 These pointers are useful for cases where the shared-ownership of `std::shared_ptr` is not desirable, e.g., when lifetime must be carefully controlled and not be allowed to extend, yet non-owning/weak/observer references to the object may exist after the object has been deleted.
 
-Note: Because of the unique ownership model, observer pointers cannot extend the lifetime of the pointed object, hence this library provides less safety compared to `std::shared_ptr`/`std::weak_ptr`. This is also true of `std::unique_ptr`, and is a fundamental limitation of unique ownership. If this is an issue, simply use `std::shared_ptr`/`std::weak_ptr`.
+Note: Because of the unique ownership model, observer pointers cannot extend the lifetime of the pointed object, hence this library provides less safety compared to `std::shared_ptr`/`std::weak_ptr`. See the [Thread safety](#thread-safety) section. This is also true of `std::unique_ptr`, and is a fundamental limitation of unique ownership. If this is an issue, simply use `std::shared_ptr`/`std::weak_ptr`.
 
 
 ## Usage
@@ -104,8 +105,18 @@ If the trade-offs chosen to defined the "convenience" types are not appropriate 
 
 The following limitations are features that were not implemented simply because of lack of motivation.
 
+ - this library is not thread-safe, contrary to `std::shared_ptr`. See the [Thread safety](#thread-safety) section for more info.
  - this library does not support pointers to arrays, but `std::unique_ptr` and `std::shared_ptr` both do.
  - this library does not support custom allocators, but `std::shared_ptr` does.
+
+
+## Thread safety
+
+This library uses reference counting to handle observable and observer pointers. The current implementation does not use any synchronization mechanism (mutex, lock, etc.) to wrap operations on the reference counter. Therefore, it is unsafe to have an observable pointer on one thread being observed by observer pointers on another thread.
+
+The above could be fixed in the future by adding a configurable policy to enable or disable synchronization. However, the unique ownership model still imposes fundamental limitations on thread safety: an observer pointer cannot extend the lifetime of the observed object (like `std::weak_ptr::lock()` would do). The only guarantee that could be offered is the following: if `expired()` returns true, the observed pointer is guaranteed to remain `nullptr` forever, with no race condition. If `expired()` returns false, the pointer could still expire on the next instant, which can lead to race conditions. To completely avoid race conditions, you will need to add explicit synchronization around your object.
+
+Finally, because this library uses no global state (beyond the standard allocator, which is thread-safe), it is perfectly fine to use it in a threaded application, provided that all observer pointers for a given object live on the same thread as the object itself.
 
 
 ## Comparison spreadsheet
@@ -126,13 +137,13 @@ Labels:
 | Owning                   | no   | no     | no       | yes    | yes    | yes        | yes        |
 | Releasable               | N/A  | N/A    | N/A      | yes    | no     | yes        | no         |
 | Observable deletion      | no   | yes    | yes      | yes    | yes    | yes        | yes        |
-| Thread-safe deletion     | no   | yes    | no(1)    | yes(2) | yes    | yes(2)     | yes(2)     |
-| Atomic                   | yes  | no(3)  | no       | no     | no(3)  | no         | no         |
+| Thread-safe              | no   | yes    | no       | no     | yes    | no         | no         |
+| Atomic                   | yes  | no(1)  | no       | no     | no(1)  | no         | no         |
 | Support arrays           | yes  | yes    | no       | yes    | yes    | no         | no         |
 | Support custom allocator | N/A  | yes    | no       | yes    | yes    | no         | no         |
-| Support custom deleter   | N/A  | N/A    | N/A      | yes    | yes(4) | yes        | no         |
-| Max number of observers  | inf. | ?(5)   | 2^31 - 1 | 1      | ?(5)   | 1          | 1          |
-| Number of heap alloc.    | 0    | 0      | 0        | 1      | 1/2(6) | 2          | 1          |
+| Support custom deleter   | N/A  | N/A    | N/A      | yes    | yes(2) | yes        | no         |
+| Max number of observers  | inf. | ?(3)   | 2^31 - 1 | 1      | ?(3)   | 1          | 1          |
+| Number of heap alloc.    | 0    | 0      | 0        | 1      | 1/2(4) | 2          | 1          |
 | Size in bytes (64 bit)   |      |        |          |        |        |            |            |
 |  - Stack (per instance)  | 8    | 16     | 16       | 8      | 16     | 16         | 16         |
 |  - Heap (shared)         | 0    | 0      | 0        | 0      | 24     | 4          | 4          |
@@ -144,12 +155,10 @@ Labels:
 
 Notes:
 
- - (1) If `expired()` returns true, the pointer is guaranteed to remain `nullptr` forever, with no race condition. If `expired()` returns false, the pointer could still expire on the next instant, which can lead to race conditions.
- - (2) By construction, only one thread can own the pointer, therefore deletion is thread-safe.
- - (3) Yes if using `std::atomic<std::shared_ptr<T>>` and `std::atomic<std::weak_ptr<T>>`.
- - (4) Not if using `std::make_shared()`.
- - (5) Not defined by the C++ standard. In practice, libstdc++ stores its reference count on an `_Atomic_word`, which for a common 64bit linux platform is a 4 byte signed integer, hence the limit will be 2^31 - 1. Microsoft's STL uses `_Atomic_counter_t`, which for a 64bit Windows platform is 4 bytes unsigned integer, hence the limit will be 2^32 - 1.
- - (6) 2 by default, or 1 if using `std::make_shared()`.
+ - (1) Yes if using `std::atomic<std::shared_ptr<T>>` and `std::atomic<std::weak_ptr<T>>`.
+ - (2) Not if using `std::make_shared()`.
+ - (3) Not defined by the C++ standard. In practice, libstdc++ stores its reference count on an `_Atomic_word`, which for a common 64bit linux platform is a 4 byte signed integer, hence the limit will be 2^31 - 1. Microsoft's STL uses `_Atomic_counter_t`, which for a 64bit Windows platform is 4 bytes unsigned integer, hence the limit will be 2^32 - 1.
+ - (4) 2 by default, or 1 if using `std::make_shared()`.
 
 
 ## Speed benchmarks
