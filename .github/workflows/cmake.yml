@@ -42,7 +42,7 @@ jobs:
       uses: actions/cache@v3.0.4
       with:
         path: ${{env.EM_CACHE_FOLDER}}
-        key: ${{env.EM_VERSION}}-${{ runner.os }}
+        key: ${{env.EM_VERSION}}-${{matrix.platform.name}}-${{matrix.build-type}}
 
     - name: Setup Emscripten
       if: matrix.platform.compiler == 'em++'
