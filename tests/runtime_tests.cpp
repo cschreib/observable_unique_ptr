@@ -6,7 +6,7 @@
 #include <vector>
 
 // Allocation tracker, to catch memory leaks and double delete
-constexpr std::size_t max_allocations = 20'000;
+constexpr std::size_t max_allocations = 200'000;
 void*                 allocations[max_allocations];
 void*                 allocations_array[max_allocations];
 std::size_t           num_allocations          = 0u;
@@ -14,13 +14,7 @@ std::size_t           double_delete            = 0u;
 bool                  memory_tracking          = false;
 bool                  force_allocation_failure = false;
 
-#if defined(OUP_PLATFORM_OSX)
-// Getting weird errors on MacOS when overriding operator new and delete,
-// so disable the memory leak checking for this platform.
-#    define CHECK_MEMORY_LEAKS 0
-#else
-#    define CHECK_MEMORY_LEAKS 1
-#endif
+#define CHECK_MEMORY_LEAKS 1
 
 #if defined(CHECK_MEMORY_LEAKS) && CHECK_MEMORY_LEAKS
 void* allocate(std::size_t size, bool array) {
