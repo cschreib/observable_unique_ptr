@@ -3286,7 +3286,7 @@ TEST_CASE("pointers in vector", "[system_tests]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
-TEST_CASE("observer from this", "[observer_from_this]") {
+TEST_CASE("observer from this unique", "[observer_from_this]") {
     memory_tracker mem_track;
 
     {
