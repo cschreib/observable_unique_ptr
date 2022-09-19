@@ -346,9 +346,10 @@ constexpr bool has_enable_observer_from_this =
  * \see observable_unique_ptr
  * \see observable_sealed_ptr
  * \see observer_ptr
- * \see basic_enable_observer_from_this
+ * \see basic_observer_ptr
  * \see enable_observer_from_this_unique
  * \see enable_observer_from_this_sealed
+ * \see basic_enable_observer_from_this
  */
 template<typename T, typename Deleter, typename Policy>
 class basic_observable_ptr final {
@@ -914,9 +915,9 @@ bool operator!=(
 /**
  * \brief Non-owning smart pointer that observes a @ref basic_observable_ptr.
  * \see observer_ptr
- * \see basic_observable_ptr
  * \see observable_unique_ptr
  * \see observable_sealed_ptr
+ * \see basic_observable_ptr
  */
 template<typename T, typename Policy>
 class basic_observer_ptr final {
@@ -1413,7 +1414,10 @@ struct inherit_as_virtual<false, T> : T {
  *
  * \see enable_observer_from_this_unique
  * \see enable_observer_from_this_sealed
+ * \see observable_unique_ptr
+ * \see observable_sealed_ptr
  * \see basic_observable_ptr
+ * \see observer_ptr
  * \see basic_observer_ptr
  */
 template<typename T, typename Policy>
