@@ -353,7 +353,8 @@ constexpr bool has_enable_observer_from_this =
 template<typename T, typename Deleter, typename Policy>
 class basic_observable_ptr final {
 public:
-    static_assert(!std::is_array_v<T>, "T[] is not supported");
+    static_assert(!std::is_reference_v<T>, "cannot create a pointer to a reference");
+    static_assert(!std::is_array_v<T>, "cannot create a pointer to an array");
 
     /// Policy for this smart pointer
     using policy = Policy;
@@ -920,7 +921,8 @@ bool operator!=(
 template<typename T, typename Policy>
 class basic_observer_ptr final {
 public:
-    static_assert(!std::is_array_v<T>, "T[] is not supported");
+    static_assert(!std::is_reference_v<T>, "cannot create a pointer to a reference");
+    static_assert(!std::is_array_v<T>, "cannot create a pointer to an array");
 
     /// Policy for the control block
     using observer_policy = Policy;
