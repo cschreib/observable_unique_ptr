@@ -14,6 +14,20 @@ std::size_t           double_delete                 = 0u;
 bool                  memory_tracking               = false;
 bool                  force_next_allocation_failure = false;
 
+// Replace Catch2's REQUIRE_THROWS_AS, which allocates on Windows;
+// this confuses our memory leak checks.
+#undef REQUIRE_THROWS_AS
+#define REQUIRE_THROWS_AS(EXPRESSION, EXCEPTION)                                                   \
+    do {                                                                                           \
+        try {                                                                                      \
+            EXPRESSION;                                                                            \
+            FAIL("no exception thrown");                                                           \
+        } catch (const EXCEPTION&) {                                                               \
+        } catch (...) {                                                                            \
+            FAIL("unexpected exception thrown");                                                   \
+        }                                                                                          \
+    } while (0)
+
 #define CHECK_MEMORY_LEAKS 1
 
 #if defined(CHECK_MEMORY_LEAKS) && CHECK_MEMORY_LEAKS
