@@ -564,13 +564,19 @@ public:
      * \note Do *not* manually delete this raw pointer after the
      * @ref observable_unique_ptr is created. If possible, prefer
      * using @ref make_observable() instead of this constructor.
+     * \note If the allocation of the control block fails, the
+     * pointer `value` will be deleted, and no memory will leak.
      */
     template<
         typename U,
         typename enable =
             std::enable_if_t<std::is_convertible_v<U*, T*> && queries::owner_allow_release()>>
-    explicit basic_observable_ptr(U* value) :
-        basic_observable_ptr(get_block_from_object_(value), value) {}
+    explicit basic_observable_ptr(U* value) try :
+        basic_observable_ptr(get_or_create_block_from_object_(value), value) {
+    } catch (...) {
+        // Allocation of control block failed, delete input pointer and rethrow
+        ptr_deleter(value);
+    }
 
     /**
      * \brief Explicit ownership capture of a raw pointer, with customer deleter.
@@ -579,13 +585,19 @@ public:
      * \note Do *not* manually delete this raw pointer after the
      * @ref basic_observable_ptr is created. If possible, prefer
      * using @ref make_observable() instead of this constructor.
+     * \note If the allocation of the control block fails, the
+     * pointer `value` will be deleted, and no memory will leak.
      */
     template<
         typename U,
         typename enable =
             std::enable_if_t<std::is_convertible_v<U*, T*> && queries::owner_allow_release()>>
-    explicit basic_observable_ptr(U* value, Deleter del) :
-        basic_observable_ptr(get_block_from_object_(value), value, std::move(del)) {}
+    explicit basic_observable_ptr(U* value, Deleter del) try :
+        basic_observable_ptr(get_or_create_block_from_object_(value), value, std::move(del)) {
+    } catch (...) {
+        // Allocation of control block failed, delete input pointer and rethrow
+        del(value);
+    }
 
     /**
      * \brief Transfer ownership by implicit casting
@@ -666,9 +678,10 @@ public:
 
     /**
      * \brief Replaces the managed object.
-     * \param ptr The new object to manage (can be `nullptr`, then this is equivalent to
-     *      @ref reset())
+     * \param ptr The new object to manage (can be null, then this is equivalent to @ref reset())
      * \note This function is enabled only if `Policy::is_sealed` is false.
+     * \note If the allocation of the control block fails, the pointer `ptr` will be deleted, and
+     * no memory will leak.
      */
     template<
         typename U,
@@ -680,8 +693,14 @@ public:
         control_block_type* old_block = block;
 
         // Assign the new one
-        block            = get_block_from_object_(ptr);
-        ptr_deleter.data = ptr;
+        try {
+            block            = get_or_create_block_from_object_(ptr);
+            ptr_deleter.data = ptr;
+        } catch (...) {
+            // Allocation of control block failed, delete input pointer and rethrow
+            ptr_deleter(ptr);
+            throw;
+        }
 
         // Delete the old pointer
         // (this follows `std::unique_ptr` specs)

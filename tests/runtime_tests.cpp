@@ -9,9 +9,10 @@
 constexpr std::size_t max_allocations = 20'000;
 void*                 allocations[max_allocations];
 void*                 allocations_array[max_allocations];
-std::size_t           num_allocations = 0u;
-std::size_t           double_delete   = 0u;
-bool                  memory_tracking = false;
+std::size_t           num_allocations          = 0u;
+std::size_t           double_delete            = 0u;
+bool                  memory_tracking          = false;
+bool                  force_allocation_failure = false;
 
 #if defined(OUP_PLATFORM_OSX)
 // Getting weird errors on MacOS when overriding operator new and delete,
@@ -24,6 +25,10 @@ bool                  memory_tracking = false;
 #if defined(CHECK_MEMORY_LEAKS) && CHECK_MEMORY_LEAKS
 void* allocate(std::size_t size, bool array) {
     if (memory_tracking && num_allocations == max_allocations) {
+        throw std::bad_alloc();
+    }
+
+    if (force_allocation_failure) {
         throw std::bad_alloc();
     }
 
@@ -277,6 +282,24 @@ TEST_CASE("owner acquiring constructor", "[owner_construction]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("owner acquiring constructor bad alloc", "[owner_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_object* raw_ptr = new test_object;
+        try {
+            force_allocation_failure = true;
+            test_ptr{raw_ptr};
+        } catch (...) {
+        }
+        force_allocation_failure = false;
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("owner acquiring constructor with deleter", "[owner_construction]") {
     memory_tracker mem_track;
 
@@ -290,6 +313,24 @@ TEST_CASE("owner acquiring constructor with deleter", "[owner_construction]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner acquiring constructor with deleter bad alloc", "[owner_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_object* raw_ptr = new test_object;
+        try {
+            force_allocation_failure = true;
+            test_ptr_with_deleter{raw_ptr, test_deleter{42}};
+        } catch (...) {
+        }
+        force_allocation_failure = false;
+    }
+
+    REQUIRE(instances == 0);
     REQUIRE(mem_track.leaks() == 0u);
     REQUIRE(mem_track.double_del() == 0u);
 }
@@ -1271,6 +1312,28 @@ TEST_CASE("owner reset to new", "[owner_utility]") {
         ptr.reset(new test_object);
         REQUIRE(instances == 1);
         REQUIRE(ptr.get() != nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner reset to new bad alloc", "[owner_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_object* raw_ptr1 = new test_object;
+        test_object* raw_ptr2 = new test_object;
+        test_ptr     ptr(raw_ptr1);
+        try {
+            force_allocation_failure = true;
+            ptr.reset(raw_ptr2);
+        } catch (...) {
+        }
+        force_allocation_failure = false;
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() == raw_ptr1);
     }
 
     REQUIRE(instances == 0);
