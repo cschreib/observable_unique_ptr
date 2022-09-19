@@ -29,6 +29,8 @@ void* allocate(std::size_t size, bool array, std::align_val_t align) {
     } else {
 #    if defined(OUP_PLATFORM_WINDOWS)
         p = _aligned_malloc(size, static_cast<std::size_t>(align));
+#    elif defined(OUP_PLATFORM_EMSCRIPTEN)
+        p = aligned_alloc(static_cast<std::size_t>(align), size);
 #    else
         p = std::aligned_alloc(static_cast<std::size_t>(align), size);
 #    endif
