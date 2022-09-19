@@ -800,6 +800,8 @@ public:
 template<typename T, typename Policy, typename... Args>
 auto make_observable(Args&&... args) {
     static_assert(!std::is_reference_v<T>, "cannot create a pointer to a reference");
+    static_assert(!std::is_array_v<T>, "cannot create a pointer to an array");
+    static_assert(!std::is_void_v<T>, "cannot create a pointer to void");
 
     using observer_policy    = typename Policy::observer_policy;
     using control_block_type = basic_control_block<observer_policy>;
