@@ -3494,6 +3494,49 @@ TEST_CASE("observer from this maybe no block reset to new", "[observer_from_this
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("observer from this maybe no block reset to new after release", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        auto* raw_ptr = new test_object_observer_from_this_maybe_no_block_unique;
+
+        test_ptr_from_this_maybe_no_block        ptr{raw_ptr};
+        const test_ptr_from_this_maybe_no_block& cptr = ptr;
+
+        test_optr_from_this_maybe_no_block_unique       optr_from_this = ptr->observer_from_this();
+        test_optr_from_this_const_maybe_no_block_unique optr_from_this_const =
+            cptr->observer_from_this();
+
+        ptr.release();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == raw_ptr);
+        REQUIRE(optr_from_this_const.get() == raw_ptr);
+
+        ptr.reset(raw_ptr);
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this_const.get() == ptr.get());
+
+        ptr.reset();
+
+        REQUIRE(instances == 0);
+        REQUIRE(optr_from_this.expired() == true);
+        REQUIRE(optr_from_this_const.expired() == true);
+        REQUIRE(optr_from_this.get() == nullptr);
+        REQUIRE(optr_from_this_const.get() == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("observer from this maybe no block reset to new bad alloc", "[observer_from_this]") {
     memory_tracker mem_track;
 
