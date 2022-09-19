@@ -121,7 +121,7 @@ Finally, because this library uses no global state (beyond the standard allocato
 
 ## Comparison spreadsheet
 
-In this comparison spreadsheet, the raw pointer `T*` is assumed to never be owning, and used only to observe an existing object (which may or may not have been deleted). The stack and heap sizes were measured with gcc 9.3.0 and libstdc++.
+In this comparison spreadsheet, the raw pointer `T*` is assumed to never be owning, and used only to observe an existing object (which may or may not have been deleted). Unless otherwise specified, the stack and heap sizes were measured with gcc 9.4.0 and libstdc++-9.
 
 Labels:
  - raw: `T*`
@@ -146,7 +146,7 @@ Labels:
 | Number of heap alloc.    | 0    | 0      | 0        | 1      | 1/2(4) | 2          | 1          |
 | Size in bytes (64 bit)   |      |        |          |        |        |            |            |
 |  - Stack (per instance)  | 8    | 16     | 16       | 8      | 16     | 16         | 16         |
-|  - Heap (shared)         | 0    | 0      | 0        | 0      | 24     | 4          | 4          |
+|  - Heap (shared)         | 0    | 0      | 0        | 0      | 24(5)  | 4          | 4(6)       |
 |  - Total                 | 8    | 16     | 16       | 8      | 40     | 20         | 20         |
 | Size in bytes (32 bit)   |      |        |          |        |        |            |            |
 |  - Stack (per instance)  | 4    | 8      | 8        | 4      | 8      | 8          | 8          |
@@ -159,6 +159,8 @@ Notes:
  - (2) Not if using `std::make_shared()`.
  - (3) Not defined by the C++ standard. In practice, libstdc++ stores its reference count on an `_Atomic_word`, which for a common 64bit linux platform is a 4 byte signed integer, hence the limit will be 2^31 - 1. Microsoft's STL uses `_Atomic_counter_t`, which for a 64bit Windows platform is 4 bytes unsigned integer, hence the limit will be 2^32 - 1.
  - (4) 2 by default, or 1 if using `std::make_shared()`.
+ - (5) When using `std::make_shared()`, this can get as low as 16 bytes, or larger than 24 bytes, depending on the size and alignment requirements of the object type. This behavior is shared by libstdc++ and MS-STL.
+ - (6) Can get larger than 4 depending on the alignment requirements of the object type.
 
 
 ## Speed benchmarks
