@@ -841,7 +841,7 @@ auto make_observable(Args&&... args) {
             if constexpr (
                 has_enable_observer_from_this<T, Policy> &&
                 queries::eoft_base_constructor_needs_block()) {
-                // The object as a constructor that can take a control block; just give it
+                // The object has a constructor that can take a control block; just give it
                 ptr = new (buffer + block_size) decayed_type(*block, std::forward<Args>(args)...);
 
                 // Make owner pointer
