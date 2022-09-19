@@ -299,6 +299,8 @@ private:
     // Friendship is required for assignment of the observer.
     template<typename U, typename P, typename... Args>
     friend auto oup::make_observable(Args&&... args);
+    template<typename U, typename D, typename P>
+    friend class oup::basic_observable_ptr;
 };
 } // namespace details
 
@@ -415,23 +417,34 @@ private:
     /**
      * \brief Decide whether to allocate a new control block or not.
      * \note If the object inherits from @ref basic_enable_observer_from_this, and
-     * `Policy::is_sealed` is false (by construction this will always be the case when this
-     * function is called), then we can just use the control block pointer stored in the
-     * @ref basic_enable_observer_from_this base. Otherwise, we need to allocate a new one.
+     * the base @ref basic_enable_observer_from_this is guaranteed to have a valid block
+     * pointer, then we can reuse this. Otherwise, we may need to allocate a new one.
      */
     template<typename U>
-    control_block_type* get_block_from_object_(U* p) {
+    control_block_type* get_or_create_block_from_object_(U* p) noexcept(
+        queries::eoft_always_has_block() && has_enable_observer_from_this<U, Policy>) {
+
         if (p == nullptr) {
             return nullptr;
         }
 
-        if constexpr (
-            queries::eoft_constructor_allocates() && has_enable_observer_from_this<U, Policy>) {
-            p->this_control_block->push_ref();
-            return p->this_control_block;
+        if constexpr (!has_enable_observer_from_this<U, Policy>) {
+            return allocate_block_();
+        } else {
+            if constexpr (queries::eoft_always_has_block()) {
+                p->this_control_block->push_ref();
+                return p->this_control_block;
+            } else {
+                if (p->this_control_block != nullptr) {
+                    p->this_control_block->push_ref();
+                    return p->this_control_block;
+                } else {
+                    control_block_type* new_block = allocate_block_();
+                    p->set_control_block_(new_block);
+                    return new_block;
+                }
+            }
         }
-
-        return allocate_block_();
     }
 
     /**
@@ -571,7 +584,8 @@ public:
         typename U,
         typename enable =
             std::enable_if_t<std::is_convertible_v<U*, T*> && queries::owner_allow_release()>>
-    explicit basic_observable_ptr(U* value) try :
+    explicit basic_observable_ptr(U* value) noexcept(
+        queries::eoft_always_has_block() && has_enable_observer_from_this<U, Policy>) try :
         basic_observable_ptr(get_or_create_block_from_object_(value), value) {
     } catch (...) {
         // Allocation of control block failed, delete input pointer and rethrow
@@ -592,7 +606,8 @@ public:
         typename U,
         typename enable =
             std::enable_if_t<std::is_convertible_v<U*, T*> && queries::owner_allow_release()>>
-    explicit basic_observable_ptr(U* value, Deleter del) try :
+    explicit basic_observable_ptr(U* value, Deleter del) noexcept(
+        queries::eoft_always_has_block() && has_enable_observer_from_this<U, Policy>) try :
         basic_observable_ptr(get_or_create_block_from_object_(value), value, std::move(del)) {
     } catch (...) {
         // Allocation of control block failed, delete input pointer and rethrow
@@ -687,19 +702,26 @@ public:
         typename U,
         typename enable =
             std::enable_if_t<std::is_convertible_v<U*, T*> && queries::owner_allow_release()>>
-    void reset(U* ptr) {
+    void reset(U* ptr) noexcept(
+        queries::eoft_always_has_block() && has_enable_observer_from_this<U, Policy>) {
         // Copy old pointer
         T*                  old_ptr   = ptr_deleter.data;
         control_block_type* old_block = block;
 
         // Assign the new one
-        try {
+        if constexpr (noexcept(get_or_create_block_from_object_(ptr))) {
+            // There is always a control block available for us, so this cannot fail
             block            = get_or_create_block_from_object_(ptr);
             ptr_deleter.data = ptr;
-        } catch (...) {
-            // Allocation of control block failed, delete input pointer and rethrow
-            ptr_deleter(ptr);
-            throw;
+        } else {
+            try {
+                block            = get_or_create_block_from_object_(ptr);
+                ptr_deleter.data = ptr;
+            } catch (...) {
+                // Allocation of control block failed, delete input pointer and rethrow
+                ptr_deleter(ptr);
+                throw;
+            }
         }
 
         // Delete the old pointer
