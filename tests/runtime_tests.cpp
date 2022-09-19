@@ -1,5 +1,5 @@
 #include "tests_common.hpp"
-#define CHECK_MEMORY_LEAKS 1
+#define CHECK_MEMORY_LEAKS
 #include "memory_tracker.hpp"
 
 #include <catch2/catch_test_macros.hpp>

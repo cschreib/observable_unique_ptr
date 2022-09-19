@@ -12,7 +12,7 @@ std::size_t           double_delete                 = 0u;
 bool                  memory_tracking               = false;
 bool                  force_next_allocation_failure = false;
 
-#if defined(CHECK_MEMORY_LEAKS) && CHECK_MEMORY_LEAKS
+#if defined(CHECK_MEMORY_LEAKS)
 void* allocate(std::size_t size, bool array, std::align_val_t align) {
     if (memory_tracking && num_allocations == max_allocations) {
         throw std::bad_alloc();
@@ -27,9 +27,9 @@ void* allocate(std::size_t size, bool array, std::align_val_t align) {
     if (align == std::align_val_t{0}) {
         p = std::malloc(size);
     } else {
-#    if defined(OUP_PLATFORM_WINDOWS)
+#    if defined(OUP_COMPILER_MSVC)
         p = _aligned_malloc(size, static_cast<std::size_t>(align));
-#    elif defined(OUP_PLATFORM_EMSCRIPTEN)
+#    elif defined(OUP_COMPILER_EMSCRIPTEN)
         p = aligned_alloc(static_cast<std::size_t>(align), size);
 #    else
         p = std::aligned_alloc(static_cast<std::size_t>(align), size);
@@ -83,7 +83,7 @@ void deallocate(void* p, bool array, std::align_val_t align [[maybe_unused]]) {
     if (align == std::align_val_t{0}) {
         std::free(p);
     } else {
-#    if defined(OUP_PLATFORM_WINDOWS)
+#    if defined(OUP_COMPILER_MSVC)
         _aligned_free(p);
 #    else
         std::free(p);

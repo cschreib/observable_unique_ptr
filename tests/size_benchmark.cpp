@@ -1,4 +1,4 @@
-#define CHECK_MEMORY_LEAKS 1
+#define CHECK_MEMORY_LEAKS
 #include "memory_tracker.hpp"
 
 #include <iostream>
