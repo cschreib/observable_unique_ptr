@@ -1,18 +1,9 @@
 #include "tests_common.hpp"
+#define CHECK_MEMORY_LEAKS 1
+#include "memory_tracker.hpp"
 
-#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
-#include <cstdlib>
 #include <vector>
-
-// Allocation tracker, to catch memory leaks and double delete
-constexpr std::size_t max_allocations = 20'000;
-void*                 allocations[max_allocations];
-void*                 allocations_array[max_allocations];
-std::size_t           num_allocations               = 0u;
-std::size_t           double_delete                 = 0u;
-bool                  memory_tracking               = false;
-bool                  force_next_allocation_failure = false;
 
 // Replace Catch2's REQUIRE_THROWS_AS, which allocates on Windows;
 // this confuses our memory leak checks.
@@ -27,100 +18,6 @@ bool                  force_next_allocation_failure = false;
             FAIL("unexpected exception thrown");                                                   \
         }                                                                                          \
     } while (0)
-
-#define CHECK_MEMORY_LEAKS 1
-
-#if defined(CHECK_MEMORY_LEAKS) && CHECK_MEMORY_LEAKS
-void* allocate(std::size_t size, bool array) {
-    if (memory_tracking && num_allocations == max_allocations) {
-        throw std::bad_alloc();
-    }
-
-    if (force_next_allocation_failure) {
-        force_next_allocation_failure = false;
-        throw std::bad_alloc();
-    }
-
-    void* p = std::malloc(size);
-    if (!p) {
-        throw std::bad_alloc();
-    }
-
-    if (memory_tracking) {
-        if (array) {
-            allocations_array[num_allocations] = p;
-        } else {
-            allocations[num_allocations] = p;
-        }
-
-        ++num_allocations;
-    }
-
-    return p;
-}
-
-void deallocate(void* p, bool array) {
-    if (p == nullptr) {
-        return;
-    }
-
-    if (memory_tracking) {
-        bool   found            = false;
-        void** allocations_type = array ? allocations_array : allocations;
-        for (std::size_t i = 0; i < num_allocations; ++i) {
-            if (allocations_type[i] == p) {
-                std::swap(allocations_type[i], allocations_type[num_allocations - 1]);
-                --num_allocations;
-                found = true;
-                break;
-            }
-        }
-
-        if (!found) {
-            ++double_delete;
-        }
-    }
-
-    std::free(p);
-}
-
-void* operator new(std::size_t size) {
-    return allocate(size, false);
-}
-
-void* operator new[](size_t size) {
-    return allocate(size, true);
-}
-
-void operator delete(void* p) noexcept {
-    deallocate(p, false);
-}
-
-void operator delete[](void* p) noexcept {
-    deallocate(p, true);
-}
-#endif
-
-struct memory_tracker {
-    std::size_t initial_allocations;
-    std::size_t initial_double_delete;
-
-    memory_tracker() noexcept :
-        initial_allocations(num_allocations), initial_double_delete(double_delete) {
-        memory_tracking = true;
-    }
-
-    ~memory_tracker() noexcept {
-        memory_tracking = false;
-    }
-
-    std::size_t leaks() const {
-        return num_allocations - initial_allocations;
-    }
-    std::size_t double_del() const {
-        return double_delete - initial_double_delete;
-    }
-};
 
 TEST_CASE("owner size", "[owner_size]") {
     REQUIRE(sizeof(test_ptr) == 2 * sizeof(void*));
