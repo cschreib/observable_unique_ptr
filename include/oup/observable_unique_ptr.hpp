@@ -829,9 +829,11 @@ auto make_observable(Args&&... args) {
         }
     } else {
         // Pre-allocate memory
-        constexpr std::size_t block_size  = sizeof(control_block_type);
-        constexpr std::size_t object_size = sizeof(object_type);
-        constexpr std::size_t obj_offset  = block_size;
+        constexpr std::size_t block_size    = sizeof(control_block_type);
+        constexpr std::size_t object_size   = sizeof(object_type);
+        constexpr std::size_t object_align  = alignof(object_type);
+        constexpr std::size_t align_padding = object_align - 1 - ((block_size - 1) % object_align);
+        constexpr std::size_t obj_offset    = block_size + align_padding;
 
         std::byte* buffer = reinterpret_cast<std::byte*>(operator new(obj_offset + object_size));
 
