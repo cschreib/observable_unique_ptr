@@ -803,20 +803,20 @@ auto make_observable(Args&&... args) {
 
     using observer_policy    = typename Policy::observer_policy;
     using control_block_type = basic_control_block<observer_policy>;
-    using decayed_type       = std::decay_t<T>;
+    using object_type        = std::remove_cv_t<T>;
     using queries            = policy_queries<Policy>;
 
     if constexpr (!queries::make_observer_single_allocation()) {
         if constexpr (
-            has_enable_observer_from_this<T, Policy> &&
+            has_enable_observer_from_this<object_type, Policy> &&
             queries::eoft_base_constructor_needs_block()) {
             // Allocate control block first
             control_block_type* block = new control_block_type;
 
             // Allocate object
-            decayed_type* ptr = nullptr;
+            object_type* ptr = nullptr;
             try {
-                ptr = new T(*block, std::forward<Args>(args)...);
+                ptr = new object_type(*block, std::forward<Args>(args)...);
             } catch (...) {
                 delete block;
                 throw;
@@ -825,13 +825,15 @@ auto make_observable(Args&&... args) {
             return basic_observable_ptr<T, default_delete, Policy>(block, ptr);
         } else {
             return basic_observable_ptr<T, default_delete, Policy>(
-                new T(std::forward<Args>(args)...));
+                new object_type(std::forward<Args>(args)...));
         }
     } else {
         // Pre-allocate memory
         constexpr std::size_t block_size  = sizeof(control_block_type);
-        constexpr std::size_t object_size = sizeof(T);
-        std::byte* buffer = reinterpret_cast<std::byte*>(operator new(block_size + object_size));
+        constexpr std::size_t object_size = sizeof(object_type);
+        constexpr std::size_t obj_offset  = block_size;
+
+        std::byte* buffer = reinterpret_cast<std::byte*>(operator new(obj_offset + object_size));
 
         try {
             // Construct control block first
@@ -839,22 +841,22 @@ auto make_observable(Args&&... args) {
             control_block_type* block = new (buffer) control_block_type;
 
             // Construct object
-            decayed_type* ptr = nullptr;
+            object_type* ptr = nullptr;
             if constexpr (
-                has_enable_observer_from_this<T, Policy> &&
+                has_enable_observer_from_this<object_type, Policy> &&
                 queries::eoft_base_constructor_needs_block()) {
                 // The object has a constructor that can take a control block; just give it
-                ptr = new (buffer + block_size) decayed_type(*block, std::forward<Args>(args)...);
+                ptr = new (buffer + obj_offset) object_type(*block, std::forward<Args>(args)...);
 
                 // Make owner pointer
                 return basic_observable_ptr<T, placement_delete, Policy>(block, ptr);
             } else {
-                ptr = new (buffer + block_size) decayed_type(std::forward<Args>(args)...);
+                ptr = new (buffer + obj_offset) object_type(std::forward<Args>(args)...);
 
                 // Make owner pointer
                 auto sptr = basic_observable_ptr<T, placement_delete, Policy>(block, ptr);
 
-                if constexpr (has_enable_observer_from_this<T, Policy>) {
+                if constexpr (has_enable_observer_from_this<object_type, Policy>) {
                     // Notify basic_enable_observer_from_this of the control
                     ptr->set_control_block_(block);
                 }
