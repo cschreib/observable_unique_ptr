@@ -6,7 +6,7 @@
 #include <vector>
 
 // Allocation tracker, to catch memory leaks and double delete
-constexpr std::size_t max_allocations = 200'000;
+constexpr std::size_t max_allocations = 20'000;
 void*                 allocations[max_allocations];
 void*                 allocations_array[max_allocations];
 std::size_t           num_allocations          = 0u;
@@ -45,6 +45,10 @@ void* allocate(std::size_t size, bool array) {
 }
 
 void deallocate(void* p, bool array) {
+    if (p == nullptr) {
+        return;
+    }
+
     if (memory_tracking) {
         bool   found            = false;
         void** allocations_type = array ? allocations_array : allocations;
