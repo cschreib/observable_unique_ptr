@@ -14,6 +14,8 @@
             EXPRESSION;                                                                            \
             FAIL("no exception thrown");                                                           \
         } catch (const EXCEPTION&) {                                                               \
+        } catch (const std::exception& e) {                                                        \
+            FAIL(e.what());                                                                        \
         } catch (...) {                                                                            \
             FAIL("unexpected exception thrown");                                                   \
         }                                                                                          \
