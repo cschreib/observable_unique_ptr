@@ -149,6 +149,11 @@ struct policy_queries {
                !Policy::eoft_constructor_takes_control_block;
     }
 
+    /// Is @ref basic_enable_observer_from_this guaranteed to always have a valid block pointer?
+    static constexpr bool eoft_always_has_block() noexcept {
+        return eoft_constructor_allocates() || eoft_base_constructor_needs_block();
+    }
+
     /// Does @ref basic_observable_ptr allow releasing and acquiring raw pointers?
     static constexpr bool owner_allow_release() noexcept {
         return !Policy::is_sealed;
@@ -1521,19 +1526,15 @@ public:
      * the object was allocated on the stack, or if it is owned by another
      * type of smart pointer, then this function will return nullptr.
      */
-    observer_type observer_from_this() noexcept(
-        queries::eoft_constructor_allocates() || queries::eoft_base_constructor_needs_block()) {
-
+    observer_type observer_from_this() noexcept(queries::eoft_always_has_block()) {
         static_assert(
             std::is_base_of_v<basic_enable_observer_from_this, std::decay_t<T>>,
             "T must inherit from basic_enable_observer_from_this<T>");
 
-        if constexpr (
-            !queries::eoft_constructor_allocates() &&
-            !queries::eoft_base_constructor_needs_block()) {
+        if constexpr (!queries::eoft_always_has_block()) {
             // This check is not needed if the constructor allocates or if we ask for the
             // control block in the constructor; then we always have a valid control block and
-            // this cannot fail.
+            // this function cannot fail.
             if (!this->this_control_block) {
                 throw bad_observer_from_this{};
             }
@@ -1549,19 +1550,15 @@ public:
      * the object was allocated on the stack, or if it is owned by another
      * type of smart pointer, then this function will return nullptr.
      */
-    const_observer_type observer_from_this() const noexcept(
-        queries::eoft_constructor_allocates() || queries::eoft_base_constructor_needs_block()) {
-
+    const_observer_type observer_from_this() const noexcept(queries::eoft_always_has_block()) {
         static_assert(
             std::is_base_of_v<basic_enable_observer_from_this, std::decay_t<T>>,
             "T must inherit from basic_enable_observer_from_this<T>");
 
-        if constexpr (
-            !queries::eoft_constructor_allocates() &&
-            !queries::eoft_base_constructor_needs_block()) {
+        if constexpr (!queries::eoft_always_has_block()) {
             // This check is not needed if the constructor allocates or if we ask for the
             // control block in the constructor; then we always have a valid control block and
-            // this cannot fail.
+            // this function cannot fail.
             if (!this->this_control_block) {
                 throw bad_observer_from_this{};
             }
