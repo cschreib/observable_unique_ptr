@@ -13,7 +13,7 @@ namespace oup {
 /// Exception thrown for failed observer_from_this().
 struct bad_observer_from_this : std::exception {
     const char* what() const noexcept override {
-        return "observer_from_this() called with uninitialised control block";
+        return "observer_from_this() called with uninitialized control block";
     }
 };
 
