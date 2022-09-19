@@ -589,7 +589,7 @@ public:
         basic_observable_ptr(get_or_create_block_from_object_(value), value) {
     } catch (...) {
         // Allocation of control block failed, delete input pointer and rethrow
-        ptr_deleter(value);
+        Deleter{}(value);
     }
 
     /**
