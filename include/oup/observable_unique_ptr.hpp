@@ -884,10 +884,26 @@ auto make_observable(Args&&... args) {
         constexpr std::size_t obj_size    = sizeof(object_type);
         constexpr std::size_t obj_align   = alignof(object_type);
         constexpr std::size_t obj_offset  = obj_align * (1 + (block_size - 1) / obj_align);
-        constexpr std::size_t alloc_align = block_align > obj_align ? block_align : obj_align;
 
-        std::byte* buffer = reinterpret_cast<std::byte*>(operator new (
-            obj_offset + obj_size, std::align_val_t{alloc_align}));
+        // See comment below on alignment
+        static_assert(
+            block_align <= __STDCPP_DEFAULT_NEW_ALIGNMENT__,
+            "control block is over-aligned, this would require a custom allocator");
+        static_assert(
+            obj_align <= __STDCPP_DEFAULT_NEW_ALIGNMENT__,
+            "object is over-aligned, this would require a custom allocator");
+
+        // NB: The correct thing to do here would be to use aligned-new, with an alignment
+        // of max(block_align, obj_align). This would require using aligned-delete in the
+        // control block, which in turn would either require the control block to always use
+        // aligned-delete and aligned-new, which could be wasteful, or to know somehow whether
+        // it has been allocated here or individually.
+        // Most types will have an alignment <= __STDCPP_DEFAULT_NEW_ALIGNMENT__, which is
+        // the alignment guaranteed by the classic operator new, therefore we can safely use
+        // it and warn the user with a static asset if we can't.
+        // Going beyond this would require support for custom allocators.
+
+        std::byte* buffer = reinterpret_cast<std::byte*>(operator new(obj_offset + obj_size));
 
         try {
             // Construct control block first
