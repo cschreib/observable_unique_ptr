@@ -1570,8 +1570,8 @@ public:
 /**
  * \brief Perform a `static_cast` for an @ref basic_observable_ptr.
  * \param ptr The pointer to cast
- * \note Ownership will be transfered to the returned pointer.
-          If the input pointer is null, the output pointer will also be null.
+ * \note Ownership will be transferred to the returned pointer.
+ * If the input pointer is null, the output pointer will also be null.
  */
 template<typename U, typename T, typename D, typename P>
 basic_observable_ptr<U, D, P> static_pointer_cast(basic_observable_ptr<T, D, P>&& ptr) {
@@ -1582,7 +1582,7 @@ basic_observable_ptr<U, D, P> static_pointer_cast(basic_observable_ptr<T, D, P>&
  * \brief Perform a `static_cast` for a @ref basic_observer_ptr.
  * \param ptr The pointer to cast
  * \note A new observer is returned, the input observer is not modified.
-          If the input pointer is null, the output pointer will also be null.
+ * If the input pointer is null, the output pointer will also be null.
  */
 template<typename U, typename T, typename Policy>
 basic_observer_ptr<U, Policy> static_pointer_cast(const basic_observer_ptr<T, Policy>& ptr) {
@@ -1594,7 +1594,7 @@ basic_observer_ptr<U, Policy> static_pointer_cast(const basic_observer_ptr<T, Po
  * \brief Perform a `static_cast` for a @ref basic_observer_ptr.
  * \param ptr The pointer to cast
  * \note A new observer is returned, the input observer is set to null.
-          If the input pointer is null, the output pointer will also be null.
+ * If the input pointer is null, the output pointer will also be null.
  */
 template<typename U, typename T, typename Policy>
 basic_observer_ptr<U, Policy> static_pointer_cast(basic_observer_ptr<T, Policy>&& ptr) {
@@ -1605,8 +1605,8 @@ basic_observer_ptr<U, Policy> static_pointer_cast(basic_observer_ptr<T, Policy>&
 /**
  * \brief Perform a `const_cast` for an @ref basic_observable_ptr.
  * \param ptr The pointer to cast
- * \note Ownership will be transfered to the returned pointer.
-          If the input pointer is null, the output pointer will also be null.
+ * \note Ownership will be transferred to the returned pointer.
+ * If the input pointer is null, the output pointer will also be null.
  */
 template<typename U, typename T, typename D, typename P>
 basic_observable_ptr<U, D, P> const_pointer_cast(basic_observable_ptr<T, D, P>&& ptr) {
@@ -1617,7 +1617,7 @@ basic_observable_ptr<U, D, P> const_pointer_cast(basic_observable_ptr<T, D, P>&&
  * \brief Perform a `const_cast` for a @ref basic_observer_ptr.
  * \param ptr The pointer to cast
  * \note A new observer is returned, the input observer is not modified.
-          If the input pointer is null, the output pointer will also be null.
+ * If the input pointer is null, the output pointer will also be null.
  */
 template<typename U, typename T, typename Policy>
 basic_observer_ptr<U, Policy> const_pointer_cast(const basic_observer_ptr<T, Policy>& ptr) {
@@ -1629,7 +1629,7 @@ basic_observer_ptr<U, Policy> const_pointer_cast(const basic_observer_ptr<T, Pol
  * \brief Perform a `const_cast` for a @ref basic_observer_ptr.
  * \param ptr The pointer to cast
  * \note A new observer is returned, the input observer is set to null.
-          If the input pointer is null, the output pointer will also be null.
+ * If the input pointer is null, the output pointer will also be null.
  */
 template<typename U, typename T, typename Policy>
 basic_observer_ptr<U, Policy> const_pointer_cast(basic_observer_ptr<T, Policy>&& ptr) {
@@ -1640,7 +1640,7 @@ basic_observer_ptr<U, Policy> const_pointer_cast(basic_observer_ptr<T, Policy>&&
 /**
  * \brief Perform a `dynamic_cast` for a @ref basic_observable_ptr.
  * \param ptr The pointer to cast
- * \note Ownership will be transfered to the returned pointer unless the cast
+ * \note Ownership will be transferred to the returned pointer unless the cast
  * fails, in which case ownership remains in the original pointer, std::bad_cast
  * is thrown, and no memory is leaked. If the input pointer is null,
  * the output pointer will also be null.
@@ -1659,8 +1659,7 @@ basic_observable_ptr<U, D, P> dynamic_pointer_cast(basic_observable_ptr<T, D, P>
  * \brief Perform a `dynamic_cast` for a @ref basic_observer_ptr.
  * \param ptr The pointer to cast
  * \note A new observer is returned, the input observer is not modified.
-          If the input pointer is null, or if the cast fails, the output pointer
-          will be null.
+ * If the input pointer is null, or if the cast fails, the output pointer will be null.
  */
 template<typename U, typename T, typename Policy>
 basic_observer_ptr<U, Policy> dynamic_pointer_cast(const basic_observer_ptr<T, Policy>& ptr) {
@@ -1672,8 +1671,7 @@ basic_observer_ptr<U, Policy> dynamic_pointer_cast(const basic_observer_ptr<T, P
  * \brief Perform a `dynamic_cast` for a @ref basic_observer_ptr.
  * \param ptr The pointer to cast
  * \note A new observer is returned, the input observer is set to null.
-          If the input pointer is null, or if the cast fails, the output pointer
-          will be null.
+ * If the input pointer is null, or if the cast fails, the output pointer will be null.
  */
 template<typename U, typename T, typename Policy>
 basic_observer_ptr<U, Policy> dynamic_pointer_cast(basic_observer_ptr<T, Policy>&& ptr) {
@@ -1747,7 +1745,7 @@ using observable_unique_ptr = basic_observable_ptr<T, Deleter, unique_policy>;
  * If you need to create an @ref observer_ptr from a `this` pointer,
  * consider making the object inheriting from @ref enable_observer_from_this_sealed.
  * Compared to @ref enable_observer_from_this_unique, this has some additional
- * limitations. Please consult the documenation for @ref enable_observer_from_this_sealed
+ * limitations. Please consult the documentation for @ref enable_observer_from_this_sealed
  * for more information.
  *
  * Other notable points (either limitations imposed by the current
