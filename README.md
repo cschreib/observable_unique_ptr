@@ -167,7 +167,7 @@ Notes:
 
 Labels are the same as in the comparison spreadsheet. The speed benchmarks were compiled with all optimizations turned on (except LTO). Speed is measured relative to `std::unique_ptr<T>` used as owner pointer, and `T*` used as observer pointer, which should be the fastest possible implementation (but obviously the one with least safety).
 
-You can run the benchmarks yourself, they are located in `tests/speed_benchmark.cpp`. The benchmark executable runs tests for three object types: `int`, `float`, `std::string`, and `std::array<int,65'536>`, to simulate objects of various allocation cost. The timings below are the worst-case values measured across all object types, which should be most relevant to highlight the overhead from the pointer itself (and erases flukes from the benchmarking framework). In real life scenarios, the actual measured overhead will be substantially lower, as actual business logic is likely to dominate the time budget.
+You can run the benchmarks yourself, they are located in `tests/speed_benchmark.cpp`. The benchmark executable runs tests for three object types: `int`, `float`, `std::string`, and `std::array<int,65'536>`, to simulate objects of various allocation cost. The timings below are the median values measured across all object types, which should be most relevant to highlight the overhead from the pointer itself (and erases flukes from the benchmarking framework). In real life scenarios, the actual measured overhead will be substantially lower, as actual business logic is likely to dominate the time budget.
 
 Detail of the benchmarks:
  - Create owner empty: default-construct an owner pointer (to nullptr).
@@ -179,22 +179,20 @@ Detail of the benchmarks:
  - Create observer copy: construct a new observer pointer from another observer pointer.
  - Dereference observer: get a reference to the underlying object from an observer pointer.
 
-The benchmarks were last ran for v0.4.0.
+*Compiler: gcc 9.4.0, std: libstdc++-9, oup: 0.7.1, OS: linux 5.15.0, CPU: Ryzen 5 2600:*
 
-*Compiler: gcc 9.3.0, std: libstdc++, OS: linux 5.1.0, CPU: Ryzen 5 2600:*
+| Pointer               | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
+| ---                   | ---        | ---         | ---                 | ---                 |
+| Create owner empty    | 1          | 1.0         | 1.0                 | 1.1                 |
+| Create owner          | 1          | 2.1         | 1.7                 | N/A                 |
+| Create owner factory  | 1          | 1.3         | 1.7                 | 1.4                 |
+| Dereference owner     | 1          | 1.1         | 1.0                 | 1.0                 |
+| Create observer empty | 1          | 1.3         | 1.2                 | 1.2                 |
+| Create observer       | 1          | 1.7         | 1.6                 | 1.6                 |
+| Create observer copy  | 1          | 1.6         | 1.6                 | 1.8                 |
+| Dereference observer  | 1          | 3.9         | 1.1                 | 1.1                 |
 
-| Pointer                  | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
-|--------------------------|------------|-------------|---------------------|---------------------|
-| Create owner empty       |     1      |     1.1     |         1.1         |         1.1         |
-| Create owner             |     1      |     2.2     |         1.9         |         N/A         |
-| Create owner factory     |     1      |     1.3     |         1.8         |         1.3         |
-| Dereference owner        |     1      |     1       |         1           |         1           |
-| Create observer empty    |     1      |     1.2     |         1.2         |         1.3         |
-| Create observer          |     1      |     1.5     |         1.6         |         1.6         |
-| Create observer copy     |     1      |     1.7     |         1.7         |         1.7         |
-| Dereference observer     |     1      |     4.8     |         1.2         |         1.3         |
-
-*Compiler: MSVC 16.11.3, std: MS-STL, OS: Windows 10.0.19043, CPU: i7-7800x:*
+*Compiler: MSVC 16.11.3, std: MS-STL, oup: 0.4.0, OS: Windows 10.0.19043, CPU: i7-7800x:*
 
 | Pointer                  | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
 |--------------------------|------------|-------------|---------------------|---------------------|
@@ -207,7 +205,7 @@ The benchmarks were last ran for v0.4.0.
 | Create observer copy     |     1      |     6.2     |         1.4         |         1.3         |
 | Dereference observer     |     1      |     11      |         1.5         |         1.1         |
 
-*Compiler: Emscripten 2.0.16, std: libc++, OS: Node.js 14.15.5 + linux kernel 5.1.0, CPU: Ryzen 5 2600:*
+*Compiler: Emscripten 2.0.16, std: libc++, oup: 0.4.0, OS: Node.js 14.15.5 + linux kernel 5.1.0, CPU: Ryzen 5 2600:*
 
 | Pointer                  | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
 |--------------------------|------------|-------------|---------------------|---------------------|
