@@ -878,14 +878,16 @@ auto make_observable(Args&&... args) {
                 new object_type(std::forward<Args>(args)...));
         }
     } else {
-        // Pre-allocate memory
-        constexpr std::size_t block_size    = sizeof(control_block_type);
-        constexpr std::size_t object_size   = sizeof(object_type);
-        constexpr std::size_t object_align  = alignof(object_type);
-        constexpr std::size_t align_padding = object_align - 1 - ((block_size - 1) % object_align);
-        constexpr std::size_t obj_offset    = block_size + align_padding;
+        // Pre-allocate memory, properly aligned for both the control block and the object
+        constexpr std::size_t block_size  = sizeof(control_block_type);
+        constexpr std::size_t block_align = alignof(control_block_type);
+        constexpr std::size_t obj_size    = sizeof(object_type);
+        constexpr std::size_t obj_align   = alignof(object_type);
+        constexpr std::size_t obj_offset  = obj_align * (1 + (block_size - 1) / obj_align);
+        constexpr std::size_t alloc_align = block_align > obj_align ? block_align : obj_align;
 
-        std::byte* buffer = reinterpret_cast<std::byte*>(operator new(obj_offset + object_size));
+        std::byte* buffer = reinterpret_cast<std::byte*>(operator new (
+            obj_offset + obj_size, std::align_val_t{alloc_align}));
 
         try {
             // Construct control block first
