@@ -179,44 +179,46 @@ Detail of the benchmarks:
  - Create observer copy: construct a new observer pointer from another observer pointer.
  - Dereference observer: get a reference to the underlying object from an observer pointer.
 
-*Compiler: gcc 9.4.0, std: libstdc++-9, oup: 0.7.1, OS: linux 5.15.0, CPU: Ryzen 5 2600:*
+The benchmarks were last ran for oup v0.7.1.
+
+*Compiler: gcc 9.4.0, std: libstdc++-9, OS: linux 5.15.0, CPU: Ryzen 5 2600:*
 
 | Pointer               | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
 | ---                   | ---        | ---         | ---                 | ---                 |
-| Create owner empty    | 1          | 1.0         | 1.0                 | 1.1                 |
+| Create owner empty    | 1          | 1.1         | 1.1                 | 1.2                 |
 | Create owner          | 1          | 2.1         | 1.7                 | N/A                 |
-| Create owner factory  | 1          | 1.3         | 1.7                 | 1.4                 |
-| Dereference owner     | 1          | 1.1         | 1.0                 | 1.0                 |
-| Create observer empty | 1          | 1.3         | 1.2                 | 1.2                 |
-| Create observer       | 1          | 1.7         | 1.6                 | 1.6                 |
-| Create observer copy  | 1          | 1.6         | 1.6                 | 1.8                 |
-| Dereference observer  | 1          | 3.9         | 1.1                 | 1.1                 |
+| Create owner factory  | 1          | 1.3         | 1.7                 | 1.1                 |
+| Dereference owner     | 1          | 1.0         | 1.0                 | 1.1                 |
+| Create observer empty | 1          | 1.1         | 1.2                 | 1.2                 |
+| Create observer       | 1          | 1.6         | 1.6                 | 1.6                 |
+| Create observer copy  | 1          | 1.7         | 1.6                 | 1.6                 |
+| Dereference observer  | 1          | 3.5         | 1.0                 | 1.0                 |
 
-*Compiler: MSVC 16.11.3, std: MS-STL, oup: 0.4.0, OS: Windows 10.0.19043, CPU: i7-7800x:*
+*Compiler: MSVC 16.11.3, std: MS-STL, OS: Windows 10.0.19043, CPU: i7-7800x:*
 
-| Pointer                  | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
-|--------------------------|------------|-------------|---------------------|---------------------|
-| Create owner empty       |     1      |     1.1     |         1.1         |         1.1         |
-| Create owner             |     1      |     2.2     |         2.0         |         N/A         |
-| Create owner factory     |     1      |     1.3     |         2.0         |         1.4         |
-| Dereference owner        |     1      |     0.8     |         1.8         |         1.5         |
-| Create observer empty    |     1      |     1.1     |         1.2         |         1.2         |
-| Create observer          |     1      |     5.6     |         1.5         |         1.3         |
-| Create observer copy     |     1      |     6.2     |         1.4         |         1.3         |
-| Dereference observer     |     1      |     11      |         1.5         |         1.1         |
+| Pointer               | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
+| ---                   | ---        | ---         | ---                 | ---                 |
+| Create owner empty    | 1          | 1.4         | 1.8                 | 1.5                 |
+| Create owner          | 1          | 2.2         | 2.9                 | N/A                 |
+| Create owner factory  | 1          | 1.2         | 2.2                 | 0.9                 |
+| Dereference owner     | 1          | 0.7         | 1.3                 | 1.0                 |
+| Create observer empty | 1          | 1.6         | 1.0                 | 0.8                 |
+| Create observer       | 1          | 5.3         | 1.6                 | 1.6                 |
+| Create observer copy  | 1          | 5.3         | 1.4                 | 1.5                 |
+| Dereference observer  | 1          | 9.4         | 1.4                 | 0.8                 |
 
-*Compiler: Emscripten 2.0.16, std: libc++, oup: 0.4.0, OS: Node.js 14.15.5 + linux kernel 5.1.0, CPU: Ryzen 5 2600:*
+*Compiler: Emscripten 2.0.34, std: libc++, OS: Node.js 14.15.5 + linux kernel 5.1.0, CPU: Ryzen 5 2600:*
 
-| Pointer                  | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
-|--------------------------|------------|-------------|---------------------|---------------------|
-| Create owner empty       |     1      |     20      |         1.2         |         1           |
-| Create owner             |     1      |     1.6     |         1.6         |         N/A         |
-| Create owner factory     |     1      |     1.1     |         1.6         |         1           |
-| Dereference owner        |     1      |     1       |         1           |         1           |
-| Create observer empty    |     1      |     35      |         1.8         |         1.7         |
-| Create observer          |     1      |     36      |         2.4         |         2.5         |
-| Create observer copy     |     1      |     41      |         2.3         |         2.3         |
-| Dereference observer     |     1      |     114     |         1           |         1           |
+| Pointer               | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
+| ---                   | ---        | ---         | ---                 | ---                 |
+| Create owner empty    | 1          | 6.9         | 1.1                 | 1.0                 |
+| Create owner          | 1          | 1.8         | 1.6                 | N/A                 |
+| Create owner factory  | 1          | 1.2         | 1.7                 | 1.0                 |
+| Dereference owner     | 1          | 1.0         | 1.0                 | 1.0                 |
+| Create observer empty | 1          | 11.4        | 1.6                 | 1.6                 |
+| Create observer       | 1          | 14.8        | 2.3                 | 2.3                 |
+| Create observer copy  | 1          | 14.9        | 2.3                 | 2.5                 |
+| Dereference observer  | 1          | 38.7        | 1.0                 | 1.0                 |
 
 
 ## Alternative implementation
