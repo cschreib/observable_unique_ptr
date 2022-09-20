@@ -1,17 +1,18 @@
-# set OS preprocessor defines
-if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
-    set(OUP_PLATFORM_WASM TRUE)
-    set(OUP_COMPILER_EMSCRIPTEN TRUE)
-elseif (APPLE)
-    set(OUP_PLATFORM_OSX TRUE)
-elseif (UNIX)
-    set(OUP_PLATFORM_LINUX TRUE)
-elseif (WIN32)
-    set(OUP_PLATFORM_WINDOWS TRUE)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        set(OUP_COMPILER_MSVC TRUE)
-    endif()
-endif()
+function(add_platform_definitions TARGET)
+  if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
+      target_compile_definitions(${TARGET} PRIVATE OUP_PLATFORM_WASM)
+      target_compile_definitions(${TARGET} PRIVATE OUP_COMPILER_EMSCRIPTEN)
+  elseif (APPLE)
+      target_compile_definitions(${TARGET} PRIVATE OUP_PLATFORM_OSX)
+  elseif (UNIX)
+      target_compile_definitions(${TARGET} PRIVATE OUP_PLATFORM_LINUX)
+  elseif (WIN32)
+      target_compile_definitions(${TARGET} PRIVATE OUP_PLATFORM_WINDOWS)
+      if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+          target_compile_definitions(${TARGET} PRIVATE OUP_COMPILER_MSVC)
+      endif()
+  endif()
+endfunction()
 
 include(FetchContent)
 
@@ -28,13 +29,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${Catch2_SOURCE_DIR}/extras")
 add_executable(oup_tests ${PROJECT_SOURCE_DIR}/tests/runtime_tests.cpp)
 target_link_libraries(oup_tests PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(oup_tests PRIVATE oup::oup)
-target_compile_definitions(oup_tests PRIVATE
-  OUP_PLATFORM_OSX
-  OUP_PLATFORM_WASM
-  OUP_PLATFORM_LINUX
-  OUP_PLATFORM_WINDOWS
-  OUP_COMPILER_MSVC
-  OUP_COMPILER_EMSCRIPTEN)
+add_platform_definitions(oup_tests)
 
 include(CTest)
 include(Catch)
@@ -79,9 +74,11 @@ message(STATUS "Running compile-time tests ended.")
 
 add_executable(oup_size_benchmark ${PROJECT_SOURCE_DIR}/tests/size_benchmark.cpp)
 target_link_libraries(oup_size_benchmark PRIVATE oup::oup)
+add_platform_definitions(oup_size_benchmark)
 
 add_executable(oup_speed_benchmark
   ${PROJECT_SOURCE_DIR}/tests/speed_benchmark.cpp
   ${PROJECT_SOURCE_DIR}/tests/speed_benchmark_utility.cpp
   ${PROJECT_SOURCE_DIR}/tests/speed_benchmark_utility2.cpp)
 target_link_libraries(oup_speed_benchmark PRIVATE oup::oup)
+add_platform_definitions(oup_speed_benchmark)

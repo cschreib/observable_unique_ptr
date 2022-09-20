@@ -121,7 +121,7 @@ Finally, because this library uses no global state (beyond the standard allocato
 
 ## Comparison spreadsheet
 
-In this comparison spreadsheet, the raw pointer `T*` is assumed to never be owning, and used only to observe an existing object (which may or may not have been deleted). The stack and heap sizes were measured with gcc 9.3.0 and libstdc++.
+In this comparison spreadsheet, the raw pointer `T*` is assumed to never be owning, and used only to observe an existing object (which may or may not have been deleted). Unless otherwise specified, the stack and heap sizes were measured with gcc 9.4.0 and libstdc++-9.
 
 Labels:
  - raw: `T*`
@@ -146,7 +146,7 @@ Labels:
 | Number of heap alloc.    | 0    | 0      | 0        | 1      | 1/2(4) | 2          | 1          |
 | Size in bytes (64 bit)   |      |        |          |        |        |            |            |
 |  - Stack (per instance)  | 8    | 16     | 16       | 8      | 16     | 16         | 16         |
-|  - Heap (shared)         | 0    | 0      | 0        | 0      | 24     | 4          | 4          |
+|  - Heap (shared)         | 0    | 0      | 0        | 0      | 24(5)  | 4          | 4(6)       |
 |  - Total                 | 8    | 16     | 16       | 8      | 40     | 20         | 20         |
 | Size in bytes (32 bit)   |      |        |          |        |        |            |            |
 |  - Stack (per instance)  | 4    | 8      | 8        | 4      | 8      | 8          | 8          |
@@ -159,13 +159,15 @@ Notes:
  - (2) Not if using `std::make_shared()`.
  - (3) Not defined by the C++ standard. In practice, libstdc++ stores its reference count on an `_Atomic_word`, which for a common 64bit linux platform is a 4 byte signed integer, hence the limit will be 2^31 - 1. Microsoft's STL uses `_Atomic_counter_t`, which for a 64bit Windows platform is 4 bytes unsigned integer, hence the limit will be 2^32 - 1.
  - (4) 2 by default, or 1 if using `std::make_shared()`.
+ - (5) When using `std::make_shared()`, this can get as low as 16 bytes, or larger than 24 bytes, depending on the size and alignment requirements of the object type. This behavior is shared by libstdc++ and MS-STL.
+ - (6) Can get larger than 4 depending on the alignment requirements of the object type.
 
 
 ## Speed benchmarks
 
 Labels are the same as in the comparison spreadsheet. The speed benchmarks were compiled with all optimizations turned on (except LTO). Speed is measured relative to `std::unique_ptr<T>` used as owner pointer, and `T*` used as observer pointer, which should be the fastest possible implementation (but obviously the one with least safety).
 
-You can run the benchmarks yourself, they are located in `tests/speed_benchmark.cpp`. The benchmark executable runs tests for three object types: `int`, `float`, `std::string`, and `std::array<int,65'536>`, to simulate objects of various allocation cost. The timings below are the worst-case values measured across all object types, which should be most relevant to highlight the overhead from the pointer itself (and erases flukes from the benchmarking framework). In real life scenarios, the actual measured overhead will be substantially lower, as actual business logic is likely to dominate the time budget.
+You can run the benchmarks yourself, they are located in `tests/speed_benchmark.cpp`. The benchmark executable runs tests for three object types: `int`, `float`, `std::string`, and `std::array<int,65'536>`, to simulate objects of various allocation cost. The timings below are the median values measured across all object types, which should be most relevant to highlight the overhead from the pointer itself (and erases flukes from the benchmarking framework). In real life scenarios, the actual measured overhead will be substantially lower, as actual business logic is likely to dominate the time budget.
 
 Detail of the benchmarks:
  - Create owner empty: default-construct an owner pointer (to nullptr).
@@ -177,46 +179,46 @@ Detail of the benchmarks:
  - Create observer copy: construct a new observer pointer from another observer pointer.
  - Dereference observer: get a reference to the underlying object from an observer pointer.
 
-The benchmarks were last ran for v0.4.0.
+The benchmarks were last ran for oup v0.7.1.
 
-*Compiler: gcc 9.3.0, std: libstdc++, OS: linux 5.1.0, CPU: Ryzen 5 2600:*
+*Compiler: gcc 9.4.0, std: libstdc++-9, OS: linux 5.15.0, CPU: Ryzen 5 2600:*
 
-| Pointer                  | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
-|--------------------------|------------|-------------|---------------------|---------------------|
-| Create owner empty       |     1      |     1.1     |         1.1         |         1.1         |
-| Create owner             |     1      |     2.2     |         1.9         |         N/A         |
-| Create owner factory     |     1      |     1.3     |         1.8         |         1.3         |
-| Dereference owner        |     1      |     1       |         1           |         1           |
-| Create observer empty    |     1      |     1.2     |         1.2         |         1.3         |
-| Create observer          |     1      |     1.5     |         1.6         |         1.6         |
-| Create observer copy     |     1      |     1.7     |         1.7         |         1.7         |
-| Dereference observer     |     1      |     4.8     |         1.2         |         1.3         |
+| Pointer               | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
+| ---                   | ---        | ---         | ---                 | ---                 |
+| Create owner empty    | 1          | 1.1         | 1.1                 | 1.2                 |
+| Create owner          | 1          | 2.1         | 1.7                 | N/A                 |
+| Create owner factory  | 1          | 1.3         | 1.7                 | 1.1                 |
+| Dereference owner     | 1          | 1.0         | 1.0                 | 1.1                 |
+| Create observer empty | 1          | 1.1         | 1.2                 | 1.2                 |
+| Create observer       | 1          | 1.6         | 1.6                 | 1.6                 |
+| Create observer copy  | 1          | 1.7         | 1.6                 | 1.6                 |
+| Dereference observer  | 1          | 3.5         | 1.0                 | 1.0                 |
 
 *Compiler: MSVC 16.11.3, std: MS-STL, OS: Windows 10.0.19043, CPU: i7-7800x:*
 
-| Pointer                  | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
-|--------------------------|------------|-------------|---------------------|---------------------|
-| Create owner empty       |     1      |     1.1     |         1.1         |         1.1         |
-| Create owner             |     1      |     2.2     |         2.0         |         N/A         |
-| Create owner factory     |     1      |     1.3     |         2.0         |         1.4         |
-| Dereference owner        |     1      |     0.8     |         1.8         |         1.5         |
-| Create observer empty    |     1      |     1.1     |         1.2         |         1.2         |
-| Create observer          |     1      |     5.6     |         1.5         |         1.3         |
-| Create observer copy     |     1      |     6.2     |         1.4         |         1.3         |
-| Dereference observer     |     1      |     11      |         1.5         |         1.1         |
+| Pointer               | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
+| ---                   | ---        | ---         | ---                 | ---                 |
+| Create owner empty    | 1          | 1.4         | 1.8                 | 1.5                 |
+| Create owner          | 1          | 2.2         | 2.9                 | N/A                 |
+| Create owner factory  | 1          | 1.2         | 2.2                 | 0.9                 |
+| Dereference owner     | 1          | 0.7         | 1.3                 | 1.0                 |
+| Create observer empty | 1          | 1.6         | 1.0                 | 0.8                 |
+| Create observer       | 1          | 5.3         | 1.6                 | 1.6                 |
+| Create observer copy  | 1          | 5.3         | 1.4                 | 1.5                 |
+| Dereference observer  | 1          | 9.4         | 1.4                 | 0.8                 |
 
-*Compiler: Emscripten 2.0.16, std: libc++, OS: Node.js 14.15.5 + linux kernel 5.1.0, CPU: Ryzen 5 2600:*
+*Compiler: Emscripten 2.0.34, std: libc++, OS: Node.js 14.15.5 + linux kernel 5.1.0, CPU: Ryzen 5 2600:*
 
-| Pointer                  | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
-|--------------------------|------------|-------------|---------------------|---------------------|
-| Create owner empty       |     1      |     20      |         1.2         |         1           |
-| Create owner             |     1      |     1.6     |         1.6         |         N/A         |
-| Create owner factory     |     1      |     1.1     |         1.6         |         1           |
-| Dereference owner        |     1      |     1       |         1           |         1           |
-| Create observer empty    |     1      |     35      |         1.8         |         1.7         |
-| Create observer          |     1      |     36      |         2.4         |         2.5         |
-| Create observer copy     |     1      |     41      |         2.3         |         2.3         |
-| Dereference observer     |     1      |     114     |         1           |         1           |
+| Pointer               | raw/unique | weak/shared | observer/obs_unique | observer/obs_sealed |
+| ---                   | ---        | ---         | ---                 | ---                 |
+| Create owner empty    | 1          | 6.9         | 1.1                 | 1.0                 |
+| Create owner          | 1          | 1.8         | 1.6                 | N/A                 |
+| Create owner factory  | 1          | 1.2         | 1.7                 | 1.0                 |
+| Dereference owner     | 1          | 1.0         | 1.0                 | 1.0                 |
+| Create observer empty | 1          | 11.4        | 1.6                 | 1.6                 |
+| Create observer       | 1          | 14.8        | 2.3                 | 2.3                 |
+| Create observer copy  | 1          | 14.9        | 2.3                 | 2.5                 |
+| Dereference observer  | 1          | 38.7        | 1.0                 | 1.0                 |
 
 
 ## Alternative implementation

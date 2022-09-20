@@ -1,108 +1,25 @@
 #include "tests_common.hpp"
+#define CHECK_MEMORY_LEAKS
+#include "memory_tracker.hpp"
 
-#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
-#include <cstdlib>
 #include <vector>
 
-// Allocation tracker, to catch memory leaks and double delete
-constexpr std::size_t max_allocations = 20'000;
-void*                 allocations[max_allocations];
-void*                 allocations_array[max_allocations];
-std::size_t           num_allocations = 0u;
-std::size_t           double_delete   = 0u;
-bool                  memory_tracking = false;
-
-#if defined(OUP_PLATFORM_OSX)
-// Getting weird errors on MacOS when overriding operator new and delete,
-// so disable the memory leak checking for this platform.
-#    define CHECK_MEMORY_LEAKS 0
-#else
-#    define CHECK_MEMORY_LEAKS 1
-#endif
-
-#if defined(CHECK_MEMORY_LEAKS) && CHECK_MEMORY_LEAKS
-void* allocate(std::size_t size, bool array) {
-    if (memory_tracking && num_allocations == max_allocations) {
-        throw std::bad_alloc();
-    }
-
-    void* p = std::malloc(size);
-    if (!p) {
-        throw std::bad_alloc();
-    }
-
-    if (memory_tracking) {
-        if (array) {
-            allocations_array[num_allocations] = p;
-        } else {
-            allocations[num_allocations] = p;
-        }
-
-        ++num_allocations;
-    }
-
-    return p;
-}
-
-void deallocate(void* p, bool array) {
-    if (memory_tracking) {
-        bool   found            = false;
-        void** allocations_type = array ? allocations_array : allocations;
-        for (std::size_t i = 0; i < num_allocations; ++i) {
-            if (allocations_type[i] == p) {
-                std::swap(allocations_type[i], allocations_type[num_allocations - 1]);
-                --num_allocations;
-                found = true;
-                break;
-            }
-        }
-
-        if (!found) {
-            ++double_delete;
-        }
-    }
-
-    std::free(p);
-}
-
-void* operator new(std::size_t size) {
-    return allocate(size, false);
-}
-
-void* operator new[](size_t size) {
-    return allocate(size, true);
-}
-
-void operator delete(void* p) noexcept {
-    deallocate(p, false);
-}
-
-void operator delete[](void* p) noexcept {
-    deallocate(p, true);
-}
-#endif
-
-struct memory_tracker {
-    std::size_t initial_allocations;
-    std::size_t initial_double_delete;
-
-    memory_tracker() noexcept :
-        initial_allocations(num_allocations), initial_double_delete(double_delete) {
-        memory_tracking = true;
-    }
-
-    ~memory_tracker() noexcept {
-        memory_tracking = false;
-    }
-
-    std::size_t leaks() const {
-        return num_allocations - initial_allocations;
-    }
-    std::size_t double_del() const {
-        return double_delete - initial_double_delete;
-    }
-};
+// Replace Catch2's REQUIRE_THROWS_AS, which allocates on Windows;
+// this confuses our memory leak checks.
+#undef REQUIRE_THROWS_AS
+#define REQUIRE_THROWS_AS(EXPRESSION, EXCEPTION)                                                   \
+    do {                                                                                           \
+        try {                                                                                      \
+            EXPRESSION;                                                                            \
+            FAIL("no exception thrown");                                                           \
+        } catch (const EXCEPTION&) {                                                               \
+        } catch (const std::exception& e) {                                                        \
+            FAIL(e.what());                                                                        \
+        } catch (...) {                                                                            \
+            FAIL("unexpected exception thrown");                                                   \
+        }                                                                                          \
+    } while (0)
 
 TEST_CASE("owner size", "[owner_size]") {
     REQUIRE(sizeof(test_ptr) == 2 * sizeof(void*));
@@ -277,6 +194,23 @@ TEST_CASE("owner acquiring constructor", "[owner_construction]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
+TEST_CASE("owner acquiring constructor bad alloc", "[owner_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_object* raw_ptr = new test_object;
+        try {
+            force_next_allocation_failure = true;
+            test_ptr{raw_ptr};
+        } catch (...) {
+        }
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
 TEST_CASE("owner acquiring constructor with deleter", "[owner_construction]") {
     memory_tracker mem_track;
 
@@ -290,6 +224,23 @@ TEST_CASE("owner acquiring constructor with deleter", "[owner_construction]") {
 
     REQUIRE(instances == 0);
     REQUIRE(instances_deleter == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner acquiring constructor with deleter bad alloc", "[owner_construction]") {
+    memory_tracker mem_track;
+
+    {
+        test_object* raw_ptr = new test_object;
+        try {
+            force_next_allocation_failure = true;
+            test_ptr_with_deleter{raw_ptr, test_deleter{42}};
+        } catch (...) {
+        }
+    }
+
+    REQUIRE(instances == 0);
     REQUIRE(mem_track.leaks() == 0u);
     REQUIRE(mem_track.double_del() == 0u);
 }
@@ -1271,6 +1222,27 @@ TEST_CASE("owner reset to new", "[owner_utility]") {
         ptr.reset(new test_object);
         REQUIRE(instances == 1);
         REQUIRE(ptr.get() != nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("owner reset to new bad alloc", "[owner_utility]") {
+    memory_tracker mem_track;
+
+    {
+        test_object* raw_ptr1 = new test_object;
+        test_object* raw_ptr2 = new test_object;
+        test_ptr     ptr(raw_ptr1);
+        try {
+            force_next_allocation_failure = true;
+            ptr.reset(raw_ptr2);
+        } catch (...) {
+        }
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() == raw_ptr1);
     }
 
     REQUIRE(instances == 0);
@@ -3286,7 +3258,7 @@ TEST_CASE("pointers in vector", "[system_tests]") {
     REQUIRE(mem_track.double_del() == 0u);
 }
 
-TEST_CASE("observer from this", "[observer_from_this]") {
+TEST_CASE("observer from this unique", "[observer_from_this]") {
     memory_tracker mem_track;
 
     {
@@ -3348,6 +3320,151 @@ TEST_CASE("observer from this non virtual unique", "[observer_from_this]") {
         REQUIRE(optr_from_this_const.expired() == false);
         REQUIRE(optr_from_this.get() == ptr.get());
         REQUIRE(optr_from_this_const.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this maybe no block unique", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_from_this_maybe_no_block ptr = oup::make_observable<
+            test_object_observer_from_this_maybe_no_block_unique, unique_maybe_no_block_policy>();
+        const test_ptr_from_this_maybe_no_block& cptr = ptr;
+
+        test_optr_from_this_maybe_no_block_unique       optr_from_this = ptr->observer_from_this();
+        test_optr_from_this_const_maybe_no_block_unique optr_from_this_const =
+            cptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this_const.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this maybe no block acquire", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        test_ptr_from_this_maybe_no_block ptr{
+            new test_object_observer_from_this_maybe_no_block_unique};
+        const test_ptr_from_this_maybe_no_block& cptr = ptr;
+
+        test_optr_from_this_maybe_no_block_unique       optr_from_this = ptr->observer_from_this();
+        test_optr_from_this_const_maybe_no_block_unique optr_from_this_const =
+            cptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this_const.get() == ptr.get());
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this maybe no block reset to new", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        auto* raw_ptr1 = new test_object_observer_from_this_maybe_no_block_unique;
+        auto* raw_ptr2 = new test_object_observer_from_this_maybe_no_block_unique;
+
+        test_ptr_from_this_maybe_no_block        ptr{raw_ptr1};
+        const test_ptr_from_this_maybe_no_block& cptr = ptr;
+
+        ptr.reset(raw_ptr2);
+
+        test_optr_from_this_maybe_no_block_unique       optr_from_this = ptr->observer_from_this();
+        test_optr_from_this_const_maybe_no_block_unique optr_from_this_const =
+            cptr->observer_from_this();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this.get() == raw_ptr2);
+        REQUIRE(optr_from_this_const.get() == ptr.get());
+        REQUIRE(optr_from_this_const.get() == raw_ptr2);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this maybe no block reset to new after release", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        auto* raw_ptr = new test_object_observer_from_this_maybe_no_block_unique;
+
+        test_ptr_from_this_maybe_no_block        ptr{raw_ptr};
+        const test_ptr_from_this_maybe_no_block& cptr = ptr;
+
+        test_optr_from_this_maybe_no_block_unique       optr_from_this = ptr->observer_from_this();
+        test_optr_from_this_const_maybe_no_block_unique optr_from_this_const =
+            cptr->observer_from_this();
+
+        ptr.release();
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == raw_ptr);
+        REQUIRE(optr_from_this_const.get() == raw_ptr);
+
+        ptr.reset(raw_ptr);
+
+        REQUIRE(instances == 1);
+        REQUIRE(optr_from_this.expired() == false);
+        REQUIRE(optr_from_this_const.expired() == false);
+        REQUIRE(optr_from_this.get() == ptr.get());
+        REQUIRE(optr_from_this_const.get() == ptr.get());
+
+        ptr.reset();
+
+        REQUIRE(instances == 0);
+        REQUIRE(optr_from_this.expired() == true);
+        REQUIRE(optr_from_this_const.expired() == true);
+        REQUIRE(optr_from_this.get() == nullptr);
+        REQUIRE(optr_from_this_const.get() == nullptr);
+    }
+
+    REQUIRE(instances == 0);
+    REQUIRE(mem_track.leaks() == 0u);
+    REQUIRE(mem_track.double_del() == 0u);
+}
+
+TEST_CASE("observer from this maybe no block reset to new bad alloc", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        auto* raw_ptr1 = new test_object_observer_from_this_maybe_no_block_unique;
+        auto* raw_ptr2 = new test_object_observer_from_this_maybe_no_block_unique;
+
+        test_ptr_from_this_maybe_no_block ptr{raw_ptr1};
+
+        try {
+            force_next_allocation_failure = true;
+            ptr.reset(raw_ptr2);
+        } catch (...) {
+        }
+
+        REQUIRE(instances == 1);
+        REQUIRE(ptr.get() == raw_ptr1);
     }
 
     REQUIRE(instances == 0);

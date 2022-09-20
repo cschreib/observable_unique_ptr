@@ -81,6 +81,14 @@ struct unique_non_virtual_policy {
     using observer_policy                                      = oup::default_observer_policy;
 };
 
+struct unique_maybe_no_block_policy {
+    static constexpr bool is_sealed                            = false;
+    static constexpr bool allow_eoft_in_constructor            = false;
+    static constexpr bool allow_eoft_multiple_inheritance      = true;
+    static constexpr bool eoft_constructor_takes_control_block = false;
+    using observer_policy                                      = oup::default_observer_policy;
+};
+
 struct test_object_observer_from_this_virtual_sealed :
     public test_object,
     public oup::basic_enable_observer_from_this<
@@ -98,6 +106,12 @@ struct test_object_observer_from_this_non_virtual_unique :
             test_object_observer_from_this_non_virtual_unique,
             unique_non_virtual_policy>(block) {}
 };
+
+struct test_object_observer_from_this_maybe_no_block_unique :
+    public test_object,
+    public oup::basic_enable_observer_from_this<
+        test_object_observer_from_this_maybe_no_block_unique,
+        unique_maybe_no_block_policy> {};
 
 struct test_object_thrower_observer_from_this_non_virtual_unique :
     public oup::basic_enable_observer_from_this<
@@ -275,6 +289,11 @@ using test_ptr_from_this_non_virtual = oup::basic_observable_ptr<
     oup::default_delete,
     unique_non_virtual_policy>;
 
+using test_ptr_from_this_maybe_no_block = oup::basic_observable_ptr<
+    test_object_observer_from_this_maybe_no_block_unique,
+    oup::default_delete,
+    unique_maybe_no_block_policy>;
+
 using test_sptr_from_this_virtual = oup::basic_observable_ptr<
     test_object_observer_from_this_virtual_sealed,
     oup::placement_delete,
@@ -323,6 +342,10 @@ using test_optr_from_this_non_virtual_unique =
     oup::observer_ptr<test_object_observer_from_this_non_virtual_unique>;
 using test_optr_from_this_const_non_virtual_unique =
     oup::observer_ptr<const test_object_observer_from_this_non_virtual_unique>;
+using test_optr_from_this_maybe_no_block_unique =
+    oup::observer_ptr<test_object_observer_from_this_maybe_no_block_unique>;
+using test_optr_from_this_const_maybe_no_block_unique =
+    oup::observer_ptr<const test_object_observer_from_this_maybe_no_block_unique>;
 using test_optr_from_this_virtual_sealed =
     oup::observer_ptr<test_object_observer_from_this_virtual_sealed>;
 using test_optr_from_this_const_virtual_sealed =
