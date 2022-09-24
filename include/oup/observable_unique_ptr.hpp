@@ -890,20 +890,20 @@ auto make_observable(Args&&... args) {
         // See comment below on alignment
         static_assert(
             block_align <= __STDCPP_DEFAULT_NEW_ALIGNMENT__,
-            "control block is over-aligned, this would require a custom allocator");
+            "control block is over-aligned, this is not supported for sealed pointers");
         static_assert(
             obj_align <= __STDCPP_DEFAULT_NEW_ALIGNMENT__,
-            "object is over-aligned, this would require a custom allocator");
+            "object is over-aligned, this is not supported for sealed pointers");
 
         // NB: The correct thing to do here would be to use aligned-new, with an alignment
         // of max(block_align, obj_align). This would require using aligned-delete in the
         // control block, which in turn would either require the control block to always use
         // aligned-delete and aligned-new, which could be wasteful, or to know somehow whether
-        // it has been allocated here or individually.
+        // it has been allocated here or individually (which is what the libstdc++ implementation
+        // of shared_ptr does, with polymorphic control blocks).
         // Most types will have an alignment <= __STDCPP_DEFAULT_NEW_ALIGNMENT__, which is
         // the alignment guaranteed by the classic operator new, therefore we can safely use
-        // it and warn the user with a static asset if we can't.
-        // Going beyond this would require support for custom allocators.
+        // it and warn the user with a static assert if we can't.
 
         std::byte* buffer = reinterpret_cast<std::byte*>(operator new(obj_offset + obj_size));
 
