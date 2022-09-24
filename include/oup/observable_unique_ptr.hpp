@@ -260,8 +260,6 @@ struct enable_observer_from_this_base {
     /// Policy query helper
     using queries = policy_queries<Policy>;
 
-    mutable control_block_type* this_control_block = nullptr;
-
     enable_observer_from_this_base() noexcept(!queries::eoft_constructor_allocates()) {
         if constexpr (queries::eoft_constructor_allocates()) {
             this_control_block = new control_block_type;
@@ -285,6 +283,8 @@ struct enable_observer_from_this_base {
     }
 
 private:
+    mutable control_block_type* this_control_block = nullptr;
+
     void set_control_block_(control_block_type* b) noexcept {
         this_control_block = b;
         this_control_block->push_ref();
@@ -301,6 +301,8 @@ private:
     friend auto oup::make_observable(Args&&... args);
     template<typename U, typename D, typename P>
     friend class oup::basic_observable_ptr;
+    template<typename U, typename P>
+    friend class oup::basic_enable_observer_from_this;
 };
 } // namespace details
 
