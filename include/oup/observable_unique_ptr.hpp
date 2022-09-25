@@ -556,8 +556,8 @@ public:
      * \param manager The smart pointer to take ownership from
      * \param value The casted pointer value to take ownership of
      * \note After this smart pointer is created, the source
-     * pointer is set to null and looses ownership. The deleter
-     * is default constructed.
+     * pointer is set to null and looses ownership. Its deleter
+     * is moved into the new pointer.
      */
     template<
         typename U,
@@ -565,10 +565,14 @@ public:
         typename V,
         typename enable = std::enable_if_t<std::is_convertible_v<V*, T*>>>
     basic_observable_ptr(basic_observable_ptr<U, D, Policy>&& manager, V* value) noexcept :
-        basic_observable_ptr(value != nullptr ? manager.block : nullptr, value) {
+        basic_observable_ptr(
+            value != nullptr ? manager.block : nullptr,
+            value,
+            std::move(manager.ptr_deleter.deleter())) {
 
-        if (value == nullptr) {
-            manager.delete_object_if_exists_();
+        if (value == nullptr && manager.ptr_deleter.pointer() != nullptr) {
+            manager.delete_object_(
+                manager.block, manager.ptr_deleter.pointer(), ptr_deleter.deleter());
         }
 
         manager.block                 = nullptr;
@@ -594,10 +598,10 @@ public:
 
         if (value == nullptr) {
             manager.delete_object_if_exists_();
+        } else {
+            manager.block                 = nullptr;
+            manager.ptr_deleter.pointer() = nullptr;
         }
-
-        manager.block                 = nullptr;
-        manager.ptr_deleter.pointer() = nullptr;
     }
 
     /**
