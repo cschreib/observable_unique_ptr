@@ -35,8 +35,33 @@ namespace details {
 // on empty base class optimization. In C++20, this could be simplified
 // by [[no_unique_address]].
 template<typename T, typename Deleter>
-struct ptr_and_deleter : Deleter {
+class ptr_and_deleter : private Deleter {
     T* data = nullptr;
+
+public:
+    explicit ptr_and_deleter(Deleter d, T* ptr) : Deleter(std::move(d)), data(ptr) {}
+
+    ptr_and_deleter()                       = default;
+    ptr_and_deleter(const ptr_and_deleter&) = default;
+    ptr_and_deleter(ptr_and_deleter&&)      = default;
+    ptr_and_deleter& operator=(const ptr_and_deleter&) = default;
+    ptr_and_deleter& operator=(ptr_and_deleter&&) = default;
+
+    T*& pointer() {
+        return data;
+    }
+
+    T* const& pointer() const {
+        return data;
+    }
+
+    Deleter& deleter() {
+        return *static_cast<Deleter*>(this);
+    }
+
+    const Deleter& deleter() const {
+        return *static_cast<const Deleter*>(this);
+    }
 };
 
 // Struct providing an unsigned integer with at least `Bits` bits.
@@ -405,14 +430,14 @@ private:
     }
 
     void delete_object_() noexcept {
-        delete_object_(block, ptr_deleter.data, ptr_deleter);
+        delete_object_(block, ptr_deleter.pointer(), ptr_deleter.deleter());
     }
 
     void delete_object_if_exists_() noexcept {
-        if (ptr_deleter.data) {
+        if (ptr_deleter.pointer()) {
             delete_object_();
-            block            = nullptr;
-            ptr_deleter.data = nullptr;
+            block                 = nullptr;
+            ptr_deleter.pointer() = nullptr;
         }
     }
 
@@ -500,9 +525,10 @@ public:
      * is moved.
      */
     basic_observable_ptr(basic_observable_ptr&& value) noexcept :
-        basic_observable_ptr(value.block, value.ptr_deleter.data, std::move(value.ptr_deleter)) {
-        value.block            = nullptr;
-        value.ptr_deleter.data = nullptr;
+        basic_observable_ptr(
+            value.block, value.ptr_deleter.pointer(), std::move(value.ptr_deleter.deleter())) {
+        value.block                 = nullptr;
+        value.ptr_deleter.pointer() = nullptr;
     }
 
     /**
@@ -519,9 +545,10 @@ public:
         typename enable =
             std::enable_if_t<std::is_convertible_v<U*, T*> && std::is_convertible_v<D, Deleter>>>
     basic_observable_ptr(basic_observable_ptr<U, D, Policy>&& value) noexcept :
-        basic_observable_ptr(value.block, value.ptr_deleter.data, std::move(value.ptr_deleter)) {
-        value.block            = nullptr;
-        value.ptr_deleter.data = nullptr;
+        basic_observable_ptr(
+            value.block, value.ptr_deleter.pointer(), std::move(value.ptr_deleter.deleter())) {
+        value.block                 = nullptr;
+        value.ptr_deleter.pointer() = nullptr;
     }
 
     /**
@@ -544,8 +571,8 @@ public:
             manager.delete_object_if_exists_();
         }
 
-        manager.block            = nullptr;
-        manager.ptr_deleter.data = nullptr;
+        manager.block                 = nullptr;
+        manager.ptr_deleter.pointer() = nullptr;
     }
 
     /**
@@ -569,8 +596,8 @@ public:
             manager.delete_object_if_exists_();
         }
 
-        manager.block            = nullptr;
-        manager.ptr_deleter.data = nullptr;
+        manager.block                 = nullptr;
+        manager.ptr_deleter.pointer() = nullptr;
     }
 
     /**
@@ -625,11 +652,11 @@ public:
     basic_observable_ptr& operator=(basic_observable_ptr&& value) noexcept {
         delete_object_if_exists_();
 
-        block                              = value.block;
-        value.block                        = nullptr;
-        ptr_deleter.data                   = value.ptr_deleter.data;
-        value.ptr_deleter.data             = nullptr;
-        static_cast<Deleter&>(ptr_deleter) = std::move(static_cast<Deleter&>(value.ptr_deleter));
+        block                       = value.block;
+        value.block                 = nullptr;
+        ptr_deleter.pointer()       = value.ptr_deleter.pointer();
+        value.ptr_deleter.pointer() = nullptr;
+        ptr_deleter.deleter()       = std::move(value.ptr_deleter.deleter());
 
         return *this;
     }
@@ -650,11 +677,11 @@ public:
     basic_observable_ptr& operator=(basic_observable_ptr<U, D, Policy>&& value) noexcept {
         delete_object_if_exists_();
 
-        block                              = value.block;
-        value.block                        = nullptr;
-        ptr_deleter.data                   = value.ptr_deleter.data;
-        value.ptr_deleter.data             = nullptr;
-        static_cast<Deleter&>(ptr_deleter) = std::move(static_cast<Deleter&>(ptr_deleter));
+        block                       = value.block;
+        value.block                 = nullptr;
+        ptr_deleter.pointer()       = value.ptr_deleter.pointer();
+        value.ptr_deleter.pointer() = nullptr;
+        ptr_deleter.deleter()       = std::move(value.ptr_deleter.deleter());
 
         return *this;
     }
@@ -668,7 +695,7 @@ public:
      * \return The deleter
      */
     Deleter& get_deleter() noexcept {
-        return ptr_deleter;
+        return ptr_deleter.deleter();
     }
 
     /**
@@ -676,7 +703,7 @@ public:
      * \return The deleter
      */
     const Deleter& get_deleter() const noexcept {
-        return ptr_deleter;
+        return ptr_deleter.deleter();
     }
 
     /**
@@ -707,21 +734,21 @@ public:
     void reset(U* ptr) noexcept(
         queries::eoft_always_has_block() && has_enable_observer_from_this<U, Policy>) {
         // Copy old pointer
-        T*                  old_ptr   = ptr_deleter.data;
+        T*                  old_ptr   = ptr_deleter.pointer();
         control_block_type* old_block = block;
 
         // Assign the new one
         if constexpr (noexcept(get_or_create_block_from_object_(ptr))) {
             // There is always a control block available for us, so this cannot fail
-            block            = get_or_create_block_from_object_(ptr);
-            ptr_deleter.data = ptr;
+            block                 = get_or_create_block_from_object_(ptr);
+            ptr_deleter.pointer() = ptr;
         } else {
             try {
-                block            = get_or_create_block_from_object_(ptr);
-                ptr_deleter.data = ptr;
+                block                 = get_or_create_block_from_object_(ptr);
+                ptr_deleter.pointer() = ptr;
             } catch (...) {
                 // Allocation of control block failed, delete input pointer and rethrow
-                ptr_deleter(ptr);
+                ptr_deleter.deleter()(ptr);
                 throw;
             }
         }
@@ -729,7 +756,7 @@ public:
         // Delete the old pointer
         // (this follows `std::unique_ptr` specs)
         if (old_ptr) {
-            delete_object_(old_block, old_ptr, ptr_deleter);
+            delete_object_(old_block, old_ptr, ptr_deleter.deleter());
         }
     }
 
@@ -741,17 +768,17 @@ public:
         static_cast<void>(ptr); // silence "unused variable" warnings
 
         // Copy old pointer
-        T*                  old_ptr   = ptr_deleter.data;
+        T*                  old_ptr   = ptr_deleter.pointer();
         control_block_type* old_block = block;
 
         // Assign the new one
-        block            = nullptr;
-        ptr_deleter.data = nullptr;
+        block                 = nullptr;
+        ptr_deleter.pointer() = nullptr;
 
         // Delete the old pointer
         // (this follows `std::unique_ptr` specs)
         if (old_ptr) {
-            delete_object_(old_block, old_ptr, ptr_deleter);
+            delete_object_(old_block, old_ptr, ptr_deleter.deleter());
         }
     }
 
@@ -770,15 +797,15 @@ public:
         typename U      = T,
         typename enable = std::enable_if_t<std::is_same_v<U, T> && queries::owner_allow_release()>>
     T* release() noexcept {
-        T* old_ptr = ptr_deleter.data;
-        if (ptr_deleter.data) {
+        T* old_ptr = ptr_deleter.pointer();
+        if (ptr_deleter.pointer()) {
             if (!has_enable_observer_from_this<T, Policy>) {
                 block->set_expired();
             }
 
             block->pop_ref();
-            block            = nullptr;
-            ptr_deleter.data = nullptr;
+            block                 = nullptr;
+            ptr_deleter.pointer() = nullptr;
         }
 
         return old_ptr;
@@ -793,7 +820,7 @@ public:
      * you are done using the raw pointer.
      */
     T* get() const noexcept {
-        return ptr_deleter.data;
+        return ptr_deleter.pointer();
     }
 
     /**
@@ -806,7 +833,7 @@ public:
      * you are done using the raw pointer.
      */
     T& operator*() const noexcept {
-        return *ptr_deleter.data;
+        return *ptr_deleter.pointer();
     }
 
     /**
@@ -818,7 +845,7 @@ public:
      * you are done using the raw pointer.
      */
     T* operator->() const noexcept {
-        return ptr_deleter.data;
+        return ptr_deleter.pointer();
     }
 
     /**
@@ -826,7 +853,7 @@ public:
      * \return `true` if an object is owned, 'false' otherwise
      */
     explicit operator bool() const noexcept {
-        return ptr_deleter.data != nullptr;
+        return ptr_deleter.pointer() != nullptr;
     }
 
     template<typename U, typename P, typename... Args>
@@ -1057,7 +1084,7 @@ public:
         typename enable = std::enable_if_t<
             std::is_convertible_v<U*, T*> && std::is_same_v<Policy, typename P::observer_policy>>>
     basic_observer_ptr(const basic_observable_ptr<U, D, P>& owner) noexcept :
-        block(owner.block), data(owner.ptr_deleter.data) {
+        block(owner.block), data(owner.ptr_deleter.pointer()) {
         if (block) {
             block->push_ref();
         }
@@ -1178,7 +1205,7 @@ public:
         typename D,
         typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
     basic_observer_ptr& operator=(const basic_observable_ptr<U, D, Policy>& owner) noexcept {
-        set_data_(owner.block, owner.ptr_deleter.data);
+        set_data_(owner.block, owner.ptr_deleter.pointer());
 
         if (block) {
             block->push_ref();
