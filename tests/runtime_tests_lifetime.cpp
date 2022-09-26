@@ -20,8 +20,14 @@ TEMPLATE_LIST_TEST_CASE(
                 auto* ptr_released = ptr.release();
                 REQUIRE(ptr_released == ptr_raw);
                 REQUIRE(ptr.get() == nullptr);
-                REQUIRE(optr.get() != nullptr);
-                REQUIRE(!optr.expired());
+
+                if constexpr (has_eoft<TestType>) {
+                    REQUIRE(optr.get() != nullptr);
+                    REQUIRE(!optr.expired());
+                } else {
+                    REQUIRE(optr.get() == nullptr);
+                    REQUIRE(optr.expired());
+                }
 
                 REQUIRE(instances == 1);
                 if constexpr (has_stateful_deleter<TestType>) {
@@ -70,8 +76,14 @@ TEMPLATE_LIST_TEST_CASE(
                 auto* ptr_released = ptr.release();
                 REQUIRE(ptr_released == ptr_raw);
                 REQUIRE(ptr.get() == nullptr);
-                REQUIRE(optr.get() != nullptr);
-                REQUIRE(!optr.expired());
+
+                if constexpr (has_eoft<TestType>) {
+                    REQUIRE(optr.get() != nullptr);
+                    REQUIRE(!optr.expired());
+                } else {
+                    REQUIRE(optr.get() == nullptr);
+                    REQUIRE(optr.expired());
+                }
 
                 REQUIRE(instances == 1);
                 if constexpr (has_stateful_deleter<TestType>) {
