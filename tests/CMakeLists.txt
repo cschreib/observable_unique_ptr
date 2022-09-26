@@ -18,23 +18,42 @@ include(FetchContent)
 
 FetchContent_Declare(
   Catch2
-  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG        912df7df354fd6c814b5d7c45ac44f494a5fb5fe
+  GIT_REPOSITORY https://github.com/cschreib/Catch2.git
+  GIT_TAG        911eb82cf37f4017cb7f3260485e9d7351e18a4f
 )
 
 FetchContent_MakeAvailable(Catch2)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${Catch2_SOURCE_DIR}/extras")
 
-add_executable(oup_tests ${PROJECT_SOURCE_DIR}/tests/runtime_tests.cpp)
+add_executable(oup_tests
+  ${PROJECT_SOURCE_DIR}/tests/memory_tracker.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests.cpp)
 target_link_libraries(oup_tests PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(oup_tests PRIVATE oup::oup)
 add_platform_definitions(oup_tests)
 
+add_executable(oup_tests2
+  ${PROJECT_SOURCE_DIR}/tests/tests_common2.cpp
+  ${PROJECT_SOURCE_DIR}/tests/memory_tracker.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_misc.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_construction.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_assignment.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_comparison.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_lifetime.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_make_observable.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_misc.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_construction.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_assignment.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_comparison.cpp)
+target_link_libraries(oup_tests2 PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(oup_tests2 PRIVATE oup::oup)
+add_platform_definitions(oup_tests2)
+
 include(CTest)
 include(Catch)
 
-catch_discover_tests(oup_tests)
+catch_discover_tests(oup_tests2)
 
 # Compile-time error tests
 set(CMAKE_TRY_COMPILE_TARGET_TYPE EXECUTABLE)
@@ -55,7 +74,7 @@ function(run_compile_test TEST_NAME TEST_FILE EXPECTED)
   endif()
 endfunction()
 
-run_compile_test("does_compilation_works" compile_test_good.cpp TRUE)
+run_compile_test("does_compilation_work" compile_test_good.cpp TRUE)
 run_compile_test("is_copy_constructor_allowed" compile_test_copy_const.cpp FALSE)
 run_compile_test("is_copy_assignment_allowed" compile_test_copy_assign.cpp FALSE)
 run_compile_test("is_implicit_constructor_base_to_derived_allowed_acquire" compile_test_implicit_const_base_to_derived1.cpp FALSE)
@@ -72,7 +91,9 @@ message(STATUS "Running compile-time tests ended.")
 
 # Benchmarks
 
-add_executable(oup_size_benchmark ${PROJECT_SOURCE_DIR}/tests/size_benchmark.cpp)
+add_executable(oup_size_benchmark
+  ${PROJECT_SOURCE_DIR}/tests/memory_tracker.cpp
+  ${PROJECT_SOURCE_DIR}/tests/size_benchmark.cpp)
 target_link_libraries(oup_size_benchmark PRIVATE oup::oup)
 add_platform_definitions(oup_size_benchmark)
 
