@@ -1,6 +1,6 @@
 #include "catch2_and_overrides.hpp"
 #include "memory_tracker.hpp"
-#include "tests_common2.hpp"
+#include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE("owner size", "[size],[owner]", owner_types) {
     using deleter_type = get_deleter<TestType>;

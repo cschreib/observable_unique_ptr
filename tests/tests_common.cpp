@@ -1,4 +1,4 @@
-#include "tests_common2.hpp"
+#include "tests_common.hpp"
 
 int instances         = 0;
 int instances_derived = 0;

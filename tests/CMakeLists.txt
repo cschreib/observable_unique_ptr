@@ -26,15 +26,15 @@ FetchContent_MakeAvailable(Catch2)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${Catch2_SOURCE_DIR}/extras")
 
-add_executable(oup_tests
-  ${PROJECT_SOURCE_DIR}/tests/memory_tracker.cpp
-  ${PROJECT_SOURCE_DIR}/tests/runtime_tests.cpp)
-target_link_libraries(oup_tests PRIVATE Catch2::Catch2WithMain)
-target_link_libraries(oup_tests PRIVATE oup::oup)
-add_platform_definitions(oup_tests)
+# add_executable(oup_tests
+#   ${PROJECT_SOURCE_DIR}/tests/memory_tracker.cpp
+#   ${PROJECT_SOURCE_DIR}/tests/runtime_tests.cpp)
+# target_link_libraries(oup_tests PRIVATE Catch2::Catch2WithMain)
+# target_link_libraries(oup_tests PRIVATE oup::oup)
+# add_platform_definitions(oup_tests)
 
-add_executable(oup_tests2
-  ${PROJECT_SOURCE_DIR}/tests/tests_common2.cpp
+add_executable(oup_tests
+  ${PROJECT_SOURCE_DIR}/tests/tests_common.cpp
   ${PROJECT_SOURCE_DIR}/tests/memory_tracker.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_misc.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_construction.cpp
@@ -46,14 +46,14 @@ add_executable(oup_tests2
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_construction.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_assignment.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_comparison.cpp)
-target_link_libraries(oup_tests2 PRIVATE Catch2::Catch2WithMain)
-target_link_libraries(oup_tests2 PRIVATE oup::oup)
-add_platform_definitions(oup_tests2)
+target_link_libraries(oup_tests PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(oup_tests PRIVATE oup::oup)
+add_platform_definitions(oup_tests)
 
 include(CTest)
 include(Catch)
 
-catch_discover_tests(oup_tests2)
+catch_discover_tests(oup_tests)
 
 # Compile-time error tests
 set(CMAKE_TRY_COMPILE_TARGET_TYPE EXECUTABLE)

@@ -182,12 +182,8 @@
 					"shell_cmd": "make -j12 oup_speed_benchmark",
 				},
 				{
-					"name": "oup_tests",
-					"shell_cmd": "make -j12 oup_tests",
-				},
-				{
 					"name": "oup_tests2",
-					"shell_cmd": "make -j12 oup_tests2"
+					"shell_cmd": "make -j12 oup_tests2",
 				},
 			],
 			"working_dir": "$folder/build",

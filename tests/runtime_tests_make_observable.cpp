@@ -1,6 +1,6 @@
 #include "catch2_and_overrides.hpp"
 #include "memory_tracker.hpp"
-#include "tests_common2.hpp"
+#include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE("make observable", "[make_observable],[owner]", owner_types) {
     if constexpr (can_use_make_observable<TestType>) {

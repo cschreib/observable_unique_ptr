@@ -1,6 +1,6 @@
 #include "tests_common.hpp"
 
 int main() {
-    test_optr ptr(new test_object);
+    oup::observer_ptr<test_object> ptr(new test_object);
     return 0;
 }
