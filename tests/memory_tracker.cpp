@@ -118,3 +118,20 @@ void operator delete(void* p, std::align_val_t al) noexcept {
 void operator delete[](void* p, std::align_val_t al) noexcept {
     deallocate(p, true, al);
 }
+
+memory_tracker::memory_tracker() noexcept :
+    initial_allocations(::num_allocations), initial_double_delete(::double_delete) {
+    ::memory_tracking = true;
+}
+
+memory_tracker::~memory_tracker() noexcept {
+    ::memory_tracking = false;
+}
+
+std::size_t memory_tracker::allocated() const {
+    return ::num_allocations - initial_allocations;
+}
+
+std::size_t memory_tracker::double_delete() const {
+    return ::double_delete - initial_double_delete;
+}

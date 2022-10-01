@@ -32,20 +32,9 @@ struct memory_tracker {
     std::size_t initial_allocations;
     std::size_t initial_double_delete;
 
-    memory_tracker() noexcept :
-        initial_allocations(::num_allocations), initial_double_delete(::double_delete) {
-        ::memory_tracking = true;
-    }
+    memory_tracker() noexcept;
+    ~memory_tracker() noexcept;
 
-    ~memory_tracker() noexcept {
-        ::memory_tracking = false;
-    }
-
-    std::size_t allocated() const {
-        return ::num_allocations - initial_allocations;
-    }
-
-    std::size_t double_delete() const {
-        return ::double_delete - initial_double_delete;
-    }
+    std::size_t allocated() const;
+    std::size_t double_delete() const;
 };
