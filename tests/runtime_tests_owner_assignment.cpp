@@ -1,5 +1,5 @@
-#include "catch2_and_overrides.hpp"
 #include "memory_tracker.hpp"
+#include "testing.hpp"
 #include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE(
@@ -11,28 +11,28 @@ TEMPLATE_LIST_TEST_CASE(
         {
             TestType ptr = make_empty_pointer_deleter_2<TestType>();
             ptr          = std::move(ptr_orig);
-            REQUIRE(instances == 1);
-            REQUIRE(ptr.get() != nullptr);
+            CHECK(instances == 1);
+            CHECK(ptr.get() != nullptr);
             if constexpr (has_stateful_deleter<TestType>) {
-                REQUIRE(instances_deleter == 2);
-                REQUIRE(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
+                CHECK(instances_deleter == 2);
+                CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
         }
 
-        REQUIRE(instances == 0);
+        CHECK(instances == 0);
         if constexpr (has_stateful_deleter<TestType>) {
-            REQUIRE(instances_deleter == 1);
+            CHECK(instances_deleter == 1);
         }
     }
 
-    REQUIRE(instances == 0);
+    CHECK(instances == 0);
     if constexpr (has_stateful_deleter<TestType>) {
-        REQUIRE(instances_deleter == 0);
+        CHECK(instances_deleter == 0);
     }
 
-    REQUIRE(mem_track.allocated() == 0u);
-    REQUIRE(mem_track.double_delete() == 0u);
-}
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment operator empty to valid", "[assignment],[owner]", owner_types) {
@@ -43,28 +43,28 @@ TEMPLATE_LIST_TEST_CASE(
         {
             TestType ptr = make_pointer_deleter_2<TestType>();
             ptr          = std::move(ptr_orig);
-            REQUIRE(instances == 0);
-            REQUIRE(ptr.get() == nullptr);
+            CHECK(instances == 0);
+            CHECK(ptr.get() == nullptr);
             if constexpr (has_stateful_deleter<TestType>) {
-                REQUIRE(instances_deleter == 2);
-                REQUIRE(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
+                CHECK(instances_deleter == 2);
+                CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
         }
 
-        REQUIRE(instances == 0);
+        CHECK(instances == 0);
         if constexpr (has_stateful_deleter<TestType>) {
-            REQUIRE(instances_deleter == 1);
+            CHECK(instances_deleter == 1);
         }
     }
 
-    REQUIRE(instances == 0);
+    CHECK(instances == 0);
     if constexpr (has_stateful_deleter<TestType>) {
-        REQUIRE(instances_deleter == 0);
+        CHECK(instances_deleter == 0);
     }
 
-    REQUIRE(mem_track.allocated() == 0u);
-    REQUIRE(mem_track.double_delete() == 0u);
-}
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment operator empty to empty", "[assignment],[owner]", owner_types) {
@@ -75,28 +75,28 @@ TEMPLATE_LIST_TEST_CASE(
         {
             TestType ptr = make_empty_pointer_deleter_2<TestType>();
             ptr          = std::move(ptr_orig);
-            REQUIRE(instances == 0);
-            REQUIRE(ptr.get() == nullptr);
+            CHECK(instances == 0);
+            CHECK(ptr.get() == nullptr);
             if constexpr (has_stateful_deleter<TestType>) {
-                REQUIRE(instances_deleter == 2);
-                REQUIRE(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
+                CHECK(instances_deleter == 2);
+                CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
         }
 
-        REQUIRE(instances == 0);
+        CHECK(instances == 0);
         if constexpr (has_stateful_deleter<TestType>) {
-            REQUIRE(instances_deleter == 1);
+            CHECK(instances_deleter == 1);
         }
     }
 
-    REQUIRE(instances == 0);
+    CHECK(instances == 0);
     if constexpr (has_stateful_deleter<TestType>) {
-        REQUIRE(instances_deleter == 0);
+        CHECK(instances_deleter == 0);
     }
 
-    REQUIRE(mem_track.allocated() == 0u);
-    REQUIRE(mem_track.double_delete() == 0u);
-}
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment operator valid to valid", "[assignment],[owner]", owner_types) {
@@ -108,28 +108,28 @@ TEMPLATE_LIST_TEST_CASE(
         {
             TestType ptr = make_pointer_deleter_1<TestType>();
             ptr          = std::move(ptr_orig);
-            REQUIRE(instances == 1);
-            REQUIRE(ptr.get() == raw_ptr_orig);
+            CHECK(instances == 1);
+            CHECK(ptr.get() == raw_ptr_orig);
             if constexpr (has_stateful_deleter<TestType>) {
-                REQUIRE(instances_deleter == 2);
-                REQUIRE(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
+                CHECK(instances_deleter == 2);
+                CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
         }
 
-        REQUIRE(instances == 0);
+        CHECK(instances == 0);
         if constexpr (has_stateful_deleter<TestType>) {
-            REQUIRE(instances_deleter == 1);
+            CHECK(instances_deleter == 1);
         }
     }
 
-    REQUIRE(instances == 0);
+    CHECK(instances == 0);
     if constexpr (has_stateful_deleter<TestType>) {
-        REQUIRE(instances_deleter == 0);
+        CHECK(instances_deleter == 0);
     }
 
-    REQUIRE(mem_track.allocated() == 0u);
-    REQUIRE(mem_track.double_delete() == 0u);
-}
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment converting operator valid to empty",
@@ -142,28 +142,28 @@ TEMPLATE_LIST_TEST_CASE(
         {
             base_ptr<TestType> ptr = make_empty_pointer_deleter_2<base_ptr<TestType>>();
             ptr                    = std::move(ptr_orig);
-            REQUIRE(instances == 1);
-            REQUIRE(ptr.get() != nullptr);
+            CHECK(instances == 1);
+            CHECK(ptr.get() != nullptr);
             if constexpr (has_stateful_deleter<TestType>) {
-                REQUIRE(instances_deleter == 2);
-                REQUIRE(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
+                CHECK(instances_deleter == 2);
+                CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
         }
 
-        REQUIRE(instances == 0);
+        CHECK(instances == 0);
         if constexpr (has_stateful_deleter<TestType>) {
-            REQUIRE(instances_deleter == 1);
+            CHECK(instances_deleter == 1);
         }
     }
 
-    REQUIRE(instances == 0);
+    CHECK(instances == 0);
     if constexpr (has_stateful_deleter<TestType>) {
-        REQUIRE(instances_deleter == 0);
+        CHECK(instances_deleter == 0);
     }
 
-    REQUIRE(mem_track.allocated() == 0u);
-    REQUIRE(mem_track.double_delete() == 0u);
-}
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment converting operator empty to valid",
@@ -176,28 +176,28 @@ TEMPLATE_LIST_TEST_CASE(
         {
             base_ptr<TestType> ptr = make_pointer_deleter_2<base_ptr<TestType>>();
             ptr                    = std::move(ptr_orig);
-            REQUIRE(instances == 0);
-            REQUIRE(ptr.get() == nullptr);
+            CHECK(instances == 0);
+            CHECK(ptr.get() == nullptr);
             if constexpr (has_stateful_deleter<TestType>) {
-                REQUIRE(instances_deleter == 2);
-                REQUIRE(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
+                CHECK(instances_deleter == 2);
+                CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
         }
 
-        REQUIRE(instances == 0);
+        CHECK(instances == 0);
         if constexpr (has_stateful_deleter<TestType>) {
-            REQUIRE(instances_deleter == 1);
+            CHECK(instances_deleter == 1);
         }
     }
 
-    REQUIRE(instances == 0);
+    CHECK(instances == 0);
     if constexpr (has_stateful_deleter<TestType>) {
-        REQUIRE(instances_deleter == 0);
+        CHECK(instances_deleter == 0);
     }
 
-    REQUIRE(mem_track.allocated() == 0u);
-    REQUIRE(mem_track.double_delete() == 0u);
-}
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment converting operator empty to empty",
@@ -210,28 +210,28 @@ TEMPLATE_LIST_TEST_CASE(
         {
             base_ptr<TestType> ptr = make_empty_pointer_deleter_2<base_ptr<TestType>>();
             ptr                    = std::move(ptr_orig);
-            REQUIRE(instances == 0);
-            REQUIRE(ptr.get() == nullptr);
+            CHECK(instances == 0);
+            CHECK(ptr.get() == nullptr);
             if constexpr (has_stateful_deleter<TestType>) {
-                REQUIRE(instances_deleter == 2);
-                REQUIRE(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
+                CHECK(instances_deleter == 2);
+                CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
         }
 
-        REQUIRE(instances == 0);
+        CHECK(instances == 0);
         if constexpr (has_stateful_deleter<TestType>) {
-            REQUIRE(instances_deleter == 1);
+            CHECK(instances_deleter == 1);
         }
     }
 
-    REQUIRE(instances == 0);
+    CHECK(instances == 0);
     if constexpr (has_stateful_deleter<TestType>) {
-        REQUIRE(instances_deleter == 0);
+        CHECK(instances_deleter == 0);
     }
 
-    REQUIRE(mem_track.allocated() == 0u);
-    REQUIRE(mem_track.double_delete() == 0u);
-}
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment converting operator valid to valid",
@@ -245,28 +245,28 @@ TEMPLATE_LIST_TEST_CASE(
         {
             base_ptr<TestType> ptr = make_pointer_deleter_1<base_ptr<TestType>>();
             ptr                    = std::move(ptr_orig);
-            REQUIRE(instances == 1);
-            REQUIRE(ptr.get() == raw_ptr_orig);
+            CHECK(instances == 1);
+            CHECK(ptr.get() == raw_ptr_orig);
             if constexpr (has_stateful_deleter<TestType>) {
-                REQUIRE(instances_deleter == 2);
-                REQUIRE(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
+                CHECK(instances_deleter == 2);
+                CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
         }
 
-        REQUIRE(instances == 0);
+        CHECK(instances == 0);
         if constexpr (has_stateful_deleter<TestType>) {
-            REQUIRE(instances_deleter == 1);
+            CHECK(instances_deleter == 1);
         }
     }
 
-    REQUIRE(instances == 0);
+    CHECK(instances == 0);
     if constexpr (has_stateful_deleter<TestType>) {
-        REQUIRE(instances_deleter == 0);
+        CHECK(instances_deleter == 0);
     }
 
-    REQUIRE(mem_track.allocated() == 0u);
-    REQUIRE(mem_track.double_delete() == 0u);
-}
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment operator self to self valid", "[assignment],[owner]", owner_types) {
@@ -275,22 +275,22 @@ TEMPLATE_LIST_TEST_CASE(
     {
         TestType ptr = make_pointer_deleter_1<TestType>();
         ptr          = std::move(ptr);
-        REQUIRE(instances == 0);
-        REQUIRE(ptr.get() == nullptr);
+        CHECK(instances == 0);
+        CHECK(ptr.get() == nullptr);
         if constexpr (has_stateful_deleter<TestType>) {
-            REQUIRE(instances_deleter == 1);
-            REQUIRE(ptr.get_deleter().state_ == test_deleter::state::empty);
+            CHECK(instances_deleter == 1);
+            CHECK(ptr.get_deleter().state_ == test_deleter::state::empty);
         }
     }
 
-    REQUIRE(instances == 0);
+    CHECK(instances == 0);
     if constexpr (has_stateful_deleter<TestType>) {
-        REQUIRE(instances_deleter == 0);
+        CHECK(instances_deleter == 0);
     }
 
-    REQUIRE(mem_track.allocated() == 0u);
-    REQUIRE(mem_track.double_delete() == 0u);
-}
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment operator self to self empty", "[assignment],[owner]", owner_types) {
@@ -299,19 +299,19 @@ TEMPLATE_LIST_TEST_CASE(
     {
         TestType ptr = make_empty_pointer_deleter_1<TestType>();
         ptr          = std::move(ptr);
-        REQUIRE(instances == 0);
-        REQUIRE(ptr.get() == nullptr);
+        CHECK(instances == 0);
+        CHECK(ptr.get() == nullptr);
         if constexpr (has_stateful_deleter<TestType>) {
-            REQUIRE(instances_deleter == 1);
-            REQUIRE(ptr.get_deleter().state_ == test_deleter::state::empty);
+            CHECK(instances_deleter == 1);
+            CHECK(ptr.get_deleter().state_ == test_deleter::state::empty);
         }
     }
 
-    REQUIRE(instances == 0);
+    CHECK(instances == 0);
     if constexpr (has_stateful_deleter<TestType>) {
-        REQUIRE(instances_deleter == 0);
+        CHECK(instances_deleter == 0);
     }
 
-    REQUIRE(mem_track.allocated() == 0u);
-    REQUIRE(mem_track.double_delete() == 0u);
-}
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};

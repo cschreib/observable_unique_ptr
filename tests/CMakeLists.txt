@@ -1,4 +1,5 @@
 function(add_platform_definitions TARGET)
+  target_compile_features(oup INTERFACE cxx_std_20)
   if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
       target_compile_definitions(${TARGET} PRIVATE OUP_PLATFORM_WASM)
       target_compile_definitions(${TARGET} PRIVATE OUP_COMPILER_EMSCRIPTEN)
@@ -14,26 +15,10 @@ function(add_platform_definitions TARGET)
   endif()
 endfunction()
 
-include(FetchContent)
-
-FetchContent_Declare(
-  Catch2
-  GIT_REPOSITORY https://github.com/cschreib/Catch2.git
-  GIT_TAG        911eb82cf37f4017cb7f3260485e9d7351e18a4f
-)
-
-FetchContent_MakeAvailable(Catch2)
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${Catch2_SOURCE_DIR}/extras")
 
-# add_executable(oup_tests
-#   ${PROJECT_SOURCE_DIR}/tests/memory_tracker.cpp
-#   ${PROJECT_SOURCE_DIR}/tests/runtime_tests.cpp)
-# target_link_libraries(oup_tests PRIVATE Catch2::Catch2WithMain)
-# target_link_libraries(oup_tests PRIVATE oup::oup)
-# add_platform_definitions(oup_tests)
-
 add_executable(oup_tests
+  ${PROJECT_SOURCE_DIR}/tests/snatch.cpp
   ${PROJECT_SOURCE_DIR}/tests/tests_common.cpp
   ${PROJECT_SOURCE_DIR}/tests/memory_tracker.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_misc.cpp
@@ -46,14 +31,10 @@ add_executable(oup_tests
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_construction.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_assignment.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_comparison.cpp)
-target_link_libraries(oup_tests PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(oup_tests PRIVATE oup::oup)
 add_platform_definitions(oup_tests)
 
 include(CTest)
-include(Catch)
-
-catch_discover_tests(oup_tests)
 
 # Compile-time error tests
 set(CMAKE_TRY_COMPILE_TARGET_TYPE EXECUTABLE)
@@ -62,10 +43,12 @@ message(STATUS "Running compile-time tests...")
 function(run_compile_test TEST_NAME TEST_FILE EXPECTED)
   try_compile(COMPILE_TEST_RESULT
     ${PROJECT_SOURCE_DIR}/tests
+    SOURCES
     ${PROJECT_SOURCE_DIR}/tests/${TEST_FILE}
+    ${PROJECT_SOURCE_DIR}/tests/tests_common.cpp
     CMAKE_FLAGS
       "-DINCLUDE_DIRECTORIES=${PROJECT_SOURCE_DIR}/include"
-      "-DCMAKE_CXX_STANDARD=17")
+      "-DCMAKE_CXX_STANDARD=20")
 
   if(COMPILE_TEST_RESULT STREQUAL EXPECTED)
     message(STATUS "Test ${TEST_NAME} passed.")
@@ -90,7 +73,6 @@ run_compile_test("is_sealed_reset_allowed" compile_test_sealed_reset.cpp FALSE)
 message(STATUS "Running compile-time tests ended.")
 
 # Benchmarks
-
 add_executable(oup_size_benchmark
   ${PROJECT_SOURCE_DIR}/tests/memory_tracker.cpp
   ${PROJECT_SOURCE_DIR}/tests/size_benchmark.cpp)
