@@ -1,5 +1,7 @@
 #include "memory_tracker.hpp"
 
+#include <cstdio>
+
 void*       allocations[max_allocations];
 void*       allocations_array[max_allocations];
 std::size_t allocations_bytes[max_allocations];
@@ -9,12 +11,20 @@ std::size_t double_delete                 = 0u;
 bool        memory_tracking               = false;
 bool        force_next_allocation_failure = false;
 
+constexpr bool debug_alloc = false;
+
 void* allocate(std::size_t size, bool array, std::align_val_t align) {
     if (memory_tracking && num_allocations == max_allocations) {
+        if (debug_alloc) {
+            printf("alloc   %ld failed\n", size);
+        }
         throw std::bad_alloc();
     }
 
     if (force_next_allocation_failure) {
+        if (debug_alloc) {
+            printf("alloc   %ld failed\n", size);
+        }
         force_next_allocation_failure = false;
         throw std::bad_alloc();
     }
@@ -33,7 +43,14 @@ void* allocate(std::size_t size, bool array, std::align_val_t align) {
     }
 
     if (!p) {
+        if (debug_alloc) {
+            printf("alloc   %ld failed\n", size);
+        }
         throw std::bad_alloc();
+    }
+
+    if (debug_alloc) {
+        printf("alloc   %ld -> %p\n", size, p);
     }
 
     if (memory_tracking) {
@@ -55,6 +72,10 @@ void* allocate(std::size_t size, bool array, std::align_val_t align) {
 void deallocate(void* p, bool array, std::align_val_t align [[maybe_unused]]) {
     if (p == nullptr) {
         return;
+    }
+
+    if (debug_alloc) {
+        printf("dealloc %p\n", p);
     }
 
     if (memory_tracking) {
