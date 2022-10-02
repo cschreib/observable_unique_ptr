@@ -126,15 +126,15 @@ void append_impl(expression& exp, T value) {
 } // namespace
 
 namespace testing::impl::color {
-const char* error_start      = "\e[1;31m";
-const char* warning_start    = "\e[1;33m";
-const char* status_start     = "\e[1;36m";
-const char* fail_start       = "\e[1;31m";
-const char* skipped_start    = "\e[1;33m";
-const char* pass_start       = "\e[1;32m";
-const char* highlight1_start = "\e[1;35m";
-const char* highlight2_start = "\e[1;36m";
-const char* reset            = "\e[0m";
+const char* error_start      = "\x1b[1;31m";
+const char* warning_start    = "\x1b[1;33m";
+const char* status_start     = "\x1b[1;36m";
+const char* fail_start       = "\x1b[1;31m";
+const char* skipped_start    = "\x1b[1;33m";
+const char* pass_start       = "\x1b[1;32m";
+const char* highlight1_start = "\x1b[1;35m";
+const char* highlight2_start = "\x1b[1;36m";
+const char* reset            = "\x1b[0m";
 } // namespace testing::impl::color
 
 namespace testing::impl {
