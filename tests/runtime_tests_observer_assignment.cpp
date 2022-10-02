@@ -2,316 +2,700 @@
 #include "testing.hpp"
 #include "tests_common.hpp"
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner move assignment operator valid to empty", "[assignment],[owner]", owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer copy assignment operator valid to empty", "[assignment],[observer]", owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr_orig = make_pointer_deleter_1<TestType>();
-//         {
-//             TestType ptr = make_empty_pointer_deleter_2<TestType>();
-//             ptr          = std::move(ptr_orig);
-//             CHECK(instances == 1);
-//             CHECK(ptr.get() != nullptr);
-//             if constexpr (has_stateful_deleter<TestType>) {
-//                 CHECK(instances_deleter == 2);
-//                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
-//             }
-//         }
+    {
+        TestType               ptr_orig = make_pointer_deleter_1<TestType>();
+        observer_ptr<TestType> optr_orig{ptr_orig};
+        {
+            observer_ptr<TestType> optr;
+            optr = optr_orig;
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 1);
+            }
+            CHECK(optr.get() == ptr_orig.get());
+            CHECK(optr_orig.get() == ptr_orig.get());
+            CHECK(optr.expired() == false);
+            CHECK(optr_orig.expired() == false);
+        }
 
-//         CHECK(instances == 0);
-//         if constexpr (has_stateful_deleter<TestType>) {
-//             CHECK(instances_deleter == 1);
-//         }
-//     }
+        CHECK(instances == 1);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 1);
+        }
+    }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner move assignment operator empty to valid", "[assignment],[owner]", owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer copy assignment operator empty to valid", "[assignment],[observer]", owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr_orig = make_empty_pointer_deleter_1<TestType>();
-//         {
-//             TestType ptr = make_pointer_deleter_2<TestType>();
-//             ptr          = std::move(ptr_orig);
-//             CHECK(instances == 0);
-//             CHECK(ptr.get() == nullptr);
-//             if constexpr (has_stateful_deleter<TestType>) {
-//                 CHECK(instances_deleter == 2);
-//                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
-//             }
-//         }
+    {
+        observer_ptr<TestType> optr_orig;
+        {
+            TestType               ptr = make_pointer_deleter_1<TestType>();
+            observer_ptr<TestType> optr{ptr};
+            optr = optr_orig;
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 1);
+            }
+            CHECK(optr.get() == nullptr);
+            CHECK(optr_orig.get() == nullptr);
+            CHECK(optr.expired() == true);
+            CHECK(optr_orig.expired() == true);
+        }
 
-//         CHECK(instances == 0);
-//         if constexpr (has_stateful_deleter<TestType>) {
-//             CHECK(instances_deleter == 1);
-//         }
-//     }
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+    }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner move assignment operator empty to empty", "[assignment],[owner]", owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer copy assignment operator empty to empty", "[assignment],[observer]", owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr_orig = make_empty_pointer_deleter_1<TestType>();
-//         {
-//             TestType ptr = make_empty_pointer_deleter_2<TestType>();
-//             ptr          = std::move(ptr_orig);
-//             CHECK(instances == 0);
-//             CHECK(ptr.get() == nullptr);
-//             if constexpr (has_stateful_deleter<TestType>) {
-//                 CHECK(instances_deleter == 2);
-//                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
-//             }
-//         }
+    {
+        observer_ptr<TestType> optr_orig;
+        {
+            observer_ptr<TestType> optr;
+            optr = optr_orig;
+            CHECK(instances == 0);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 0);
+            }
+            CHECK(optr.get() == nullptr);
+            CHECK(optr_orig.get() == nullptr);
+            CHECK(optr.expired() == true);
+            CHECK(optr_orig.expired() == true);
+        }
 
-//         CHECK(instances == 0);
-//         if constexpr (has_stateful_deleter<TestType>) {
-//             CHECK(instances_deleter == 1);
-//         }
-//     }
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+    }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner move assignment operator valid to valid", "[assignment],[owner]", owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer copy assignment operator valid to valid", "[assignment],[observer]", owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr_orig     = make_pointer_deleter_1<TestType>();
-//         auto*    raw_ptr_orig = ptr_orig.get();
-//         {
-//             TestType ptr = make_pointer_deleter_1<TestType>();
-//             ptr          = std::move(ptr_orig);
-//             CHECK(instances == 1);
-//             CHECK(ptr.get() == raw_ptr_orig);
-//             if constexpr (has_stateful_deleter<TestType>) {
-//                 CHECK(instances_deleter == 2);
-//                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
-//             }
-//         }
+    {
+        TestType               ptr_orig = make_pointer_deleter_1<TestType>();
+        observer_ptr<TestType> optr_orig{ptr_orig};
+        {
+            TestType               ptr = make_pointer_deleter_1<TestType>();
+            observer_ptr<TestType> optr{ptr};
+            optr = optr_orig;
+            CHECK(instances == 2);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 2);
+            }
+            CHECK(optr.get() == ptr_orig.get());
+            CHECK(optr_orig.get() == ptr_orig.get());
+            CHECK(optr.expired() == false);
+            CHECK(optr_orig.expired() == false);
+        }
 
-//         CHECK(instances == 0);
-//         if constexpr (has_stateful_deleter<TestType>) {
-//             CHECK(instances_deleter == 1);
-//         }
-//     }
+        CHECK(instances == 1);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 1);
+        }
+    }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner move assignment converting operator valid to empty",
-//     "[assignment],[owner]",
-//     owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer copy assignment converting operator valid to empty",
+    "[assignment],[observer]",
+    owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr_orig = make_pointer_deleter_1<TestType>();
-//         {
-//             base_ptr<TestType> ptr = make_empty_pointer_deleter_2<base_ptr<TestType>>();
-//             ptr                    = std::move(ptr_orig);
-//             CHECK(instances == 1);
-//             CHECK(ptr.get() != nullptr);
-//             if constexpr (has_stateful_deleter<TestType>) {
-//                 CHECK(instances_deleter == 2);
-//                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
-//             }
-//         }
+    if constexpr (has_base<TestType>) {
+        {
+            TestType               ptr_orig = make_pointer_deleter_1<TestType>();
+            observer_ptr<TestType> optr_orig{ptr_orig};
+            {
+                base_observer_ptr<TestType> optr;
+                optr = optr_orig;
+                CHECK(instances == 1);
+                if constexpr (has_stateful_deleter<TestType>) {
+                    CHECK(instances_deleter == 1);
+                }
+                CHECK(optr.get() == ptr_orig.get());
+                CHECK(optr_orig.get() == ptr_orig.get());
+                CHECK(optr.expired() == false);
+                CHECK(optr_orig.expired() == false);
+            }
 
-//         CHECK(instances == 0);
-//         if constexpr (has_stateful_deleter<TestType>) {
-//             CHECK(instances_deleter == 1);
-//         }
-//     }
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 1);
+            }
+        }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner move assignment converting operator empty to valid",
-//     "[assignment],[owner]",
-//     owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer copy assignment converting operator empty to valid",
+    "[assignment],[observer]",
+    owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr_orig = make_empty_pointer_deleter_1<TestType>();
-//         {
-//             base_ptr<TestType> ptr = make_pointer_deleter_2<base_ptr<TestType>>();
-//             ptr                    = std::move(ptr_orig);
-//             CHECK(instances == 0);
-//             CHECK(ptr.get() == nullptr);
-//             if constexpr (has_stateful_deleter<TestType>) {
-//                 CHECK(instances_deleter == 2);
-//                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
-//             }
-//         }
+    if constexpr (has_base<TestType>) {
+        {
+            observer_ptr<TestType> optr_orig;
+            {
+                TestType                    ptr = make_pointer_deleter_1<TestType>();
+                base_observer_ptr<TestType> optr{ptr};
+                optr = optr_orig;
+                CHECK(instances == 1);
+                if constexpr (has_stateful_deleter<TestType>) {
+                    CHECK(instances_deleter == 1);
+                }
+                CHECK(optr.get() == nullptr);
+                CHECK(optr_orig.get() == nullptr);
+                CHECK(optr.expired() == true);
+                CHECK(optr_orig.expired() == true);
+            }
 
-//         CHECK(instances == 0);
-//         if constexpr (has_stateful_deleter<TestType>) {
-//             CHECK(instances_deleter == 1);
-//         }
-//     }
+            CHECK(instances == 0);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 0);
+            }
+        }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner move assignment converting operator empty to empty",
-//     "[assignment],[owner]",
-//     owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer copy assignment converting operator empty to empty",
+    "[assignment],[observer]",
+    owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr_orig = make_empty_pointer_deleter_1<TestType>();
-//         {
-//             base_ptr<TestType> ptr = make_empty_pointer_deleter_2<base_ptr<TestType>>();
-//             ptr                    = std::move(ptr_orig);
-//             CHECK(instances == 0);
-//             CHECK(ptr.get() == nullptr);
-//             if constexpr (has_stateful_deleter<TestType>) {
-//                 CHECK(instances_deleter == 2);
-//                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
-//             }
-//         }
+    if constexpr (has_base<TestType>) {
+        {
+            observer_ptr<TestType> optr_orig;
+            {
+                base_observer_ptr<TestType> optr;
+                optr = optr_orig;
+                CHECK(instances == 0);
+                if constexpr (has_stateful_deleter<TestType>) {
+                    CHECK(instances_deleter == 0);
+                }
+                CHECK(optr.get() == nullptr);
+                CHECK(optr_orig.get() == nullptr);
+                CHECK(optr.expired() == true);
+                CHECK(optr_orig.expired() == true);
+            }
 
-//         CHECK(instances == 0);
-//         if constexpr (has_stateful_deleter<TestType>) {
-//             CHECK(instances_deleter == 1);
-//         }
-//     }
+            CHECK(instances == 0);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 0);
+            }
+        }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner move assignment converting operator valid to valid",
-//     "[assignment],[owner]",
-//     owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer copy assignment converting operator valid to valid",
+    "[assignment],[observer]",
+    owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr_orig     = make_pointer_deleter_1<TestType>();
-//         auto*    raw_ptr_orig = ptr_orig.get();
-//         {
-//             base_ptr<TestType> ptr = make_pointer_deleter_1<base_ptr<TestType>>();
-//             ptr                    = std::move(ptr_orig);
-//             CHECK(instances == 1);
-//             CHECK(ptr.get() == raw_ptr_orig);
-//             if constexpr (has_stateful_deleter<TestType>) {
-//                 CHECK(instances_deleter == 2);
-//                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
-//             }
-//         }
+    if constexpr (has_base<TestType>) {
+        {
+            TestType               ptr_orig = make_pointer_deleter_1<TestType>();
+            observer_ptr<TestType> optr_orig{ptr_orig};
+            {
+                TestType                    ptr = make_pointer_deleter_1<TestType>();
+                base_observer_ptr<TestType> optr{ptr};
+                optr = optr_orig;
+                CHECK(instances == 2);
+                if constexpr (has_stateful_deleter<TestType>) {
+                    CHECK(instances_deleter == 2);
+                }
+                CHECK(optr.get() == ptr_orig.get());
+                CHECK(optr_orig.get() == ptr_orig.get());
+                CHECK(optr.expired() == false);
+                CHECK(optr_orig.expired() == false);
+            }
 
-//         CHECK(instances == 0);
-//         if constexpr (has_stateful_deleter<TestType>) {
-//             CHECK(instances_deleter == 1);
-//         }
-//     }
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 1);
+            }
+        }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner move assignment operator self to self valid", "[assignment],[owner]", owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer copy assignment operator self to self valid",
+    "[assignment],[observer]",
+    owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr = make_pointer_deleter_1<TestType>();
-//         ptr          = std::move(ptr);
-//         CHECK(instances == 0);
-//         CHECK(ptr.get() == nullptr);
-//         if constexpr (has_stateful_deleter<TestType>) {
-//             CHECK(instances_deleter == 1);
-//             CHECK(ptr.get_deleter().state_ == test_deleter::state::empty);
-//         }
-//     }
+    {
+        TestType               ptr = make_pointer_deleter_1<TestType>();
+        observer_ptr<TestType> optr{ptr};
+        optr = optr;
+        CHECK(instances == 1);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 1);
+        }
+        CHECK(optr.get() == ptr.get());
+        CHECK(optr.expired() == false);
+    }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner move assignment operator self to self empty", "[assignment],[owner]", owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer copy assignment operator self to self empty",
+    "[assignment],[observer]",
+    owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr = make_empty_pointer_deleter_1<TestType>();
-//         ptr          = std::move(ptr);
-//         CHECK(instances == 0);
-//         CHECK(ptr.get() == nullptr);
-//         if constexpr (has_stateful_deleter<TestType>) {
-//             CHECK(instances_deleter == 1);
-//             CHECK(ptr.get_deleter().state_ == test_deleter::state::empty);
-//         }
-//     }
+    {
+        observer_ptr<TestType> optr;
+        optr = optr;
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+        CHECK(optr.get() == nullptr);
+        CHECK(optr.expired() == true);
+    }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer move assignment operator valid to empty", "[assignment],[observer]", owner_types) {
+    memory_tracker mem_track;
+
+    {
+        TestType               ptr_orig = make_pointer_deleter_1<TestType>();
+        observer_ptr<TestType> optr_orig{ptr_orig};
+        {
+            observer_ptr<TestType> optr;
+            optr = std::move(optr_orig);
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 1);
+            }
+            CHECK(optr.get() == ptr_orig.get());
+            CHECK(optr_orig.get() == nullptr);
+            CHECK(optr.expired() == false);
+            CHECK(optr_orig.expired() == true);
+        }
+
+        CHECK(instances == 1);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 1);
+        }
+    }
+
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
+
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer move assignment operator empty to valid", "[assignment],[observer]", owner_types) {
+    memory_tracker mem_track;
+
+    {
+        observer_ptr<TestType> optr_orig;
+        {
+            TestType               ptr = make_pointer_deleter_1<TestType>();
+            observer_ptr<TestType> optr{ptr};
+            optr = std::move(optr_orig);
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 1);
+            }
+            CHECK(optr.get() == nullptr);
+            CHECK(optr_orig.get() == nullptr);
+            CHECK(optr.expired() == true);
+            CHECK(optr_orig.expired() == true);
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+    }
+
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
+
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer move assignment operator empty to empty", "[assignment],[observer]", owner_types) {
+    memory_tracker mem_track;
+
+    {
+        observer_ptr<TestType> optr_orig;
+        {
+            observer_ptr<TestType> optr;
+            optr = std::move(optr_orig);
+            CHECK(instances == 0);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 0);
+            }
+            CHECK(optr.get() == nullptr);
+            CHECK(optr_orig.get() == nullptr);
+            CHECK(optr.expired() == true);
+            CHECK(optr_orig.expired() == true);
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+    }
+
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
+
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer move assignment operator valid to valid", "[assignment],[observer]", owner_types) {
+    memory_tracker mem_track;
+
+    {
+        TestType               ptr_orig = make_pointer_deleter_1<TestType>();
+        observer_ptr<TestType> optr_orig{ptr_orig};
+        {
+            TestType               ptr = make_pointer_deleter_1<TestType>();
+            observer_ptr<TestType> optr{ptr};
+            optr = std::move(optr_orig);
+            CHECK(instances == 2);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 2);
+            }
+            CHECK(optr.get() == ptr_orig.get());
+            CHECK(optr_orig.get() == nullptr);
+            CHECK(optr.expired() == false);
+            CHECK(optr_orig.expired() == true);
+        }
+
+        CHECK(instances == 1);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 1);
+        }
+    }
+
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
+
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer move assignment converting operator valid to empty",
+    "[assignment],[observer]",
+    owner_types) {
+    memory_tracker mem_track;
+
+    if constexpr (has_base<TestType>) {
+        {
+            TestType               ptr_orig = make_pointer_deleter_1<TestType>();
+            observer_ptr<TestType> optr_orig{ptr_orig};
+            {
+                base_observer_ptr<TestType> optr;
+                optr = std::move(optr_orig);
+                CHECK(instances == 1);
+                if constexpr (has_stateful_deleter<TestType>) {
+                    CHECK(instances_deleter == 1);
+                }
+                CHECK(optr.get() == ptr_orig.get());
+                CHECK(optr_orig.get() == nullptr);
+                CHECK(optr.expired() == false);
+                CHECK(optr_orig.expired() == true);
+            }
+
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 1);
+            }
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer move assignment converting operator empty to valid",
+    "[assignment],[observer]",
+    owner_types) {
+    memory_tracker mem_track;
+
+    if constexpr (has_base<TestType>) {
+        {
+            observer_ptr<TestType> optr_orig;
+            {
+                TestType                    ptr = make_pointer_deleter_1<TestType>();
+                base_observer_ptr<TestType> optr{ptr};
+                optr = std::move(optr_orig);
+                CHECK(instances == 1);
+                if constexpr (has_stateful_deleter<TestType>) {
+                    CHECK(instances_deleter == 1);
+                }
+                CHECK(optr.get() == nullptr);
+                CHECK(optr_orig.get() == nullptr);
+                CHECK(optr.expired() == true);
+                CHECK(optr_orig.expired() == true);
+            }
+
+            CHECK(instances == 0);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 0);
+            }
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer move assignment converting operator empty to empty",
+    "[assignment],[observer]",
+    owner_types) {
+    memory_tracker mem_track;
+
+    if constexpr (has_base<TestType>) {
+        {
+            observer_ptr<TestType> optr_orig;
+            {
+                base_observer_ptr<TestType> optr;
+                optr = std::move(optr_orig);
+                CHECK(instances == 0);
+                if constexpr (has_stateful_deleter<TestType>) {
+                    CHECK(instances_deleter == 0);
+                }
+                CHECK(optr.get() == nullptr);
+                CHECK(optr_orig.get() == nullptr);
+                CHECK(optr.expired() == true);
+                CHECK(optr_orig.expired() == true);
+            }
+
+            CHECK(instances == 0);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 0);
+            }
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer move assignment converting operator valid to valid",
+    "[assignment],[observer]",
+    owner_types) {
+    memory_tracker mem_track;
+
+    if constexpr (has_base<TestType>) {
+        {
+            TestType               ptr_orig = make_pointer_deleter_1<TestType>();
+            observer_ptr<TestType> optr_orig{ptr_orig};
+            {
+                TestType                    ptr = make_pointer_deleter_1<TestType>();
+                base_observer_ptr<TestType> optr{ptr};
+                optr = std::move(optr_orig);
+                CHECK(instances == 2);
+                if constexpr (has_stateful_deleter<TestType>) {
+                    CHECK(instances_deleter == 2);
+                }
+                CHECK(optr.get() == ptr_orig.get());
+                CHECK(optr_orig.get() == nullptr);
+                CHECK(optr.expired() == false);
+                CHECK(optr_orig.expired() == true);
+            }
+
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 1);
+            }
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer move assignment operator self to self valid",
+    "[assignment],[observer]",
+    owner_types) {
+    memory_tracker mem_track;
+
+    {
+        TestType               ptr = make_pointer_deleter_1<TestType>();
+        observer_ptr<TestType> optr{ptr};
+        optr = std::move(optr);
+        CHECK(instances == 1);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 1);
+        }
+        CHECK(optr.get() == nullptr);
+        CHECK(optr.expired() == true);
+    }
+
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
+
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer move assignment operator self to self empty",
+    "[assignment],[observer]",
+    owner_types) {
+    memory_tracker mem_track;
+
+    {
+        observer_ptr<TestType> optr;
+        optr = std::move(optr);
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+        CHECK(optr.get() == nullptr);
+        CHECK(optr.expired() == true);
+    }
+
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
+
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
