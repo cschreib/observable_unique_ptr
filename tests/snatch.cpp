@@ -32,13 +32,13 @@ bool run_tests(registry& r, F&& predicate) {
         }
     }
 
-    printf("==========================================\n");
+    std::printf("==========================================\n");
     if (success) {
-        printf(
+        std::printf(
             "%ssuccess:%s all tests passed (%ld test cases, %ld assertions)\n", color::pass_start,
             color::reset, run_count, assertion_count);
     } else {
-        printf(
+        std::printf(
             "%serror:%s some tests failed (%ld out of %ld test cases, %ld assertions)\n",
             color::fail_start, color::reset, fail_count, run_count, assertion_count);
     }
@@ -55,11 +55,11 @@ void list_tests(const registry& r, F&& predicate) {
         }
 
         if (!t.type.empty()) {
-            printf(
+            std::printf(
                 "%.*s [%.*s]\n", static_cast<int>(t.name.length()), t.name.data(),
                 static_cast<int>(t.type.length()), t.type.data());
         } else {
-            printf("%.*s\n", static_cast<int>(t.name.length()), t.name.data());
+            std::printf("%.*s\n", static_cast<int>(t.name.length()), t.name.data());
         }
     }
 }
@@ -89,10 +89,10 @@ std::size_t get_full_name_length(const test_case& t) {
 
 std::string_view
 make_full_name(std::array<char, max_test_name_length>& buffer, const test_case& t) {
-    strncpy(buffer.data(), t.name.data(), t.name.length());
-    strncpy(buffer.data() + t.name.length(), " [", 2);
-    strncpy(buffer.data() + t.name.length() + 2, t.type.data(), t.type.length());
-    strncpy(buffer.data() + t.name.length() + t.type.length() + 2, "]", 1);
+    std::memcpy(buffer.data(), t.name.data(), t.name.length());
+    std::memcpy(buffer.data() + t.name.length(), " [", 2);
+    std::memcpy(buffer.data() + t.name.length() + 2, t.type.data(), t.type.length());
+    std::memcpy(buffer.data() + t.name.length() + t.type.length() + 2, "]", 1);
     return std::string_view(buffer.data(), get_full_name_length(t));
 }
 
@@ -112,14 +112,14 @@ constexpr const char* get_format_code() {
 template<typename T>
 void append_impl(expression& exp, T value) {
     std::size_t length =
-        snprintf(exp.data.data() + exp.data_length, 0, get_format_code<T>(), value);
+        std::snprintf(exp.data.data() + exp.data_length, 0, get_format_code<T>(), value);
 
     if (length > exp.available()) {
         exp.failed = true;
         return;
     }
 
-    snprintf(exp.data.data() + exp.data_length, exp.available(), get_format_code<T>(), value);
+    std::snprintf(exp.data.data() + exp.data_length, exp.available(), get_format_code<T>(), value);
 
     exp.data_length += length;
 }
@@ -156,13 +156,13 @@ void expression::append_str(const char* str, std::size_t length) {
         return;
     }
 
-    strncpy(data.data() + data_length, str, length);
+    std::memcpy(data.data() + data_length, str, length);
 
     data_length += length;
 }
 
 void expression::append_str(const char* str) {
-    append_str(str, strlen(str));
+    append_str(str, std::strlen(str));
 }
 
 void expression::append_impl(const void* ptr) {
@@ -203,7 +203,7 @@ void registry::register_test(
     std::string_view name, std::string_view tags, std::string_view type, test_ptr func) {
 
     if (test_count == max_test_cases) {
-        printf(
+        std::printf(
             "%serror:%s max number of test cases reached; "
             "please increase 'max_test_cases' (currently %ld)\n.",
             color::error_start, color::reset, max_test_cases);
@@ -213,7 +213,7 @@ void registry::register_test(
     test_list[test_count] = test_case{name, tags, type, func};
 
     if (get_full_name_length(test_list[test_count]) > max_test_name_length) {
-        printf(
+        std::printf(
             "%serror:%s max length of test name reached; "
             "please increase 'max_test_name_length' (currently %ld)\n.",
             color::error_start, color::reset, max_test_name_length);
@@ -226,7 +226,7 @@ void registry::register_test(
 void registry::print_location(
     const test_case& current_case, const char* filename, int line_number) const {
 
-    printf(
+    std::printf(
         "running test case \"%s%.*s%s\"\n"
         "          at %s:%d\n"
         "          for type %s%.*s%s\n",
@@ -236,40 +236,40 @@ void registry::print_location(
 }
 
 void registry::print_failure() const {
-    printf("%sfailed:%s ", color::fail_start, color::reset);
+    std::printf("%sfailed:%s ", color::fail_start, color::reset);
 }
 void registry::print_skip() const {
-    printf("%sskipped:%s ", color::skipped_start, color::reset);
+    std::printf("%sskipped:%s ", color::skipped_start, color::reset);
 }
 
 void registry::print_details(const char* message) const {
-    printf("          %s%s%s\n", color::highlight2_start, message, color::reset);
+    std::printf("          %s%s%s\n", color::highlight2_start, message, color::reset);
 }
 
 void registry::print_details_expr(
     const char* check, const char* exp_str, const expression& exp) const {
-    printf("          %s%s(%s)%s", color::highlight2_start, check, exp_str, color::reset);
+    std::printf("          %s%s(%s)%s", color::highlight2_start, check, exp_str, color::reset);
     if (!exp.failed) {
         auto str = exp.str();
-        printf(
+        std::printf(
             ", got %s%.*s%s\n", color::highlight2_start, static_cast<int>(str.length()), str.data(),
             color::reset);
     } else {
-        printf("\n");
+        std::printf("\n");
     }
 }
 
 void registry::run(test_case& t) {
     if (verbose) {
-        printf("%sstarting:%s %s", color::status_start, color::reset, color::highlight1_start);
+        std::printf("%sstarting:%s %s", color::status_start, color::reset, color::highlight1_start);
         if (!t.type.empty()) {
-            printf(
+            std::printf(
                 "%.*s [%.*s]", static_cast<int>(t.name.length()), t.name.data(),
                 static_cast<int>(t.type.length()), t.type.data());
         } else {
-            printf("%.*s", static_cast<int>(t.name.length()), t.name.data());
+            std::printf("%.*s", static_cast<int>(t.name.length()), t.name.data());
         }
-        printf("%s.\n", color::reset);
+        std::printf("%s.\n", color::reset);
     }
 
     t.tests = 0;
@@ -284,15 +284,15 @@ void registry::run(test_case& t) {
     }
 
     if (verbose) {
-        printf("%sfinished:%s %s", color::status_start, color::reset, color::highlight1_start);
+        std::printf("%sfinished:%s %s", color::status_start, color::reset, color::highlight1_start);
         if (!t.type.empty()) {
-            printf(
+            std::printf(
                 "%.*s [%.*s]", static_cast<int>(t.name.length()), t.name.data(),
                 static_cast<int>(t.type.length()), t.type.data());
         } else {
-            printf("%.*s", static_cast<int>(t.name.length()), t.name.data());
+            std::printf("%.*s", static_cast<int>(t.name.length()), t.name.data());
         }
-        printf("%s.\n", color::reset);
+        std::printf("%s.\n", color::reset);
     }
 }
 
@@ -338,7 +338,7 @@ void registry::list_all_tags() const {
     }
 
     for (auto c : tags) {
-        printf("%.*s\n", static_cast<int>(c.length()), c.data());
+        std::printf("%.*s\n", static_cast<int>(c.length()), c.data());
     }
 }
 
