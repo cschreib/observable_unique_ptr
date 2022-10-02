@@ -225,6 +225,7 @@ TEMPLATE_LIST_TEST_CASE("owner swap self vs self empty", "[swap],[owner]", owner
         CHECK(instances == 0);
         CHECK(ptr.get() == nullptr);
         if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 1);
             CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
         }
     }
@@ -247,6 +248,7 @@ TEMPLATE_LIST_TEST_CASE("owner swap self vs self valid", "[swap],[owner]", owner
         CHECK(instances == 1);
         CHECK(ptr.get() != nullptr);
         if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 1);
             CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
         }
     }
@@ -260,7 +262,7 @@ TEMPLATE_LIST_TEST_CASE("owner swap self vs self valid", "[swap],[owner]", owner
     CHECK(mem_track.double_delete() == 0u);
 };
 
-TEMPLATE_LIST_TEST_CASE("owner dereference", "[dereference],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner dereference valid", "[dereference],[owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -339,7 +341,7 @@ TEMPLATE_LIST_TEST_CASE("owner operator bool empty", "[bool],[owner]", owner_typ
     {
         TestType ptr = make_empty_pointer_deleter_1<TestType>();
         if (ptr) {
-            FAIL("if (ptr) should have been true");
+            FAIL("if (ptr) should have been false");
         }
     }
 
