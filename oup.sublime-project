@@ -54,16 +54,20 @@
 					"shell_cmd": "make -j12 test",
 				},
 				{
+					"name": "oup_runtime_tests_run",
+					"shell_cmd": "make -j12 oup_runtime_tests_run",
+				},
+				{
+					"name": "oup_runtime_tests",
+					"shell_cmd": "make -j12 oup_runtime_tests",
+				},
+				{
 					"name": "oup_size_benchmark",
 					"shell_cmd": "make -j12 oup_size_benchmark",
 				},
 				{
 					"name": "oup_speed_benchmark",
 					"shell_cmd": "make -j12 oup_speed_benchmark",
-				},
-				{
-					"name": "oup_tests",
-					"shell_cmd": "make -j12 oup_tests",
 				},
 			],
 			"working_dir": "$folder/build",

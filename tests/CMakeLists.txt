@@ -15,7 +15,7 @@ function(add_platform_definitions TARGET)
   endif()
 endfunction()
 
-add_executable(oup_tests
+set(RUNTIME_TEST_FILES
   ${PROJECT_SOURCE_DIR}/tests/snatch.cpp
   ${PROJECT_SOURCE_DIR}/tests/tests_common.cpp
   ${PROJECT_SOURCE_DIR}/tests/memory_tracker.cpp
@@ -29,8 +29,17 @@ add_executable(oup_tests
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_construction.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_assignment.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_comparison.cpp)
-target_link_libraries(oup_tests PRIVATE oup::oup)
-add_platform_definitions(oup_tests)
+
+add_executable(oup_runtime_tests ${RUNTIME_TEST_FILES})
+target_link_libraries(oup_runtime_tests PRIVATE oup::oup)
+add_platform_definitions(oup_runtime_tests)
+
+add_custom_target(oup_runtime_tests_run
+  COMMAND oup_runtime_tests
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  SOURCES ${RUNTIME_TEST_FILES}
+)
+set_target_properties(oup_runtime_tests_run PROPERTIES EXCLUDE_FROM_ALL True)
 
 # Compile-time error tests
 set(CMAKE_TRY_COMPILE_TARGET_TYPE EXECUTABLE)

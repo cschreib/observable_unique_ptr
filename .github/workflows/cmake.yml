@@ -13,12 +13,12 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-        - { name: Ubuntu GCC,   os: ubuntu-latest,  compiler: g++,     arch: "64", cmakepp: "",        test-command: "./tests/oup_tests",         flags: "-DCMAKE_CXX_COMPILER=g++ -DCMAKE_CXX_FLAGS=--coverage"}
-        - { name: Ubuntu Clang, os: ubuntu-latest,  compiler: clang++, arch: "64", cmakepp: "",        test-command: "./tests/oup_tests",         flags: "-DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS=-stdlib=libc++"}
-        - { name: Windows 32,   os: windows-latest, compiler: vs2019,  arch: "32", cmakepp: "",        test-command: "./tests/oup_tests.exe",     flags: "-A Win32"}
-        - { name: Windows 64,   os: windows-latest, compiler: vs2019,  arch: "64", cmakepp: "",        test-command: "./tests/oup_tests.exe",     flags: "-A x64"}
-        - { name: MacOS,        os: macos-latest,   compiler: clang++, arch: "64", cmakepp: "",        test-command: "./tests/oup_tests",         flags: ""}
-        - { name: WebAssembly,  os: ubuntu-latest,  compiler: em++,    arch: "32", cmakepp: "emcmake", test-command: "node ./tests/oup_tests.js", flags: "-DCMAKE_CXX_FLAGS=\"-s DISABLE_EXCEPTION_CATCHING=0\" -DCMAKE_CROSSCOMPILING_EMULATOR=node"}
+        - { name: Ubuntu GCC,   os: ubuntu-latest,  compiler: g++,     arch: "64", cmakepp: "",        flags: "-DCMAKE_CXX_COMPILER=g++ -DCMAKE_CXX_FLAGS=--coverage"}
+        - { name: Ubuntu Clang, os: ubuntu-latest,  compiler: clang++, arch: "64", cmakepp: "",        flags: "-DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS=-stdlib=libc++"}
+        - { name: Windows 32,   os: windows-latest, compiler: vs2019,  arch: "32", cmakepp: "",        flags: "-A Win32"}
+        - { name: Windows 64,   os: windows-latest, compiler: vs2019,  arch: "64", cmakepp: "",        flags: "-A x64"}
+        - { name: MacOS,        os: macos-latest,   compiler: clang++, arch: "64", cmakepp: "",        flags: ""}
+        - { name: WebAssembly,  os: ubuntu-latest,  compiler: em++,    arch: "32", cmakepp: "emcmake", flags: "-DCMAKE_CXX_FLAGS=\"-s DISABLE_EXCEPTION_CATCHING=0\" -DCMAKE_CROSSCOMPILING_EMULATOR=node"}
         build-type:
         - Release
         - Debug
@@ -67,7 +67,7 @@ jobs:
     - name: Test
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: ${{matrix.test-command}}
+      run: cmake --build . --config ${{matrix.build-type}} --target oup_runtime_tests
 
     - name: Compute Code Coverage
       if: runner.os == 'Linux' && matrix.platform.compiler == 'g++' && matrix.build-type == 'Debug'
