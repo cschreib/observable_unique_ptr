@@ -181,8 +181,12 @@ struct registry {
 
     bool verbose = false;
 
+    impl::proxy<std::tuple<>> add(std::string_view name, std::string_view tags) {
+        return {this, name, tags};
+    }
+
     template<typename T>
-    impl::proxy<T> add(std::string_view name, std::string_view tags) {
+    impl::proxy<T> add_with_types(std::string_view name, std::string_view tags) {
         return {this, name, tags};
     }
 
@@ -226,7 +230,11 @@ namespace testing::impl {
 template<typename... Args>
 template<typename F>
 const char* proxy<std::tuple<Args...>>::operator=(const F& func) {
-    tests->template register_tests<Args...>(name, tags, func);
+    if constexpr (sizeof...(Args) > 0) {
+        tests->template register_tests<Args...>(name, tags, func);
+    } else {
+        tests->register_test(name, tags, {}, func);
+    }
     return name.data();
 }
 } // namespace testing::impl
@@ -238,9 +246,14 @@ const char* proxy<std::tuple<Args...>>::operator=(const F& func) {
 #define TESTING_MACRO_CONCAT(x, y) TESTING_CONCAT_IMPL(x, y)
 #define TESTING_EXPR(x) testing::impl::expression{} <= x
 
+#define TEST_CASE(NAME, TAGS)                                                                      \
+    static const char* TESTING_MACRO_CONCAT(test_id_, __COUNTER__) =                               \
+        testing::tests.add(NAME, TAGS) =                                                           \
+            [](testing::impl::test_case & CURRENT_CASE [[maybe_unused]]) -> void
+
 #define TEMPLATE_LIST_TEST_CASE(NAME, TAGS, TYPES)                                                 \
     static const char* TESTING_MACRO_CONCAT(test_id_, __COUNTER__) =                               \
-        testing::tests.add<TYPES>(NAME, TAGS) = []<typename TestType>(                             \
+        testing::tests.add_with_types<TYPES>(NAME, TAGS) = []<typename TestType>(                  \
             testing::impl::test_case & CURRENT_CASE [[maybe_unused]]) -> void
 
 #define REQUIRE(EXP)                                                                               \
