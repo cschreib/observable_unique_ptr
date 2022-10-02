@@ -403,13 +403,16 @@ int main(int argc, char* argv[]) {
         testing::tests.verbose = true;
     }
 
+    bool success = true;
     if (result.count("tests") > 0) {
         if (result.count("tags") > 0) {
-            return testing::tests.run_tests_with_tag(result["tests"].as<std::string>());
+            success = testing::tests.run_tests_with_tag(result["tests"].as<std::string>());
         } else {
-            return testing::tests.run_tests_matching_name(result["tests"].as<std::string>());
+            success = testing::tests.run_tests_matching_name(result["tests"].as<std::string>());
         }
     } else {
-        return testing::tests.run_all_tests();
+        success = testing::tests.run_all_tests();
     }
+
+    return success ? 0 : 1;
 }
