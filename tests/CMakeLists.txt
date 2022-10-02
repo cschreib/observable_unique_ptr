@@ -15,8 +15,6 @@ function(add_platform_definitions TARGET)
   endif()
 endfunction()
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${Catch2_SOURCE_DIR}/extras")
-
 add_executable(oup_tests
   ${PROJECT_SOURCE_DIR}/tests/snatch.cpp
   ${PROJECT_SOURCE_DIR}/tests/tests_common.cpp
@@ -33,8 +31,6 @@ add_executable(oup_tests
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_comparison.cpp)
 target_link_libraries(oup_tests PRIVATE oup::oup)
 add_platform_definitions(oup_tests)
-
-include(CTest)
 
 # Compile-time error tests
 set(CMAKE_TRY_COMPILE_TARGET_TYPE EXECUTABLE)
