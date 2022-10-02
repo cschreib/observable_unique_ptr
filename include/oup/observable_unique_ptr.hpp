@@ -604,6 +604,12 @@ public:
         }
     }
 
+#if defined(_MSC_VER)
+// MSVC has a false-positive warning about throwing from a noexcept function.
+#    pragma warning(push)
+#    pragma warning(disable : 4297)
+#endif
+
     /**
      * \brief Explicit ownership capture of a raw pointer.
      * \param value The raw pointer to take ownership of
@@ -646,6 +652,10 @@ public:
         // Allocation of control block failed, delete input pointer and rethrow
         del(value);
     }
+
+#if defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
 
     /**
      * \brief Transfer ownership by implicit casting
