@@ -2,110 +2,194 @@
 #include "testing.hpp"
 #include "tests_common.hpp"
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner comparison valid ptr vs nullptr", "[comparison],[owner]", owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer comparison valid vs nullptr", "[comparison],[observer]", owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr = make_pointer_deleter_1<TestType>();
-//         CHECK(ptr != nullptr);
-//         CHECK(!(ptr == nullptr));
-//         CHECK(nullptr != ptr);
-//         CHECK(!(nullptr == ptr));
-//     }
+    {
+        TestType               ptr = make_pointer_deleter_1<TestType>();
+        observer_ptr<TestType> optr{ptr};
+        CHECK(optr != nullptr);
+        CHECK(!(optr == nullptr));
+        CHECK(nullptr != optr);
+        CHECK(!(nullptr == optr));
+    }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner comparison empty ptr vs nullptr", "[comparison],[owner]", owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer comparison empty vs nullptr", "[comparison],[observer]", owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr = make_empty_pointer_deleter_1<TestType>();
-//         CHECK(ptr == nullptr);
-//         CHECK(!(ptr != nullptr));
-//         CHECK(nullptr == ptr);
-//         CHECK(!(nullptr != ptr));
-//     }
+    {
+        observer_ptr<TestType> optr;
+        CHECK(optr == nullptr);
+        CHECK(!(optr != nullptr));
+        CHECK(nullptr == optr);
+        CHECK(!(nullptr != optr));
+    }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner comparison empty ptr vs empty ptr", "[comparison],[owner]", owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer comparison empty vs empty", "[comparison],[observer]", owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr1 = make_empty_pointer_deleter_1<TestType>();
-//         TestType ptr2 = make_empty_pointer_deleter_2<TestType>();
-//         CHECK(ptr1 == ptr2);
-//         CHECK(ptr2 == ptr1);
-//         CHECK(!(ptr1 != ptr2));
-//         CHECK(!(ptr2 != ptr1));
-//     }
+    {
+        observer_ptr<TestType> optr1;
+        observer_ptr<TestType> optr2;
+        CHECK(optr1 == optr2);
+        CHECK(optr2 == optr1);
+        CHECK(!(optr1 != optr2));
+        CHECK(!(optr2 != optr1));
+    }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner comparison empty ptr vs valid ptr", "[comparison],[owner]", owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer comparison empty vs valid", "[comparison],[observer]", owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr1 = make_empty_pointer_deleter_1<TestType>();
-//         TestType ptr2 = make_pointer_deleter_2<TestType>();
-//         CHECK(ptr1 != ptr2);
-//         CHECK(ptr2 != ptr1);
-//         CHECK(!(ptr1 == ptr2));
-//         CHECK(!(ptr2 == ptr1));
-//     }
+    {
+        observer_ptr<TestType> optr1;
+        TestType               ptr2 = make_pointer_deleter_2<TestType>();
+        observer_ptr<TestType> optr2{ptr2};
+        CHECK(optr1 != optr2);
+        CHECK(optr2 != optr1);
+        CHECK(!(optr1 == optr2));
+        CHECK(!(optr2 == optr1));
+    }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
 
-// TEMPLATE_LIST_TEST_CASE(
-//     "owner comparison valid ptr vs valid ptr", "[comparison],[owner]", owner_types) {
-//     memory_tracker mem_track;
+TEMPLATE_LIST_TEST_CASE(
+    "observer comparison valid vs valid different instance",
+    "[comparison],[observer]",
+    owner_types) {
+    memory_tracker mem_track;
 
-//     {
-//         TestType ptr1 = make_pointer_deleter_1<TestType>();
-//         TestType ptr2 = make_pointer_deleter_2<TestType>();
-//         CHECK(ptr1 != ptr2);
-//         CHECK(ptr2 != ptr1);
-//         CHECK(!(ptr1 == ptr2));
-//         CHECK(!(ptr2 == ptr1));
-//     }
+    {
+        TestType               ptr1 = make_pointer_deleter_1<TestType>();
+        observer_ptr<TestType> optr1{ptr1};
+        TestType               ptr2 = make_pointer_deleter_2<TestType>();
+        observer_ptr<TestType> optr2{ptr2};
+        CHECK(optr1 != optr2);
+        CHECK(optr2 != optr1);
+        CHECK(!(optr1 == optr2));
+        CHECK(!(optr2 == optr1));
+    }
 
-//     CHECK(instances == 0);
-//     if constexpr (has_stateful_deleter<TestType>) {
-//         CHECK(instances_deleter == 0);
-//     }
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
 
-//     CHECK(mem_track.allocated() == 0u);
-//     CHECK(mem_track.double_delete() == 0u);
-// }
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer comparison valid vs valid same instance", "[comparison],[observer]", owner_types) {
+    memory_tracker mem_track;
+
+    {
+        TestType               ptr = make_pointer_deleter_1<TestType>();
+        observer_ptr<TestType> optr1{ptr};
+        observer_ptr<TestType> optr2{ptr};
+        CHECK(optr1 == optr2);
+        CHECK(optr2 == optr1);
+        CHECK(!(optr1 != optr2));
+        CHECK(!(optr2 != optr1));
+    }
+
+    CHECK(instances == 0);
+    if constexpr (has_stateful_deleter<TestType>) {
+        CHECK(instances_deleter == 0);
+    }
+
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer comparison valid vs valid different instance derived",
+    "[comparison],[observer]",
+    owner_types) {
+    if constexpr (has_base<TestType>) {
+        memory_tracker mem_track;
+
+        {
+            TestType                    ptr1 = make_pointer_deleter_1<TestType>();
+            observer_ptr<TestType>      optr1{ptr1};
+            TestType                    ptr2 = make_pointer_deleter_2<TestType>();
+            base_observer_ptr<TestType> optr2{ptr2};
+            CHECK(optr1 != optr2);
+            CHECK(optr2 != optr1);
+            CHECK(!(optr1 == optr2));
+            CHECK(!(optr2 == optr1));
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer comparison valid vs valid same instance derived",
+    "[comparison],[observer]",
+    owner_types) {
+    if constexpr (has_base<TestType>) {
+        memory_tracker mem_track;
+
+        {
+            TestType                    ptr = make_pointer_deleter_1<TestType>();
+            observer_ptr<TestType>      optr1{ptr};
+            base_observer_ptr<TestType> optr2{ptr};
+            CHECK(optr1 == optr2);
+            CHECK(optr2 == optr1);
+            CHECK(!(optr1 != optr2));
+            CHECK(!(optr2 != optr1));
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};

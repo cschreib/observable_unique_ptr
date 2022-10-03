@@ -2,8 +2,7 @@
 #include "testing.hpp"
 #include "tests_common.hpp"
 
-TEMPLATE_LIST_TEST_CASE(
-    "owner comparison valid ptr vs nullptr", "[comparison],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner comparison valid vs nullptr", "[comparison],[owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -23,8 +22,7 @@ TEMPLATE_LIST_TEST_CASE(
     CHECK(mem_track.double_delete() == 0u);
 };
 
-TEMPLATE_LIST_TEST_CASE(
-    "owner comparison empty ptr vs nullptr", "[comparison],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner comparison empty vs nullptr", "[comparison],[owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -44,8 +42,7 @@ TEMPLATE_LIST_TEST_CASE(
     CHECK(mem_track.double_delete() == 0u);
 };
 
-TEMPLATE_LIST_TEST_CASE(
-    "owner comparison empty ptr vs empty ptr", "[comparison],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner comparison empty vs empty", "[comparison],[owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -66,8 +63,7 @@ TEMPLATE_LIST_TEST_CASE(
     CHECK(mem_track.double_delete() == 0u);
 };
 
-TEMPLATE_LIST_TEST_CASE(
-    "owner comparison empty ptr vs valid ptr", "[comparison],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner comparison empty vs valid", "[comparison],[owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -88,8 +84,7 @@ TEMPLATE_LIST_TEST_CASE(
     CHECK(mem_track.double_delete() == 0u);
 };
 
-TEMPLATE_LIST_TEST_CASE(
-    "owner comparison valid ptr vs valid ptr", "[comparison],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner comparison valid vs valid", "[comparison],[owner]", owner_types) {
     memory_tracker mem_track;
 
     {

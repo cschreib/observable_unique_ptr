@@ -319,6 +319,14 @@ struct test_deleter {
     void operator()(std::nullptr_t) noexcept {}
 };
 
+struct test_object_observer_owner : test_object {
+    test_object_observer_owner() {}
+
+    explicit test_object_observer_owner(state s) : test_object(s) {}
+
+    oup::observer_ptr<test_object_observer_owner> obs;
+};
+
 template<typename T>
 using get_object = typename T::element_type;
 
@@ -361,6 +369,9 @@ constexpr bool can_use_make_observable = (is_sealed<T> &&
 
 template<typename T>
 constexpr bool has_base = std::is_base_of_v<test_object_derived, get_object<T>>;
+
+template<typename T>
+constexpr bool is_cyclic = std::is_base_of_v<test_object_observer_owner, get_object<T>>;
 
 template<typename T>
 using base_ptr = oup::basic_observable_ptr<
@@ -461,6 +472,8 @@ using owner_types = std::tuple<
     oup::observable_unique_ptr<test_object_observer_from_this_constructor_unique>,
     oup::observable_sealed_ptr<test_object_observer_from_this_constructor_sealed>,
     oup::observable_unique_ptr<test_object_observer_from_this_constructor_multi_unique>,
-    oup::observable_sealed_ptr<test_object_observer_from_this_constructor_multi_sealed>
+    oup::observable_sealed_ptr<test_object_observer_from_this_constructor_multi_sealed>,
+    oup::observable_unique_ptr<test_object_observer_owner>,
+    oup::observable_sealed_ptr<test_object_observer_owner>
     >;
 // clang-format on

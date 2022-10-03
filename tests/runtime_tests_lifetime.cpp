@@ -246,3 +246,147 @@ TEMPLATE_LIST_TEST_CASE(
     CHECK(mem_track.allocated() == 0u);
     CHECK(mem_track.double_delete() == 0u);
 };
+
+TEMPLATE_LIST_TEST_CASE(
+    "object owning observer pointer to itself",
+    "[lifetime],[cycles],[owner],[observer]",
+    owner_types) {
+    if constexpr (is_cyclic<TestType>) {
+        memory_tracker mem_track;
+
+        {
+            TestType ptr = make_pointer_deleter_1<TestType>();
+            ptr->obs     = ptr;
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 1);
+            }
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "object owning observer pointer to other",
+    "[lifetime],[cycles],[owner],[observer]",
+    owner_types) {
+    if constexpr (is_cyclic<TestType>) {
+        memory_tracker mem_track;
+
+        {
+            TestType ptr1 = make_pointer_deleter_1<TestType>();
+            TestType ptr2 = make_pointer_deleter_2<TestType>();
+            ptr1->obs     = ptr2;
+            ptr2->obs     = ptr1;
+            CHECK(instances == 2);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 2);
+            }
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "object owning observer pointer open chain",
+    "[lifetime],[cycles],[owner],[observer]",
+    owner_types) {
+    if constexpr (is_cyclic<TestType>) {
+        memory_tracker mem_track;
+
+        {
+            TestType ptr1 = make_pointer_deleter_1<TestType>();
+            TestType ptr2 = make_pointer_deleter_2<TestType>();
+            TestType ptr3 = make_pointer_deleter_1<TestType>();
+            ptr1->obs     = ptr2;
+            ptr2->obs     = ptr3;
+            CHECK(instances == 3);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 3);
+            }
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "object owning observer pointer open chain reversed",
+    "[lifetime],[cycles],[owner],[observer]",
+    owner_types) {
+    if constexpr (is_cyclic<TestType>) {
+        memory_tracker mem_track;
+
+        {
+            TestType ptr1 = make_pointer_deleter_1<TestType>();
+            TestType ptr2 = make_pointer_deleter_2<TestType>();
+            TestType ptr3 = make_pointer_deleter_1<TestType>();
+            ptr3->obs     = ptr2;
+            ptr2->obs     = ptr1;
+            CHECK(instances == 3);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 3);
+            }
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "object owning observer pointer closed chain interleaved",
+    "[lifetime],[cycles],[owner],[observer]",
+    owner_types) {
+    if constexpr (is_cyclic<TestType>) {
+        memory_tracker mem_track;
+
+        {
+            TestType ptr1 = make_pointer_deleter_1<TestType>();
+            TestType ptr2 = make_pointer_deleter_2<TestType>();
+            TestType ptr3 = make_pointer_deleter_1<TestType>();
+            TestType ptr4 = make_pointer_deleter_2<TestType>();
+            ptr1->obs     = ptr2;
+            ptr2->obs     = ptr4;
+            ptr3->obs     = ptr1;
+            ptr4->obs     = ptr3;
+            CHECK(instances == 4);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 4);
+            }
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
