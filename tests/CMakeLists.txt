@@ -21,13 +21,18 @@ set(RUNTIME_TEST_FILES
   ${PROJECT_SOURCE_DIR}/tests/memory_tracker.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_misc.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_construction.cpp
-  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_assignment.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_assignment_move.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_comparison.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_lifetime.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_make_observable.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_misc.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_construction.cpp
-  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_assignment.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_construction_from_owner.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_construction_copy.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_construction_move.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_assignment_from_owner.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_assignment_copy.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_assignment_move.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_comparison.cpp)
 
 add_executable(oup_runtime_tests ${RUNTIME_TEST_FILES})
