@@ -340,7 +340,14 @@ template<typename T>
 using get_observer_policy = typename T::observer_policy;
 
 template<typename T>
+using get_eoft =
+    oup::basic_enable_observer_from_this<std::remove_cv_t<get_object<T>>, get_policy<T>>;
+
+template<typename T>
 using observer_ptr = typename T::observer_type;
+
+template<typename T>
+using const_observer_ptr = oup::basic_observer_ptr<const get_object<T>, get_observer_policy<T>>;
 
 template<typename T>
 constexpr bool is_sealed = get_policy<T>::is_sealed;
@@ -350,6 +357,25 @@ constexpr bool has_stateful_deleter = !std::is_empty_v<get_deleter<T>>;
 
 template<typename T>
 constexpr bool has_eoft = oup::has_enable_observer_from_this<get_object<T>, get_policy<T>>;
+
+template<typename T>
+constexpr bool has_eoft_direct_base =
+    std::is_base_of_v<get_eoft<T>, std::remove_cv_t<get_object<T>>>;
+
+template<typename T>
+struct has_eoft_multi_base_t : std::false_type {};
+// clang-format off
+template<> struct has_eoft_multi_base_t<test_object_observer_from_this_multi_unique> : std::true_type {};
+template<> struct has_eoft_multi_base_t<test_object_observer_from_this_multi_sealed> : std::true_type {};
+template<> struct has_eoft_multi_base_t<test_object_observer_from_this_constructor_multi_unique> : std::true_type {};
+template<> struct has_eoft_multi_base_t<test_object_observer_from_this_constructor_multi_sealed> : std::true_type {};
+// clang-format on
+
+template<typename T>
+constexpr bool has_eoft_multi_base = has_eoft_multi_base_t<std::remove_cv_t<get_object<T>>>::value;
+
+template<typename T>
+constexpr bool has_eoft_direct_base_only = has_eoft_direct_base<T> && !has_eoft_multi_base<T>;
 
 template<typename T>
 constexpr bool    eoft_constructor_takes_control_block =
@@ -368,10 +394,17 @@ constexpr bool can_use_make_observable = (is_sealed<T> &&
                                          std::is_same_v<get_deleter<T>, oup::default_delete>;
 
 template<typename T>
-constexpr bool has_base = std::is_base_of_v<test_object_derived, get_object<T>>;
+constexpr bool has_base = std::is_base_of_v<test_object_derived, std::remove_cv_t<get_object<T>>>;
 
 template<typename T>
-constexpr bool is_cyclic = std::is_base_of_v<test_object_observer_owner, get_object<T>>;
+constexpr bool is_cyclic =
+    std::is_base_of_v<test_object_observer_owner, std::remove_cv_t<get_object<T>>>;
+
+template<typename T>
+constexpr bool can_reset_to_new = !is_sealed<T> && !eoft_constructor_takes_control_block<T>;
+
+template<typename T>
+constexpr bool can_release = !is_sealed<T>;
 
 template<typename T>
 using base_ptr = oup::basic_observable_ptr<
@@ -445,6 +478,17 @@ T make_empty_pointer_deleter_2() {
         return T(nullptr, make_deleter_instance_2<T>());
     } else {
         return T{};
+    }
+}
+
+template<typename T>
+auto make_observer_from_this(get_object<T>* ptr) {
+    if constexpr (has_eoft_multi_base<T>) {
+        // Need an explicit choice of which base to call.
+        return ptr->get_eoft<T>::observer_from_this();
+    } else {
+        // No ambiguity, just call normally.
+        return ptr->observer_from_this();
     }
 }
 

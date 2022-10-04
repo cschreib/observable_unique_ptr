@@ -390,3 +390,47 @@ TEMPLATE_LIST_TEST_CASE(
         CHECK(mem_track.double_delete() == 0u);
     }
 };
+
+TEMPLATE_LIST_TEST_CASE(
+    "pointers in vector", "[lifetime],[array],[owner],[observer]", owner_types) {
+    memory_tracker mem_track;
+
+    {
+        std::vector<TestType>               vec_own;
+        std::vector<observer_ptr<TestType>> vec_obs;
+
+        vec_own.resize(100);
+        CHECK(std::all_of(vec_own.begin(), vec_own.end(), [](const auto& p) {
+                  return p == nullptr;
+              }) == true);
+
+        std::generate(
+            vec_own.begin(), vec_own.end(), []() { return make_pointer_deleter_1<TestType>(); });
+        CHECK(std::none_of(vec_own.begin(), vec_own.end(), [](const auto& p) {
+                  return p == nullptr;
+              }) == true);
+
+        vec_obs.resize(100);
+        CHECK(std::all_of(vec_obs.begin(), vec_obs.end(), [](const auto& p) {
+                  return p == nullptr;
+              }) == true);
+
+        std::copy(vec_own.begin(), vec_own.end(), vec_obs.begin());
+        CHECK(std::none_of(vec_own.begin(), vec_own.end(), [](const auto& p) {
+                  return p == nullptr;
+              }) == true);
+
+        std::vector<TestType> vec_own_new = std::move(vec_own);
+        CHECK(std::none_of(vec_own.begin(), vec_own.end(), [](const auto& p) {
+                  return p == nullptr;
+              }) == true);
+
+        vec_own_new.clear();
+        CHECK(std::all_of(vec_obs.begin(), vec_obs.end(), [](const auto& p) {
+                  return p == nullptr;
+              }) == true);
+    }
+
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
+};
