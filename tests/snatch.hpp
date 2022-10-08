@@ -319,6 +319,14 @@ const char* proxy<std::tuple<Args...>>::operator=(const F& func) {
         throw testing::impl::test_state::failed;                                                   \
     } while (0)
 
+#define FAIL_CHECK(MESSAGE)                                                                        \
+    do {                                                                                           \
+        testing::tests.print_failure();                                                            \
+        testing::tests.print_location(CURRENT_CASE, __FILE__, __LINE__);                           \
+        testing::tests.print_details(MESSAGE);                                                     \
+        testing::tests.set_state(CURRENT_CASE, testing::impl::test_state::failed);                 \
+    } while (0)
+
 #define SKIP(MESSAGE)                                                                              \
     do {                                                                                           \
         testing::tests.print_skip();                                                               \
