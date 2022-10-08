@@ -281,7 +281,16 @@ void registry::run(test_case& t) {
         t.func(t);
     } catch (const test_state& s) {
         t.state = s;
+    } catch (const std::exception& e) {
+        testing::tests.print_failure();
+        testing::tests.print_location(t, __FILE__, __LINE__);
+        testing::tests.print_details("unhandled std::exception caught; message:");
+        testing::tests.print_details(e.what());
+        t.state = test_state::failed;
     } catch (...) {
+        testing::tests.print_failure();
+        testing::tests.print_location(t, __FILE__, __LINE__);
+        testing::tests.print_details("unhandled unknown exception caught");
         t.state = test_state::failed;
     }
 
