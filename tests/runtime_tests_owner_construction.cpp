@@ -131,20 +131,11 @@ TEMPLATE_LIST_TEST_CASE(
         memory_tracker mem_track;
 
         {
-            auto* raw_ptr    = make_instance<TestType>();
-            bool  has_thrown = false;
-            try {
-                force_next_allocation_failure = true;
-                TestType{raw_ptr};
-                force_next_allocation_failure = false;
-            } catch (const std::bad_alloc&) {
-                has_thrown = true;
-            }
-
+            auto* raw_ptr = make_instance<TestType>();
             if constexpr (eoft_allocates<TestType>) {
-                CHECK(!has_thrown);
+                fail_next_allocation{}, TestType{raw_ptr};
             } else {
-                CHECK(has_thrown);
+                REQUIRE_THROWS_AS((fail_next_allocation{}, TestType{raw_ptr}), std::bad_alloc);
             }
         }
 
@@ -160,24 +151,18 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "owner acquiring constructor bad alloc with deleter", "[construction],[owner]", owner_types) {
-    if constexpr (
-        !must_use_make_observable<TestType> && !eoft_allocates<TestType> &&
-        has_stateful_deleter<TestType>) {
+    if constexpr (!must_use_make_observable<TestType> && has_stateful_deleter<TestType>) {
         memory_tracker mem_track;
 
         {
-            auto* raw_ptr    = make_instance<TestType>();
-            auto  deleter    = make_deleter_instance_1<TestType>();
-            bool  has_thrown = false;
-            try {
-                force_next_allocation_failure = true;
-                TestType{raw_ptr, deleter};
-                force_next_allocation_failure = false;
-            } catch (const std::bad_alloc&) {
-                has_thrown = true;
+            auto* raw_ptr = make_instance<TestType>();
+            auto  deleter = make_deleter_instance_1<TestType>();
+            if constexpr (eoft_allocates<TestType>) {
+                fail_next_allocation{}, TestType{raw_ptr, deleter};
+            } else {
+                REQUIRE_THROWS_AS(
+                    (fail_next_allocation{}, TestType{raw_ptr, deleter}), std::bad_alloc);
             }
-
-            CHECK(has_thrown);
         }
 
         CHECK(instances == 0);

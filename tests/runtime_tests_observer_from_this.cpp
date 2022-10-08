@@ -71,26 +71,22 @@ TEMPLATE_LIST_TEST_CASE("observer from this with no owner", "[observer_from_this
             get_object<TestType>* orig_ptr = make_instance<TestType>();
 
             if constexpr (eoft_always_has_block<TestType>) {
-                auto optr_from_this = make_observer_from_this<TestType>(orig_ptr);
+                auto optr  = make_observer_from_this<TestType>(orig_ptr);
+                auto coptr = make_const_observer_from_this<TestType>(orig_ptr);
 
                 CHECK(instances == 1);
                 if constexpr (has_stateful_deleter<TestType>) {
                     CHECK(instances_deleter == 0);
                 }
-                CHECK(optr_from_this.expired() == false);
-                CHECK(optr_from_this.get() == orig_ptr);
+                CHECK(optr.expired() == false);
+                CHECK(optr.get() == orig_ptr);
+                CHECK(coptr.expired() == false);
+                CHECK(coptr.get() == orig_ptr);
             } else {
-                bool has_thrown = false;
-                try {
-                    make_observer_from_this<TestType>(orig_ptr);
-                } catch (const oup::bad_observer_from_this& e) {
-                    has_thrown = true;
-                    CHECK(
-                        std::string_view(e.what()) ==
-                        "observer_from_this() called with uninitialized control block");
-                }
-
-                CHECK(has_thrown == true);
+                REQUIRE_THROWS_MATCHES(
+                    (make_observer_from_this<TestType>(orig_ptr)), oup::bad_observer_from_this,
+                    testing::matchers::with_what_contains{
+                        "observer_from_this() called with uninitialized control block"});
             }
 
             delete orig_ptr;
@@ -125,17 +121,10 @@ TEMPLATE_LIST_TEST_CASE(
                 CHECK(optr_from_this.expired() == false);
                 CHECK(optr_from_this.get() == ptr.get());
             } else {
-                bool has_thrown = false;
-                try {
-                    make_observer_from_this<TestType>(orig_ptr);
-                } catch (const oup::bad_observer_from_this& e) {
-                    has_thrown = true;
-                    CHECK(
-                        std::string_view(e.what()) ==
-                        "observer_from_this() called with uninitialized control block");
-                }
-
-                CHECK(has_thrown == true);
+                REQUIRE_THROWS_MATCHES(
+                    (make_observer_from_this<TestType>(orig_ptr)), oup::bad_observer_from_this,
+                    testing::matchers::with_what_contains{
+                        "observer_from_this() called with uninitialized control block"});
             }
         }
 
