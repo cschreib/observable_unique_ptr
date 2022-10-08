@@ -339,12 +339,47 @@ const char* proxy<std::tuple<Args...>>::operator=(const F& func) {
     do {                                                                                           \
         try {                                                                                      \
             EXPRESSION;                                                                            \
-            FAIL("no exception thrown");                                                           \
+            FAIL(#EXCEPTION " expected but no exception thrown");                                  \
         } catch (const EXCEPTION&) {                                                               \
-        } catch (const std::exception& e) {                                                        \
-            FAIL(e.what());                                                                        \
+            /* success */                                                                          \
         } catch (...) {                                                                            \
-            FAIL("unexpected exception thrown");                                                   \
+            testing::tests.print_failure();                                                        \
+            testing::tests.print_location(CURRENT_CASE, __FILE__, __LINE__);                       \
+            try {                                                                                  \
+                throw;                                                                             \
+            } catch (const std::exception& e) {                                                    \
+                testing::tests.print_details(                                                      \
+                    #EXCEPTION " expected but other std::exception thrown; message:");             \
+                testing::tests.print_details(e.what());                                            \
+            } catch (...) {                                                                        \
+                testing::tests.print_details(#EXCEPTION                                            \
+                                             " expected but other unknown exception thrown");      \
+            }                                                                                      \
+            throw testing::impl::test_state::failed;                                               \
+        }                                                                                          \
+    } while (0)
+
+#define CHECK_THROWS_AS(EXPRESSION, EXCEPTION)                                                     \
+    do {                                                                                           \
+        try {                                                                                      \
+            EXPRESSION;                                                                            \
+            FAIL_CHECK(#EXCEPTION " expected but no exception thrown");                            \
+        } catch (const EXCEPTION&) {                                                               \
+            /* success */                                                                          \
+        } catch (...) {                                                                            \
+            testing::tests.print_failure();                                                        \
+            testing::tests.print_location(CURRENT_CASE, __FILE__, __LINE__);                       \
+            try {                                                                                  \
+                throw;                                                                             \
+            } catch (const std::exception& e) {                                                    \
+                testing::tests.print_details(                                                      \
+                    #EXCEPTION " expected but other std::exception thrown; message:");             \
+                testing::tests.print_details(e.what());                                            \
+            } catch (...) {                                                                        \
+                testing::tests.print_details(#EXCEPTION                                            \
+                                             " expected but other unknown exception thrown");      \
+            }                                                                                      \
+            testing::tests.set_state(CURRENT_CASE, testing::impl::test_state::failed);             \
         }                                                                                          \
     } while (0)
 
