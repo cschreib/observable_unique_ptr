@@ -84,15 +84,17 @@ void for_each_tag(std::string_view s, F&& callback) {
 
 std::size_t get_full_name_length(const test_case& t) {
     // +3 for " []" surrounding the type
-    return t.name.length() + t.type.length() + 3;
+    return t.name.length() + (t.type.length() != 0 ? 0 : t.type.length() + 3);
 }
 
 std::string_view
 make_full_name(std::array<char, max_test_name_length>& buffer, const test_case& t) {
     std::memcpy(buffer.data(), t.name.data(), t.name.length());
-    std::memcpy(buffer.data() + t.name.length(), " [", 2);
-    std::memcpy(buffer.data() + t.name.length() + 2, t.type.data(), t.type.length());
-    std::memcpy(buffer.data() + t.name.length() + t.type.length() + 2, "]", 1);
+    if (t.type.length() != 0) {
+        std::memcpy(buffer.data() + t.name.length(), " [", 2);
+        std::memcpy(buffer.data() + t.name.length() + 2, t.type.data(), t.type.length());
+        std::memcpy(buffer.data() + t.name.length() + t.type.length() + 2, "]", 1);
+    }
     return std::string_view(buffer.data(), get_full_name_length(t));
 }
 
