@@ -449,6 +449,17 @@ auto make_observer_from_this(get_object<T>* ptr) {
     }
 }
 
+template<typename T>
+auto make_const_observer_from_this(const get_object<T>* ptr) {
+    if constexpr (has_eoft_multi_base<T>) {
+        // Need an explicit choice of which base to call.
+        return ptr->get_eoft<T>::observer_from_this();
+    } else {
+        // No ambiguity, just call normally.
+        return ptr->observer_from_this();
+    }
+}
+
 // clang-format off
 using owner_types = std::tuple<
     oup::observable_unique_ptr<test_object>,
