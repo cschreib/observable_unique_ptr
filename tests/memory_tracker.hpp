@@ -38,3 +38,8 @@ struct memory_tracker {
     std::size_t allocated() const;
     std::size_t double_delete() const;
 };
+
+struct fail_next_allocation {
+    fail_next_allocation() noexcept;
+    ~fail_next_allocation() noexcept;
+};

@@ -185,3 +185,11 @@ std::size_t memory_tracker::allocated() const {
 std::size_t memory_tracker::double_delete() const {
     return ::double_delete - initial_double_delete;
 }
+
+fail_next_allocation::fail_next_allocation() noexcept {
+    force_next_allocation_failure = true;
+}
+
+fail_next_allocation::~fail_next_allocation() noexcept {
+    force_next_allocation_failure = false;
+}
