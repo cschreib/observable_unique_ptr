@@ -17,10 +17,10 @@
 #    define SNATCH_MAX_TEST_NAME_LENGTH 1'024
 #endif
 
-namespace testing {
-
 // Testing framework configuration.
 // --------------------------------
+
+namespace testing {
 // Maximum number of test cases in the whole program.
 // A "test case" is created for each uses of the `*_TEST_CASE` macros,
 // and for each type for the `TEMPLATE_LIST_TEST_CASE` macro.
@@ -31,14 +31,19 @@ constexpr std::size_t max_expr_length = SNATCH_MAX_EXPR_LENGTH;
 // Maximum length of a full test case name.
 // The full test case name includes the base name, plus any type.
 constexpr std::size_t max_test_name_length = SNATCH_MAX_TEST_NAME_LENGTH;
+} // namespace testing
 
 // Forward declarations.
 // ---------------------
+
+namespace testing {
 struct registry;
+}
 
 // Implementation details.
 // -----------------------
-namespace impl {
+
+namespace testing::impl {
 template<typename T>
 constexpr std::string_view get_type_name() {
 #if defined(__clang__)
@@ -109,43 +114,68 @@ extern const char* highlight2_start;
 extern const char* reset;
 } // namespace color
 
-struct expression {
+struct small_string {
     std::array<char, max_expr_length> data;
     std::size_t                       data_length = 0;
-    bool                              failed      = false;
 
     std::string_view str() const;
     std::size_t      available() const;
+    std::size_t      size() const;
+    std::size_t      length() const;
+    bool             empty() const;
+    void             clear();
+};
 
-    void append_str(const char* str, std::size_t length);
-    void append_str(const char* str);
+[[nodiscard]] bool append(small_string& ss, std::string_view value);
 
-    void append_impl(const void* ptr);
-    void append_impl(std::nullptr_t);
-    void append_impl(std::size_t i);
-    void append_impl(std::ptrdiff_t i);
+[[nodiscard]] bool append(small_string& ss, const void* ptr);
+[[nodiscard]] bool append(small_string& ss, std::nullptr_t);
+[[nodiscard]] bool append(small_string& ss, std::size_t i);
+[[nodiscard]] bool append(small_string& ss, std::ptrdiff_t i);
+[[nodiscard]] bool append(small_string& ss, float f);
+[[nodiscard]] bool append(small_string& ss, double f);
+[[nodiscard]] bool append(small_string& ss, bool value);
+[[nodiscard]] bool append(small_string& ss, const std::string& str);
+[[nodiscard]] bool append(small_string& ss, const char* str);
+template<std::size_t N>
+[[nodiscard]] bool append(small_string& ss, const char (&str)[N]) {
+    return append(ss, std::string_view(str));
+}
 
-    void append_impl(float f);
-    void append_impl(double f);
-    void append_impl(bool value);
-    void append_impl(const std::string& value);
-    void append_impl(std::string_view value);
-    void append_impl(const char* value);
+template<typename T, typename U, typename... Args>
+[[nodiscard]] bool append(small_string& ss, T&& t, U&& u, Args&&... args) {
+    if (!append(ss, std::forward<T>(t))) {
+        return false;
+    }
+    return append(ss, std::forward<U>(u), std::forward<Args>(args)...);
+}
+
+void truncate_end(small_string& ss);
+
+struct expression {
+    small_string data;
+    bool         failed = false;
 
     template<typename T>
     void append(T&& value) {
         using TD = std::decay_t<T>;
         if constexpr (std::is_integral_v<TD>) {
             if constexpr (std::is_signed_v<TD>) {
-                append_impl(static_cast<std::ptrdiff_t>(value));
+                if (!impl::append(data, static_cast<std::ptrdiff_t>(value))) {
+                    failed = true;
+                }
             } else {
-                append_impl(static_cast<std::size_t>(value));
+                if (!impl::append(data, static_cast<std::size_t>(value))) {
+                    failed = true;
+                }
             }
         } else if constexpr (
             std::is_pointer_v<TD> || std::is_floating_point_v<TD> || std::is_same_v<TD, bool> ||
             std::is_convertible_v<T, const char*> || std::is_convertible_v<T, std::string> ||
             std::is_convertible_v<T, std::string_view>) {
-            append_impl(value);
+            if (!impl::append(data, value)) {
+                failed = true;
+            }
         } else {
             failed = true;
         }
@@ -154,8 +184,8 @@ struct expression {
 #define EXPR_OPERATOR(OP, INVERSE_OP)                                                              \
     template<typename T>                                                                           \
     expression& operator OP(const T& value) {                                                      \
-        if (data_length != 0) {                                                                    \
-            append_str(" " #INVERSE_OP " ");                                                       \
+        if (data.empty()) {                                                                        \
+            append(" " #INVERSE_OP " ");                                                           \
         }                                                                                          \
         append(value);                                                                             \
         return *this;                                                                              \
@@ -170,11 +200,12 @@ struct expression {
 
 #undef EXPR_OPERATOR
 };
-} // namespace impl
+} // namespace testing::impl
 
 // Test registry.
 // --------------
 
+namespace testing {
 struct registry {
     std::array<impl::test_case, max_test_cases> test_list;
     std::size_t                                 test_count = 0;
@@ -204,9 +235,9 @@ struct registry {
 
     void print_failure() const;
     void print_skip() const;
-    void print_details(const char* message) const;
-    void
-    print_details_expr(const char* check, const char* exp_str, const impl::expression& exp) const;
+    void print_details(std::string_view message) const;
+    void print_details_expr(
+        std::string_view check, std::string_view exp_str, const impl::expression& exp) const;
 
     void run(impl::test_case& t);
     void set_state(impl::test_case& t, impl::test_state s);

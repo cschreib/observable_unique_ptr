@@ -106,24 +106,26 @@ constexpr const char* get_format_code() {
         return "%zu";
     } else if constexpr (std::is_same_v<T, std::ptrdiff_t>) {
         return "%td";
+    } else if constexpr (std::is_same_v<T, float>) {
+        return "%f";
+    } else if constexpr (std::is_same_v<T, double>) {
+        return "%d";
     } else {
         static_assert(std::is_same_v<T, T>, "unsupported type");
     }
 }
 
 template<typename T>
-void append_impl(expression& exp, T value) {
-    std::size_t length =
-        std::snprintf(exp.data.data() + exp.data_length, 0, get_format_code<T>(), value);
+bool append_fmt(small_string& ss, T value) {
+    const std::size_t length =
+        std::snprintf(ss.data.data() + ss.data_length, 0, get_format_code<T>(), value);
 
-    if (length > exp.available()) {
-        exp.failed = true;
-        return;
-    }
+    const bool could_fit = length <= ss.available();
 
-    std::snprintf(exp.data.data() + exp.data_length, exp.available(), get_format_code<T>(), value);
+    std::snprintf(ss.data.data() + ss.data_length, ss.available(), get_format_code<T>(), value);
+    ss.data_length = std::min(ss.data_length + length, ss.data.size());
 
-    exp.data_length += length;
+    return could_fit;
 }
 } // namespace
 
@@ -140,64 +142,86 @@ const char* reset            = "\x1b[0m";
 } // namespace testing::impl::color
 
 namespace testing::impl {
-std::string_view expression::str() const {
+std::string_view small_string::str() const {
     return std::string_view(data.data(), data_length);
 }
 
-std::size_t expression::available() const {
-    return data.size() - data_length;
+std::size_t small_string::available() const {
+    return data.size() - length();
 }
 
-void expression::append_str(const char* str, std::size_t length) {
-    if (failed) {
-        return;
-    }
-
-    if (length > available()) {
-        failed = true;
-        return;
-    }
-
-    std::memcpy(data.data() + data_length, str, length);
-
-    data_length += length;
+std::size_t small_string::size() const {
+    return data_length;
 }
 
-void expression::append_str(const char* str) {
-    append_str(str, std::strlen(str));
+std::size_t small_string::length() const {
+    return data_length;
 }
 
-void expression::append_impl(const void* ptr) {
-    ::append_impl(*this, ptr);
+bool small_string::empty() const {
+    return data_length == 0;
 }
 
-void expression::append_impl(std::nullptr_t) {
-    append_str("nullptr");
+void small_string::clear() {
+    data_length = 0;
 }
 
-void expression::append_impl(std::size_t i) {
-    ::append_impl(*this, i);
+bool append(small_string& ss, std::string_view str) {
+    const bool        could_fit  = str.length() <= ss.available();
+    const std::size_t copy_count = std::min(str.length(), ss.available());
+
+    std::memcpy(ss.data.data() + ss.data_length, str.data(), copy_count);
+    ss.data_length += copy_count;
+
+    return could_fit;
 }
 
-void expression::append_impl(std::ptrdiff_t i) {
-    ::append_impl(*this, i);
+bool append(small_string& ss, const void* ptr) {
+    return append_fmt(ss, ptr);
 }
 
-void expression::append_impl(bool value) {
-    append_str(value ? "true" : "false");
+bool append(small_string& ss, std::nullptr_t) {
+    return append(ss, "nullptr");
 }
 
-void expression::append_impl(const std::string& value) {
-    append_str(value.c_str(), value.length());
+bool append(small_string& ss, std::size_t i) {
+    return append_fmt(ss, i);
 }
 
-void expression::append_impl(std::string_view value) {
-    append_str(value.data(), value.length());
+bool append(small_string& ss, std::ptrdiff_t i) {
+    return append_fmt(ss, i);
 }
 
-void expression::append_impl(const char* value) {
-    append_str(value);
+bool append(small_string& ss, float f) {
+    return append_fmt(ss, f);
 }
+
+bool append(small_string& ss, double d) {
+    return append_fmt(ss, d);
+}
+
+bool append(small_string& ss, bool value) {
+    return append(ss, value ? "true" : "false");
+}
+
+bool append(small_string& ss, const std::string& str) {
+    return append(ss, std::string_view(str));
+}
+
+bool append(small_string& ss, const char* str) {
+    return append(ss, std::string_view(str));
+}
+
+void truncate_end(small_string& ss) {
+    std::size_t num_dots     = 3;
+    std::size_t final_length = std::min(ss.data.size(), ss.data_length + num_dots);
+    std::size_t offset       = final_length >= num_dots ? final_length - num_dots : 0;
+    num_dots                 = final_length - offset;
+
+    std::memcpy(ss.data.data() + offset, "...", num_dots);
+    ss.data_length = final_length;
+}
+
 } // namespace testing::impl
 
 namespace testing {
@@ -244,15 +268,19 @@ void registry::print_skip() const {
     std::printf("%sskipped:%s ", color::skipped_start, color::reset);
 }
 
-void registry::print_details(const char* message) const {
-    std::printf("          %s%s%s\n", color::highlight2_start, message, color::reset);
+void registry::print_details(std::string_view message) const {
+    std::printf(
+        "          %s%.*s%s\n", color::highlight2_start, static_cast<int>(message.length()),
+        message.data(), color::reset);
 }
 
 void registry::print_details_expr(
-    const char* check, const char* exp_str, const expression& exp) const {
-    std::printf("          %s%s(%s)%s", color::highlight2_start, check, exp_str, color::reset);
+    std::string_view check, std::string_view exp_str, const expression& exp) const {
+    std::printf(
+        "          %s%.*s(%.*s)%s", color::highlight2_start, static_cast<int>(check.length()),
+        check.data(), static_cast<int>(exp_str.length()), exp_str.data(), color::reset);
     if (!exp.failed) {
-        auto str = exp.str();
+        auto str = exp.data.str();
         std::printf(
             ", got %s%.*s%s\n", color::highlight2_start, static_cast<int>(str.length()), str.data(),
             color::reset);
