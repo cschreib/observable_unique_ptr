@@ -2,36 +2,19 @@
 
 #include <exception>
 
-extern int instances;
-extern int instances_derived;
-extern int instances_deleter;
-
-extern bool next_test_object_constructor_throws;
-
 struct throw_constructor : std::exception {};
+
+extern int  instances;
+extern int  instances_derived;
+extern int  instances_deleter;
+extern bool next_test_object_constructor_throws;
 
 struct test_object {
     enum class state { default_init = 1337, special_init = 42 } state_ = state::default_init;
 
-    test_object() {
-        if (next_test_object_constructor_throws) {
-            next_test_object_constructor_throws = false;
-            throw throw_constructor{};
-        }
-        ++instances;
-    }
-
-    explicit test_object(state s) : state_(s) {
-        if (next_test_object_constructor_throws) {
-            next_test_object_constructor_throws = false;
-            throw throw_constructor{};
-        }
-        ++instances;
-    }
-
-    virtual ~test_object() noexcept {
-        --instances;
-    }
+    test_object();
+    explicit test_object(state s);
+    virtual ~test_object();
 
     test_object(const test_object&) = delete;
     test_object(test_object&&)      = delete;
@@ -41,17 +24,9 @@ struct test_object {
 };
 
 struct test_object_derived : test_object {
-    test_object_derived() {
-        ++instances_derived;
-    }
-
-    explicit test_object_derived(state s) : test_object(s) {
-        ++instances_derived;
-    }
-
-    virtual ~test_object_derived() noexcept {
-        --instances_derived;
-    }
+    test_object_derived();
+    explicit test_object_derived(state s);
+    ~test_object_derived() noexcept override;
 };
 
 struct test_object_observer_from_this_unique :
@@ -283,40 +258,17 @@ struct test_deleter {
         empty          = 0
     } state_ = state::default_init;
 
-    test_deleter() noexcept {
-        ++instances_deleter;
-    }
-
-    explicit test_deleter(state s) noexcept : state_(s) {
-        ++instances_deleter;
-    }
-
-    test_deleter(const test_deleter& source) noexcept : state_(source.state_) {
-        ++instances_deleter;
-    }
-
-    test_deleter(test_deleter&& source) noexcept : state_(source.state_) {
-        source.state_ = state::empty;
-        ++instances_deleter;
-    }
-
-    ~test_deleter() noexcept {
-        --instances_deleter;
-    }
+    test_deleter() noexcept;
+    explicit test_deleter(state s) noexcept;
+    test_deleter(const test_deleter& source) noexcept;
+    test_deleter(test_deleter&& source) noexcept;
+    ~test_deleter() noexcept;
 
     test_deleter& operator=(const test_deleter&) = default;
+    test_deleter& operator                       =(test_deleter&& source) noexcept;
 
-    test_deleter& operator=(test_deleter&& source) noexcept {
-        state_        = source.state_;
-        source.state_ = state::empty;
-        return *this;
-    }
-
-    void operator()(test_object* ptr) noexcept {
-        delete ptr;
-    }
-
-    void operator()(std::nullptr_t) noexcept {}
+    void operator()(test_object* ptr) noexcept;
+    void operator()(std::nullptr_t) noexcept;
 };
 
 struct test_object_observer_owner : test_object {
