@@ -334,3 +334,34 @@ TEMPLATE_LIST_TEST_CASE(
         CHECK(mem_track.double_delete() == 0u);
     }
 };
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer from this after owner move", "[observer_from_this]", owner_types) {
+    if constexpr (has_eoft<TestType> && can_release<TestType>) {
+        memory_tracker mem_track;
+
+        {
+            TestType ptr1 = make_pointer_deleter_1<TestType>();
+            TestType ptr2 = std::move(ptr1);
+
+            auto optr  = make_observer_from_this<TestType>(ptr2.get());
+            auto coptr = make_const_observer_from_this<TestType>(ptr2.get());
+
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 1);
+            }
+            CHECK(optr.expired() == false);
+            CHECK(optr.get() == ptr2.get());
+            CHECK(coptr.expired() == false);
+            CHECK(coptr.get() == ptr2.get());
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
