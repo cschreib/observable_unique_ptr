@@ -224,6 +224,26 @@ void truncate_end(small_string& ss) {
 
 } // namespace testing::impl
 
+namespace testing::matchers {
+contains_substring::contains_substring(std::string_view pattern) noexcept : pattern(pattern) {}
+
+bool contains_substring::match(std::string_view message) const noexcept {
+    return message.find(pattern) != message.npos;
+}
+
+std::string_view contains_substring::describe_fail(std::string_view message) const noexcept {
+    description.clear();
+    if (!append(description, "could not find '", pattern, "' in '", message, "'")) {
+        truncate_end(description);
+    }
+
+    return description.str();
+}
+
+with_what_contains::with_what_contains(std::string_view pattern) noexcept :
+    contains_substring(pattern) {}
+} // namespace testing::matchers
+
 namespace testing {
 void registry::register_test(
     std::string_view name, std::string_view tags, std::string_view type, test_ptr func) {

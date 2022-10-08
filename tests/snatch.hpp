@@ -270,6 +270,36 @@ const char* proxy<std::tuple<Args...>>::operator=(const F& func) {
 }
 } // namespace testing::impl
 
+// Builtin matchers.
+// -----------------
+
+namespace testing::matchers {
+struct contains_substring {
+    mutable impl::small_string description;
+    std::string_view           pattern;
+
+    explicit contains_substring(std::string_view pattern) noexcept;
+
+    bool match(std::string_view message) const noexcept;
+
+    std::string_view describe_fail(std::string_view message) const noexcept;
+};
+
+struct with_what_contains : private contains_substring {
+    explicit with_what_contains(std::string_view pattern) noexcept;
+
+    template<typename E>
+    bool match(const E& e) const noexcept {
+        return contains_substring::match(e.what());
+    }
+
+    template<typename E>
+    std::string_view describe_fail(const E& e) const noexcept {
+        return contains_substring::describe_fail(e.what());
+    }
+};
+} // namespace testing::matchers
+
 // Test macros.
 // ------------
 
@@ -366,6 +396,68 @@ const char* proxy<std::tuple<Args...>>::operator=(const F& func) {
             FAIL_CHECK(#EXCEPTION " expected but no exception thrown");                            \
         } catch (const EXCEPTION&) {                                                               \
             /* success */                                                                          \
+        } catch (...) {                                                                            \
+            testing::tests.print_failure();                                                        \
+            testing::tests.print_location(CURRENT_CASE, __FILE__, __LINE__);                       \
+            try {                                                                                  \
+                throw;                                                                             \
+            } catch (const std::exception& e) {                                                    \
+                testing::tests.print_details(                                                      \
+                    #EXCEPTION " expected but other std::exception thrown; message:");             \
+                testing::tests.print_details(e.what());                                            \
+            } catch (...) {                                                                        \
+                testing::tests.print_details(#EXCEPTION                                            \
+                                             " expected but other unknown exception thrown");      \
+            }                                                                                      \
+            testing::tests.set_state(CURRENT_CASE, testing::impl::test_state::failed);             \
+        }                                                                                          \
+    } while (0)
+
+#define REQUIRE_THROWS_MATCHES(EXPRESSION, EXCEPTION, MATCHER)                                     \
+    do {                                                                                           \
+        try {                                                                                      \
+            EXPRESSION;                                                                            \
+            FAIL(#EXCEPTION " expected but no exception thrown");                                  \
+        } catch (const EXCEPTION& e) {                                                             \
+            if (!(MATCHER).match(e)) {                                                             \
+                testing::tests.print_failure();                                                    \
+                testing::tests.print_location(CURRENT_CASE, __FILE__, __LINE__);                   \
+                testing::tests.print_details("could not match caught " #EXCEPTION                  \
+                                             " with expected content:");                           \
+                testing::tests.print_details((MATCHER).describe_fail(e));                          \
+                throw testing::impl::test_state::failed;                                           \
+            }                                                                                      \
+        } catch (...) {                                                                            \
+            testing::tests.print_failure();                                                        \
+            testing::tests.print_location(CURRENT_CASE, __FILE__, __LINE__);                       \
+            try {                                                                                  \
+                throw;                                                                             \
+            } catch (const std::exception& e) {                                                    \
+                testing::tests.print_details(                                                      \
+                    #EXCEPTION " expected but other std::exception thrown; message:");             \
+                testing::tests.print_details(e.what());                                            \
+            } catch (...) {                                                                        \
+                testing::tests.print_details(#EXCEPTION                                            \
+                                             " expected but other unknown exception thrown");      \
+            }                                                                                      \
+            throw testing::impl::test_state::failed;                                               \
+        }                                                                                          \
+    } while (0)
+
+#define CHECK_THROWS_MATCHES(EXPRESSION, EXCEPTION, MATCHER)                                       \
+    do {                                                                                           \
+        try {                                                                                      \
+            EXPRESSION;                                                                            \
+            FAIL_CHECK(#EXCEPTION " expected but no exception thrown");                            \
+        } catch (const EXCEPTION& e) {                                                             \
+            if (!(MATCHER).match(e)) {                                                             \
+                testing::tests.print_failure();                                                    \
+                testing::tests.print_location(CURRENT_CASE, __FILE__, __LINE__);                   \
+                testing::tests.print_details("could not match caught " #EXCEPTION                  \
+                                             " with expected content:");                           \
+                testing::tests.print_details((MATCHER).describe_fail(e));                          \
+                testing::tests.set_state(CURRENT_CASE, testing::impl::test_state::failed);         \
+            }                                                                                      \
         } catch (...) {                                                                            \
             testing::tests.print_failure();                                                        \
             testing::tests.print_location(CURRENT_CASE, __FILE__, __LINE__);                       \
