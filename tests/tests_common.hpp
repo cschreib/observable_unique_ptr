@@ -338,6 +338,10 @@ constexpr bool eoft_allocates = has_eoft<T>&&
                oup::policy_queries<get_policy<T>>::eoft_constructor_allocates();
 
 template<typename T>
+constexpr bool eoft_always_has_block = has_eoft<T>&&
+               oup::policy_queries<get_policy<T>>::eoft_always_has_block();
+
+template<typename T>
 constexpr bool must_use_make_observable = is_sealed<T> || eoft_constructor_takes_control_block<T>;
 
 template<typename T>
@@ -359,10 +363,11 @@ template<typename T>
 constexpr bool can_release = !is_sealed<T>;
 
 template<typename T>
-using base_ptr = oup::basic_observable_ptr<
-    std::conditional_t<std::is_const_v<get_object<T>>, const test_object, test_object>,
-    get_deleter<T>,
-    get_policy<T>>;
+using get_base_object =
+    std::conditional_t<std::is_const_v<get_object<T>>, const test_object, test_object>;
+
+template<typename T>
+using base_ptr = oup::basic_observable_ptr<get_base_object<T>, get_deleter<T>, get_policy<T>>;
 
 template<typename T>
 using base_observer_ptr = typename base_ptr<T>::observer_type;

@@ -2,7 +2,7 @@
 #include "testing.hpp"
 #include "tests_common.hpp"
 
-TEMPLATE_LIST_TEST_CASE("observer from this", "[observer_from_this],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer from this", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType>) {
         memory_tracker mem_track;
 
@@ -63,10 +63,122 @@ TEMPLATE_LIST_TEST_CASE("observer from this", "[observer_from_this],[observer]",
     }
 };
 
+TEMPLATE_LIST_TEST_CASE("observer from this with no owner", "[observer_from_this]", owner_types) {
+    if constexpr (has_eoft<TestType> && !must_use_make_observable<TestType>) {
+        memory_tracker mem_track;
+
+        {
+            get_object<TestType>* orig_ptr = make_instance<TestType>();
+
+            if constexpr (eoft_always_has_block<TestType>) {
+                auto optr_from_this = make_observer_from_this<TestType>(orig_ptr);
+
+                CHECK(instances == 1);
+                if constexpr (has_stateful_deleter<TestType>) {
+                    CHECK(instances_deleter == 0);
+                }
+                CHECK(optr_from_this.expired() == false);
+                CHECK(optr_from_this.get() == orig_ptr);
+            } else {
+                bool has_thrown = false;
+                try {
+                    make_observer_from_this<TestType>(orig_ptr);
+                } catch (const oup::bad_observer_from_this& e) {
+                    has_thrown = true;
+                    CHECK(
+                        std::string_view(e.what()) ==
+                        "observer_from_this() called with uninitialized control block");
+                }
+
+                CHECK(has_thrown == true);
+            }
+
+            delete orig_ptr;
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
 TEMPLATE_LIST_TEST_CASE(
-    "observer from this after owner reset to empty",
-    "[observer_from_this],[observer]",
-    owner_types) {
+    "observer from this acquired into base owner as base", "[observer_from_this]", owner_types) {
+    if constexpr (has_eoft<TestType> && !must_use_make_observable<TestType>) {
+        memory_tracker mem_track;
+
+        {
+            get_object<TestType>*      orig_ptr      = make_instance<TestType>();
+            get_base_object<TestType>* orig_base_ptr = orig_ptr;
+            base_ptr<TestType>         ptr{orig_base_ptr};
+
+            if constexpr (eoft_always_has_block<TestType>) {
+                auto optr_from_this = make_observer_from_this<TestType>(orig_ptr);
+
+                CHECK(instances == 1);
+                if constexpr (has_stateful_deleter<TestType>) {
+                    CHECK(instances_deleter == 1);
+                }
+                CHECK(optr_from_this.expired() == false);
+                CHECK(optr_from_this.get() == ptr.get());
+            } else {
+                bool has_thrown = false;
+                try {
+                    make_observer_from_this<TestType>(orig_ptr);
+                } catch (const oup::bad_observer_from_this& e) {
+                    has_thrown = true;
+                    CHECK(
+                        std::string_view(e.what()) ==
+                        "observer_from_this() called with uninitialized control block");
+                }
+
+                CHECK(has_thrown == true);
+            }
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer from this acquired into base owner as derived", "[observer_from_this]", owner_types) {
+    if constexpr (has_eoft<TestType> && has_base<TestType> && !must_use_make_observable<TestType>) {
+        memory_tracker mem_track;
+
+        {
+            get_object<TestType>* orig_ptr = make_instance<TestType>();
+            base_ptr<TestType>    ptr{orig_ptr};
+
+            base_observer_ptr<TestType> optr_from_this =
+                make_observer_from_this<TestType>(orig_ptr);
+
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 1);
+            }
+            CHECK(optr_from_this.expired() == false);
+            CHECK(optr_from_this.get() == ptr.get());
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer from this after owner reset to empty", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType>) {
         memory_tracker mem_track;
 
@@ -101,9 +213,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer from this after owner reset to valid",
-    "[observer_from_this],[observer]",
-    owner_types) {
+    "observer from this after owner reset to valid", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && can_reset_to_new<TestType>) {
         memory_tracker mem_track;
 
@@ -138,7 +248,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer from this after owner release", "[observer_from_this],[observer]", owner_types) {
+    "observer from this after owner release", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && can_release<TestType>) {
         memory_tracker mem_track;
 
@@ -183,7 +293,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner release then reset to same",
-    "[observer_from_this],[observer]",
+    "[observer_from_this]",
     owner_types) {
     if constexpr (has_eoft<TestType> && can_release<TestType> && can_reset_to_new<TestType>) {
         memory_tracker mem_track;
