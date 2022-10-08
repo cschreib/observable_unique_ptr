@@ -15,15 +15,15 @@ constexpr bool debug_alloc = false;
 
 void* allocate(std::size_t size, bool array, std::align_val_t align) {
     if (memory_tracking && num_allocations == max_allocations) {
-        if (debug_alloc) {
-            printf("alloc   %ld failed\n", size);
+        if constexpr (debug_alloc) {
+            std::printf("alloc   %ld failed\n", size);
         }
         throw std::bad_alloc();
     }
 
     if (force_next_allocation_failure) {
-        if (debug_alloc) {
-            printf("alloc   %ld failed\n", size);
+        if constexpr (debug_alloc) {
+            std::printf("alloc   %ld failed\n", size);
         }
         force_next_allocation_failure = false;
         throw std::bad_alloc();
@@ -43,14 +43,14 @@ void* allocate(std::size_t size, bool array, std::align_val_t align) {
     }
 
     if (!p) {
-        if (debug_alloc) {
-            printf("alloc   %ld failed\n", size);
+        if constexpr (debug_alloc) {
+            std::printf("alloc   %ld failed\n", size);
         }
         throw std::bad_alloc();
     }
 
-    if (debug_alloc) {
-        printf("alloc   %ld -> %p\n", size, p);
+    if constexpr (debug_alloc) {
+        std::printf("alloc   %ld -> %p\n", size, p);
     }
 
     if (memory_tracking) {
@@ -74,8 +74,8 @@ void deallocate(void* p, bool array, std::align_val_t align [[maybe_unused]]) {
         return;
     }
 
-    if (debug_alloc) {
-        printf("dealloc %p\n", p);
+    if constexpr (debug_alloc) {
+        std::printf("dealloc %p\n", p);
     }
 
     if (memory_tracking) {
