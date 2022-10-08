@@ -11,7 +11,32 @@ std::size_t double_delete                 = 0u;
 bool        memory_tracking               = false;
 bool        force_next_allocation_failure = false;
 
-constexpr bool debug_alloc = false;
+constexpr bool debug_alloc    = false;
+constexpr bool scramble_alloc = true;
+
+void scramble(void* ptr, std::size_t size) {
+    // Create a static random-like array, and use it to populate the allocated buffer.
+    // clang-format off
+    constexpr unsigned char random_bytes[] = {
+        177, 250,   8, 188, 247,  14, 164, 181, 116, 101,  13, 153,   2,  90,  92,  36,
+        240, 213,  38, 155, 223,  27, 100, 155, 182,  77, 106, 213, 219,  61,  36,  53,
+        244, 206, 197,  28,  39,  55, 228, 147, 217,  13, 146,   1, 216, 252,  59, 109,
+        143, 100, 101,  55, 204, 185,  40,  55, 197, 207, 187, 222,  13,  23, 177, 172,
+        165,  67, 252, 163,  89,  51,  19,  15, 107,  92, 103, 129,  65,  89, 189,  21,
+        206, 236, 130, 211, 148, 223, 104,  14,  54,  88,  54, 148, 227, 127, 234,   3,
+        125,  86, 184, 161, 109,  32, 124, 150,  54, 194,  56, 128,   7, 144, 139,  30,
+        226, 145,   4, 199,  11,  50, 241,  86,  72, 143, 215, 199,   0,   7, 124, 161
+    };
+    // clang-format on
+
+    unsigned char* bytes_ptr = static_cast<unsigned char*>(ptr);
+    while (size > sizeof(random_bytes)) {
+        std::copy(random_bytes, random_bytes + sizeof(random_bytes), bytes_ptr);
+        size -= sizeof(random_bytes);
+    }
+
+    std::copy(random_bytes, random_bytes + size, bytes_ptr);
+}
 
 void* allocate(std::size_t size, bool array, std::align_val_t align) {
     if (memory_tracking && num_allocations == max_allocations) {
@@ -51,6 +76,10 @@ void* allocate(std::size_t size, bool array, std::align_val_t align) {
 
     if constexpr (debug_alloc) {
         std::printf("alloc   %ld -> %p\n", size, p);
+    }
+
+    if constexpr (scramble_alloc) {
+        scramble(p, size);
     }
 
     if (memory_tracking) {
