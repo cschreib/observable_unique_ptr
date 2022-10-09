@@ -38,16 +38,12 @@ struct test_object_observer_from_this_unique :
 
     test_object_observer_from_this_unique() {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
 
     test_object_observer_from_this_unique(state s) : test_object(s) {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
@@ -62,8 +58,6 @@ struct test_object_observer_from_this_sealed :
     explicit test_object_observer_from_this_sealed(control_block_type& block) :
         oup::enable_observer_from_this_sealed<test_object_observer_from_this_sealed>(block) {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
@@ -72,8 +66,6 @@ struct test_object_observer_from_this_sealed :
         test_object(s),
         oup::enable_observer_from_this_sealed<test_object_observer_from_this_sealed>(block) {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
@@ -113,15 +105,11 @@ struct test_object_observer_from_this_virtual_sealed :
 
     test_object_observer_from_this_virtual_sealed() {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
     test_object_observer_from_this_virtual_sealed(state s) : test_object(s) {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
@@ -140,8 +128,6 @@ struct test_object_observer_from_this_non_virtual_unique :
             test_object_observer_from_this_non_virtual_unique,
             unique_non_virtual_policy>(block) {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
@@ -152,8 +138,6 @@ struct test_object_observer_from_this_non_virtual_unique :
             test_object_observer_from_this_non_virtual_unique,
             unique_non_virtual_policy>(block) {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
@@ -169,15 +153,11 @@ struct test_object_observer_from_this_maybe_no_block_unique :
 
     test_object_observer_from_this_maybe_no_block_unique() {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
     test_object_observer_from_this_maybe_no_block_unique(state s) : test_object(s) {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
@@ -190,16 +170,12 @@ struct test_object_observer_from_this_derived_unique :
 
     test_object_observer_from_this_derived_unique() {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
     test_object_observer_from_this_derived_unique(state s) :
         test_object_observer_from_this_unique(s) {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
@@ -213,8 +189,6 @@ struct test_object_observer_from_this_derived_sealed :
     explicit test_object_observer_from_this_derived_sealed(control_block_type& block) :
         test_object_observer_from_this_sealed(block) {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
@@ -222,8 +196,6 @@ struct test_object_observer_from_this_derived_sealed :
     explicit test_object_observer_from_this_derived_sealed(control_block_type& block, state s) :
         test_object_observer_from_this_sealed(block, s) {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = observer_from_this().get();
         }
     }
@@ -240,16 +212,12 @@ struct test_object_observer_from_this_multi_unique :
 
     test_object_observer_from_this_multi_unique() {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = multi_eoft::observer_from_this().get();
         }
     }
     test_object_observer_from_this_multi_unique(state s) :
         test_object_observer_from_this_unique(s) {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = multi_eoft::observer_from_this().get();
         }
     }
@@ -271,8 +239,6 @@ struct test_object_observer_from_this_multi_sealed :
         test_object_observer_from_this_sealed(block),
         oup::enable_observer_from_this_sealed<test_object_observer_from_this_multi_sealed>(block) {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = multi_eoft::observer_from_this().get();
         }
     }
@@ -281,8 +247,6 @@ struct test_object_observer_from_this_multi_sealed :
         test_object_observer_from_this_sealed(block, s),
         oup::enable_observer_from_this_sealed<test_object_observer_from_this_multi_sealed>(block) {
         if (next_test_object_constructor_calls_observer_from_this) {
-            next_test_object_constructor_calls_observer_from_this = false;
-
             self = multi_eoft::observer_from_this().get();
         }
     }

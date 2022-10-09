@@ -482,3 +482,35 @@ TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
     CHECK(mem_track.allocated() == 0u);
     CHECK(mem_track.double_delete() == 0u);
 };
+
+TEMPLATE_LIST_TEST_CASE("observer from this in constructor", "[observer_from_this]", owner_types) {
+    if constexpr (has_eoft<TestType> && has_eoft_self_member<TestType>) {
+        memory_tracker mem_track;
+
+        if constexpr (eoft_always_has_block<TestType>) {
+            next_test_object_constructor_calls_observer_from_this = true;
+            TestType ptr = make_pointer_deleter_1<TestType>();
+            next_test_object_constructor_calls_observer_from_this = false;
+            CHECK(ptr->self == ptr.get());
+
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 1);
+            }
+        } else {
+            next_test_object_constructor_calls_observer_from_this = true;
+            REQUIRE_THROWS_MATCHES(
+                (make_pointer_deleter_1<TestType>()), oup::bad_observer_from_this,
+                testing::matchers::with_what_contains{
+                    "observer_from_this() called with uninitialized control block"});
+            next_test_object_constructor_calls_observer_from_this = false;
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
