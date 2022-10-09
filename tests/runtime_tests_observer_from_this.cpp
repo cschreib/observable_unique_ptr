@@ -63,7 +63,8 @@ TEMPLATE_LIST_TEST_CASE("observer from this", "[observer_from_this]", owner_type
     }
 };
 
-TEMPLATE_LIST_TEST_CASE("observer from this with no owner", "[observer_from_this]", owner_types) {
+TEMPLATE_LIST_TEST_CASE(
+    "observer from this with no owner heap", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && !must_use_make_observable<TestType>) {
         memory_tracker mem_track;
 
@@ -74,10 +75,6 @@ TEMPLATE_LIST_TEST_CASE("observer from this with no owner", "[observer_from_this
                 auto optr  = make_observer_from_this<TestType>(orig_ptr);
                 auto coptr = make_const_observer_from_this<TestType>(orig_ptr);
 
-                CHECK(instances == 1);
-                if constexpr (has_stateful_deleter<TestType>) {
-                    CHECK(instances_deleter == 0);
-                }
                 CHECK(optr.expired() == false);
                 CHECK(optr.get() == orig_ptr);
                 CHECK(coptr.expired() == false);
@@ -87,9 +84,60 @@ TEMPLATE_LIST_TEST_CASE("observer from this with no owner", "[observer_from_this
                     (make_observer_from_this<TestType>(orig_ptr)), oup::bad_observer_from_this,
                     testing::matchers::with_what_contains{
                         "observer_from_this() called with uninitialized control block"});
+                REQUIRE_THROWS_MATCHES(
+                    (make_const_observer_from_this<TestType>(orig_ptr)),
+                    oup::bad_observer_from_this,
+                    testing::matchers::with_what_contains{
+                        "observer_from_this() called with uninitialized control block"});
+            }
+
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 0);
             }
 
             delete orig_ptr;
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
+TEMPLATE_LIST_TEST_CASE("observer from this no owner stack", "[observer_from_this]", owner_types) {
+    if constexpr (has_eoft<TestType> && !eoft_constructor_takes_control_block<TestType>) {
+        memory_tracker mem_track;
+
+        {
+            get_object<TestType> obj;
+
+            if constexpr (eoft_always_has_block<TestType>) {
+                auto optr  = make_observer_from_this<TestType>(&obj);
+                auto coptr = make_const_observer_from_this<TestType>(&obj);
+
+                CHECK(optr.expired() == false);
+                CHECK(optr.get() == &obj);
+                CHECK(coptr.expired() == false);
+                CHECK(coptr.get() == &obj);
+            } else {
+                REQUIRE_THROWS_MATCHES(
+                    (make_observer_from_this<TestType>(&obj)), oup::bad_observer_from_this,
+                    testing::matchers::with_what_contains{
+                        "observer_from_this() called with uninitialized control block"});
+                REQUIRE_THROWS_MATCHES(
+                    (make_const_observer_from_this<TestType>(&obj)), oup::bad_observer_from_this,
+                    testing::matchers::with_what_contains{
+                        "observer_from_this() called with uninitialized control block"});
+            }
+
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 0);
+            }
         }
 
         CHECK(instances == 0);
@@ -112,17 +160,25 @@ TEMPLATE_LIST_TEST_CASE(
             base_ptr<TestType>         ptr{orig_base_ptr};
 
             if constexpr (eoft_always_has_block<TestType>) {
-                auto optr_from_this = make_observer_from_this<TestType>(orig_ptr);
+                auto optr  = make_observer_from_this<TestType>(orig_ptr);
+                auto coptr = make_const_observer_from_this<TestType>(orig_ptr);
 
                 CHECK(instances == 1);
                 if constexpr (has_stateful_deleter<TestType>) {
                     CHECK(instances_deleter == 1);
                 }
-                CHECK(optr_from_this.expired() == false);
-                CHECK(optr_from_this.get() == ptr.get());
+                CHECK(optr.expired() == false);
+                CHECK(optr.get() == ptr.get());
+                CHECK(coptr.expired() == false);
+                CHECK(coptr.get() == orig_ptr);
             } else {
                 REQUIRE_THROWS_MATCHES(
                     (make_observer_from_this<TestType>(orig_ptr)), oup::bad_observer_from_this,
+                    testing::matchers::with_what_contains{
+                        "observer_from_this() called with uninitialized control block"});
+                REQUIRE_THROWS_MATCHES(
+                    (make_const_observer_from_this<TestType>(orig_ptr)),
+                    oup::bad_observer_from_this,
                     testing::matchers::with_what_contains{
                         "observer_from_this() called with uninitialized control block"});
             }
@@ -146,15 +202,14 @@ TEMPLATE_LIST_TEST_CASE(
             get_object<TestType>* orig_ptr = make_instance<TestType>();
             base_ptr<TestType>    ptr{orig_ptr};
 
-            base_observer_ptr<TestType> optr_from_this =
-                make_observer_from_this<TestType>(orig_ptr);
+            base_observer_ptr<TestType> optr = make_observer_from_this<TestType>(orig_ptr);
 
             CHECK(instances == 1);
             if constexpr (has_stateful_deleter<TestType>) {
                 CHECK(instances_deleter == 1);
             }
-            CHECK(optr_from_this.expired() == false);
-            CHECK(optr_from_this.get() == ptr.get());
+            CHECK(optr.expired() == false);
+            CHECK(optr.get() == ptr.get());
         }
 
         CHECK(instances == 0);
@@ -337,7 +392,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner move", "[observer_from_this]", owner_types) {
-    if constexpr (has_eoft<TestType> && can_release<TestType>) {
+    if constexpr (has_eoft<TestType>) {
         memory_tracker mem_track;
 
         {
@@ -364,4 +419,66 @@ TEMPLATE_LIST_TEST_CASE(
         CHECK(mem_track.allocated() == 0u);
         CHECK(mem_track.double_delete() == 0u);
     }
+};
+
+TEMPLATE_LIST_TEST_CASE(
+    "observer from this after owner move assignment", "[observer_from_this]", owner_types) {
+    if constexpr (has_eoft<TestType>) {
+        memory_tracker mem_track;
+
+        {
+            TestType ptr1 = make_pointer_deleter_1<TestType>();
+            TestType ptr2;
+            ptr2 = std::move(ptr1);
+
+            auto optr  = make_observer_from_this<TestType>(ptr2.get());
+            auto coptr = make_const_observer_from_this<TestType>(ptr2.get());
+
+            CHECK(instances == 1);
+            if constexpr (has_stateful_deleter<TestType>) {
+                CHECK(instances_deleter == 1);
+            }
+            CHECK(optr.expired() == false);
+            CHECK(optr.get() == ptr2.get());
+            CHECK(coptr.expired() == false);
+            CHECK(coptr.get() == ptr2.get());
+        }
+
+        CHECK(instances == 0);
+        if constexpr (has_stateful_deleter<TestType>) {
+            CHECK(instances_deleter == 0);
+        }
+        CHECK(mem_track.allocated() == 0u);
+        CHECK(mem_track.double_delete() == 0u);
+    }
+};
+
+TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
+    memory_tracker mem_track;
+
+    {
+        using base       = test_object_observer_from_this_unique;
+        using deriv      = test_object_observer_from_this_multi_unique;
+        using ptr_base   = oup::observable_unique_ptr<base>;
+        using ptr_deriv  = oup::observable_unique_ptr<deriv>;
+        using eoft_base  = oup::enable_observer_from_this_unique<base>;
+        using eoft_deriv = oup::enable_observer_from_this_unique<deriv>;
+
+        deriv*    raw_ptr_deriv = new deriv;
+        base*     raw_ptr_base  = raw_ptr_deriv;
+        ptr_deriv ptr(raw_ptr_deriv);
+
+        observer_ptr<ptr_base>  optr_base  = ptr->eoft_base::observer_from_this();
+        observer_ptr<ptr_deriv> optr_deriv = ptr->eoft_deriv::observer_from_this();
+
+        CHECK(instances == 1);
+        CHECK(optr_base.expired() == false);
+        CHECK(optr_deriv.expired() == false);
+        CHECK(optr_base.get() == raw_ptr_base);
+        CHECK(optr_deriv.get() == raw_ptr_deriv);
+    }
+
+    CHECK(instances == 0);
+    CHECK(mem_track.allocated() == 0u);
+    CHECK(mem_track.double_delete() == 0u);
 };
