@@ -8,6 +8,7 @@ extern int  instances;
 extern int  instances_derived;
 extern int  instances_deleter;
 extern bool next_test_object_constructor_throws;
+extern bool next_test_object_constructor_calls_observer_from_this;
 
 struct test_object {
     enum class state { default_init = 1337, special_init = 42 } state_ = state::default_init;
@@ -32,20 +33,50 @@ struct test_object_derived : test_object {
 struct test_object_observer_from_this_unique :
     public test_object,
     public oup::enable_observer_from_this_unique<test_object_observer_from_this_unique> {
-    test_object_observer_from_this_unique() = default;
-    test_object_observer_from_this_unique(state s) : test_object(s) {}
+
+    test_object_observer_from_this_unique* self = nullptr;
+
+    test_object_observer_from_this_unique() {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
+
+    test_object_observer_from_this_unique(state s) : test_object(s) {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
 };
 
 struct test_object_observer_from_this_sealed :
     public test_object,
     public oup::enable_observer_from_this_sealed<test_object_observer_from_this_sealed> {
 
+    test_object_observer_from_this_sealed* self = nullptr;
+
     explicit test_object_observer_from_this_sealed(control_block_type& block) :
-        oup::enable_observer_from_this_sealed<test_object_observer_from_this_sealed>(block) {}
+        oup::enable_observer_from_this_sealed<test_object_observer_from_this_sealed>(block) {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
 
     explicit test_object_observer_from_this_sealed(control_block_type& block, state s) :
         test_object(s),
-        oup::enable_observer_from_this_sealed<test_object_observer_from_this_sealed>(block) {}
+        oup::enable_observer_from_this_sealed<test_object_observer_from_this_sealed>(block) {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
 };
 
 struct sealed_virtual_policy {
@@ -77,8 +108,23 @@ struct test_object_observer_from_this_virtual_sealed :
     public oup::basic_enable_observer_from_this<
         test_object_observer_from_this_virtual_sealed,
         sealed_virtual_policy> {
-    test_object_observer_from_this_virtual_sealed() = default;
-    test_object_observer_from_this_virtual_sealed(state s) : test_object(s) {}
+
+    test_object_observer_from_this_virtual_sealed* self = nullptr;
+
+    test_object_observer_from_this_virtual_sealed() {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
+    test_object_observer_from_this_virtual_sealed(state s) : test_object(s) {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
 };
 
 struct test_object_observer_from_this_non_virtual_unique :
@@ -87,16 +133,30 @@ struct test_object_observer_from_this_non_virtual_unique :
         test_object_observer_from_this_non_virtual_unique,
         unique_non_virtual_policy> {
 
+    test_object_observer_from_this_non_virtual_unique* self = nullptr;
+
     explicit test_object_observer_from_this_non_virtual_unique(control_block_type& block) :
         oup::basic_enable_observer_from_this<
             test_object_observer_from_this_non_virtual_unique,
-            unique_non_virtual_policy>(block) {}
+            unique_non_virtual_policy>(block) {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
 
     explicit test_object_observer_from_this_non_virtual_unique(control_block_type& block, state s) :
         test_object(s),
         oup::basic_enable_observer_from_this<
             test_object_observer_from_this_non_virtual_unique,
-            unique_non_virtual_policy>(block) {}
+            unique_non_virtual_policy>(block) {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
 };
 
 struct test_object_observer_from_this_maybe_no_block_unique :
@@ -104,49 +164,128 @@ struct test_object_observer_from_this_maybe_no_block_unique :
     public oup::basic_enable_observer_from_this<
         test_object_observer_from_this_maybe_no_block_unique,
         unique_maybe_no_block_policy> {
-    test_object_observer_from_this_maybe_no_block_unique() = default;
-    test_object_observer_from_this_maybe_no_block_unique(state s) : test_object(s) {}
+
+    test_object_observer_from_this_maybe_no_block_unique* self = nullptr;
+
+    test_object_observer_from_this_maybe_no_block_unique() {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
+    test_object_observer_from_this_maybe_no_block_unique(state s) : test_object(s) {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
 };
 
 struct test_object_observer_from_this_derived_unique :
     public test_object_observer_from_this_unique {
-    test_object_observer_from_this_derived_unique() = default;
+
+    test_object_observer_from_this_unique* self = nullptr;
+
+    test_object_observer_from_this_derived_unique() {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
     test_object_observer_from_this_derived_unique(state s) :
-        test_object_observer_from_this_unique(s) {}
+        test_object_observer_from_this_unique(s) {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
 };
 
 struct test_object_observer_from_this_derived_sealed :
     public test_object_observer_from_this_sealed {
 
+    test_object_observer_from_this_sealed* self = nullptr;
+
     explicit test_object_observer_from_this_derived_sealed(control_block_type& block) :
-        test_object_observer_from_this_sealed(block) {}
+        test_object_observer_from_this_sealed(block) {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
 
     explicit test_object_observer_from_this_derived_sealed(control_block_type& block, state s) :
-        test_object_observer_from_this_sealed(block, s) {}
+        test_object_observer_from_this_sealed(block, s) {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = observer_from_this().get();
+        }
+    }
 };
 
 struct test_object_observer_from_this_multi_unique :
     public test_object_observer_from_this_unique,
     public oup::enable_observer_from_this_unique<test_object_observer_from_this_multi_unique> {
-    test_object_observer_from_this_multi_unique() = default;
+
+    using multi_eoft =
+        oup::enable_observer_from_this_unique<test_object_observer_from_this_multi_unique>;
+
+    test_object_observer_from_this_multi_unique* self = nullptr;
+
+    test_object_observer_from_this_multi_unique() {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = multi_eoft::observer_from_this().get();
+        }
+    }
     test_object_observer_from_this_multi_unique(state s) :
-        test_object_observer_from_this_unique(s) {}
+        test_object_observer_from_this_unique(s) {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = multi_eoft::observer_from_this().get();
+        }
+    }
 };
 
 struct test_object_observer_from_this_multi_sealed :
     public test_object_observer_from_this_sealed,
     public oup::enable_observer_from_this_sealed<test_object_observer_from_this_multi_sealed> {
 
+    using multi_eoft =
+        oup::enable_observer_from_this_sealed<test_object_observer_from_this_multi_sealed>;
+
+    test_object_observer_from_this_multi_sealed* self = nullptr;
+
     using control_block_type = oup::enable_observer_from_this_sealed<
         test_object_observer_from_this_multi_sealed>::control_block_type;
 
     explicit test_object_observer_from_this_multi_sealed(control_block_type& block) :
         test_object_observer_from_this_sealed(block),
-        oup::enable_observer_from_this_sealed<test_object_observer_from_this_multi_sealed>(block) {}
+        oup::enable_observer_from_this_sealed<test_object_observer_from_this_multi_sealed>(block) {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = multi_eoft::observer_from_this().get();
+        }
+    }
 
     explicit test_object_observer_from_this_multi_sealed(control_block_type& block, state s) :
         test_object_observer_from_this_sealed(block, s),
-        oup::enable_observer_from_this_sealed<test_object_observer_from_this_multi_sealed>(block) {}
+        oup::enable_observer_from_this_sealed<test_object_observer_from_this_multi_sealed>(block) {
+        if (next_test_object_constructor_calls_observer_from_this) {
+            next_test_object_constructor_calls_observer_from_this = false;
+
+            self = multi_eoft::observer_from_this().get();
+        }
+    }
 };
 
 struct test_object_observer_from_this_constructor_unique :
@@ -182,23 +321,6 @@ struct test_object_observer_from_this_constructor_sealed :
         test_object(s),
         oup::enable_observer_from_this_sealed<test_object_observer_from_this_constructor_sealed>(
             block) {
-        ptr = observer_from_this();
-    }
-};
-
-struct test_object_observer_from_this_constructor_bad :
-    public test_object,
-    public oup::basic_enable_observer_from_this<
-        test_object_observer_from_this_constructor_bad,
-        sealed_virtual_policy> {
-
-    oup::observer_ptr<test_object_observer_from_this_constructor_bad> ptr;
-
-    explicit test_object_observer_from_this_constructor_bad() {
-        ptr = observer_from_this();
-    }
-
-    explicit test_object_observer_from_this_constructor_bad(state s) : test_object(s) {
         ptr = observer_from_this();
     }
 };
@@ -327,7 +449,22 @@ template<typename T>
 constexpr bool has_eoft_multi_base = has_eoft_multi_base_t<std::remove_cv_t<get_object<T>>>::value;
 
 template<typename T>
+struct has_eoft_obs_member_t : std::false_type {};
+// clang-format off
+template<> struct has_eoft_obs_member_t<test_object_observer_from_this_constructor_unique> : std::true_type {};
+template<> struct has_eoft_obs_member_t<test_object_observer_from_this_constructor_sealed> : std::true_type {};
+template<> struct has_eoft_obs_member_t<test_object_observer_from_this_constructor_multi_unique> : std::true_type {};
+template<> struct has_eoft_obs_member_t<test_object_observer_from_this_constructor_multi_sealed> : std::true_type {};
+// clang-format on
+
+template<typename T>
+constexpr bool has_eoft_obs_member = has_eoft_obs_member_t<std::remove_cv_t<get_object<T>>>::value;
+
+template<typename T>
 constexpr bool has_eoft_direct_base_only = has_eoft_direct_base<T> && !has_eoft_multi_base<T>;
+
+template<typename T>
+constexpr bool has_eoft_self_member = has_eoft<T> && !has_eoft_obs_member<T>;
 
 template<typename T>
 constexpr bool    eoft_constructor_takes_control_block =

@@ -6,7 +6,8 @@ int instances         = 0;
 int instances_derived = 0;
 int instances_deleter = 0;
 
-bool next_test_object_constructor_throws = false;
+bool next_test_object_constructor_throws                   = false;
+bool next_test_object_constructor_calls_observer_from_this = false;
 
 constexpr bool debug_instances = false;
 
