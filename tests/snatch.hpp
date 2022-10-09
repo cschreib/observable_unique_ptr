@@ -191,7 +191,7 @@ struct expression {
 #define EXPR_OPERATOR(OP, INVERSE_OP)                                                              \
     template<typename T>                                                                           \
     expression& operator OP(const T& value) {                                                      \
-        if (data.empty()) {                                                                        \
+        if (!data.empty()) {                                                                       \
             append(" " #INVERSE_OP " ");                                                           \
         }                                                                                          \
         append(value);                                                                             \
