@@ -208,10 +208,6 @@ bool append(small_string& ss, const std::string& str) {
     return append(ss, std::string_view(str));
 }
 
-bool append(small_string& ss, const char* str) {
-    return append(ss, std::string_view(str));
-}
-
 void truncate_end(small_string& ss) {
     std::size_t num_dots     = 3;
     std::size_t final_length = std::min(ss.data.size(), ss.data_length + num_dots);

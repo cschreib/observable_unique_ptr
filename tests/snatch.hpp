@@ -136,9 +136,16 @@ struct small_string {
 [[nodiscard]] bool append(small_string& ss, double f);
 [[nodiscard]] bool append(small_string& ss, bool value);
 [[nodiscard]] bool append(small_string& ss, const std::string& str);
-[[nodiscard]] bool append(small_string& ss, const char* str);
+template<typename T>
+[[nodiscard]] bool append(small_string& ss, T* ptr) {
+    if constexpr (std::is_same_v<std::remove_cv_t<T>, char>) {
+        return append(ss, std::string_view(ptr));
+    } else {
+        return append(ss, static_cast<const void*>(ptr));
+    }
+}
 template<std::size_t N>
-[[nodiscard]] bool append(small_string& ss, const char (&str)[N]) {
+[[nodiscard]] bool append(small_string& ss, const char str[N]) {
     return append(ss, std::string_view(str));
 }
 
