@@ -30,6 +30,8 @@ struct test_object_derived : test_object {
     ~test_object_derived() noexcept override;
 };
 
+struct test_object_dead_end : test_object {};
+
 struct test_object_observer_from_this_unique :
     public test_object,
     public oup::enable_observer_from_this_unique<test_object_observer_from_this_unique> {
@@ -354,6 +356,7 @@ struct test_deleter {
     test_deleter& operator                       =(test_deleter&& source) noexcept;
 
     void operator()(test_object* ptr) noexcept;
+    void operator()(const test_object* ptr) noexcept;
     void operator()(std::nullptr_t) noexcept;
 };
 
@@ -386,6 +389,10 @@ using observer_ptr = typename T::observer_type;
 
 template<typename T>
 using const_observer_ptr = oup::basic_observer_ptr<const get_object<T>, get_observer_policy<T>>;
+
+template<typename T>
+using mutable_observer_ptr =
+    oup::basic_observer_ptr<std::remove_const_t<get_object<T>>, get_observer_policy<T>>;
 
 template<typename T>
 constexpr bool is_sealed = get_policy<T>::is_sealed;
@@ -479,6 +486,13 @@ using get_state = std::
 
 template<typename T>
 using state_observer_ptr = oup::basic_observer_ptr<get_state<T>, get_observer_policy<T>>;
+
+template<typename T>
+using const_ptr = oup::basic_observable_ptr<const get_object<T>, get_deleter<T>, get_policy<T>>;
+
+template<typename T>
+using mutable_ptr =
+    oup::basic_observable_ptr<std::remove_const_t<get_object<T>>, get_deleter<T>, get_policy<T>>;
 
 template<typename T>
 get_object<T>* make_instance() {

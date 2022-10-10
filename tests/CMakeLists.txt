@@ -23,6 +23,7 @@ set(RUNTIME_TEST_FILES
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_construction.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_assignment_move.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_comparison.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_cast_move.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_lifetime.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_make_observable.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_misc.cpp
@@ -34,6 +35,7 @@ set(RUNTIME_TEST_FILES
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_assignment_copy.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_assignment_move.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_comparison.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_cast_move.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_from_this.cpp)
 
 add_executable(oup_runtime_tests ${RUNTIME_TEST_FILES})

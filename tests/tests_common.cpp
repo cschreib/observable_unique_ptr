@@ -98,4 +98,8 @@ void test_deleter::operator()(test_object* ptr) noexcept {
     delete ptr;
 }
 
+void test_deleter::operator()(const test_object* ptr) noexcept {
+    delete ptr;
+}
+
 void test_deleter::operator()(std::nullptr_t) noexcept {}
