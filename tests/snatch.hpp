@@ -45,7 +45,7 @@ struct registry;
 
 namespace testing::impl {
 template<typename T>
-constexpr std::string_view get_type_name() {
+constexpr std::string_view get_type_name() noexcept {
 #if defined(__clang__)
     constexpr auto prefix   = std::string_view{"[T = "};
     constexpr auto suffix   = "]";
@@ -79,7 +79,7 @@ struct proxy<std::tuple<Args...>> {
     std::string_view tags;
 
     template<typename F>
-    const char* operator=(const F& func);
+    const char* operator=(const F& func) noexcept;
 };
 
 struct test_case;
@@ -87,7 +87,7 @@ struct test_case;
 using test_ptr = void (*)(test_case&);
 
 template<typename T, typename F>
-constexpr test_ptr to_test_case_ptr(const F&) {
+constexpr test_ptr to_test_case_ptr(const F&) noexcept {
     return [](test_case& t) { F{}.template operator()<T>(t); };
 }
 
@@ -102,42 +102,70 @@ struct test_case {
     std::size_t      tests = 0;
 };
 
-namespace color {
-extern const char* error_start;
-extern const char* warning_start;
-extern const char* status_start;
-extern const char* fail_start;
-extern const char* skipped_start;
-extern const char* pass_start;
-extern const char* highlight1_start;
-extern const char* highlight2_start;
-extern const char* reset;
-} // namespace color
-
-struct small_string {
-    std::array<char, max_expr_length> data;
+class small_string {
+    std::array<char, max_expr_length> data_buffer;
     std::size_t                       data_length = 0;
 
-    std::string_view str() const;
-    std::size_t      available() const;
-    std::size_t      size() const;
-    std::size_t      length() const;
-    bool             empty() const;
-    void             clear();
+public:
+    constexpr std::string_view str() const noexcept {
+        return std::string_view(data(), length());
+    }
+    constexpr std::size_t capacity() const noexcept {
+        return data_buffer.size();
+    }
+    constexpr std::size_t available() const noexcept {
+        return capacity() - length();
+    }
+    constexpr std::size_t size() const noexcept {
+        return data_length;
+    }
+    constexpr std::size_t length() const noexcept {
+        return data_length;
+    }
+    constexpr bool empty() const noexcept {
+        return data_length == 0;
+    }
+    constexpr void clear() noexcept {
+        data_length = 0;
+    }
+    constexpr void resize(std::size_t length) noexcept {
+        data_length = length;
+    }
+    constexpr void grow(std::size_t additional_length) noexcept {
+        data_length += additional_length;
+    }
+    constexpr char* data() noexcept {
+        return data_buffer.data();
+    }
+    constexpr const char* data() const noexcept {
+        return data_buffer.data();
+    }
+    constexpr char* begin() noexcept {
+        return data_buffer.data();
+    }
+    constexpr char* end() noexcept {
+        return begin() + length();
+    }
+    constexpr const char* begin() const noexcept {
+        return data_buffer.data();
+    }
+    constexpr const char* end() const noexcept {
+        return begin() + length();
+    }
 };
 
-[[nodiscard]] bool append(small_string& ss, std::string_view value);
+[[nodiscard]] bool append(small_string& ss, std::string_view value) noexcept;
 
-[[nodiscard]] bool append(small_string& ss, const void* ptr);
-[[nodiscard]] bool append(small_string& ss, std::nullptr_t);
-[[nodiscard]] bool append(small_string& ss, std::size_t i);
-[[nodiscard]] bool append(small_string& ss, std::ptrdiff_t i);
-[[nodiscard]] bool append(small_string& ss, float f);
-[[nodiscard]] bool append(small_string& ss, double f);
-[[nodiscard]] bool append(small_string& ss, bool value);
-[[nodiscard]] bool append(small_string& ss, const std::string& str);
+[[nodiscard]] bool append(small_string& ss, const void* ptr) noexcept;
+[[nodiscard]] bool append(small_string& ss, std::nullptr_t) noexcept;
+[[nodiscard]] bool append(small_string& ss, std::size_t i) noexcept;
+[[nodiscard]] bool append(small_string& ss, std::ptrdiff_t i) noexcept;
+[[nodiscard]] bool append(small_string& ss, float f) noexcept;
+[[nodiscard]] bool append(small_string& ss, double f) noexcept;
+[[nodiscard]] bool append(small_string& ss, bool value) noexcept;
+[[nodiscard]] bool append(small_string& ss, const std::string& str) noexcept;
 template<typename T>
-[[nodiscard]] bool append(small_string& ss, T* ptr) {
+[[nodiscard]] bool append(small_string& ss, T* ptr) noexcept {
     if constexpr (std::is_same_v<std::remove_cv_t<T>, char>) {
         return append(ss, std::string_view(ptr));
     } else {
@@ -145,26 +173,26 @@ template<typename T>
     }
 }
 template<std::size_t N>
-[[nodiscard]] bool append(small_string& ss, const char str[N]) {
+[[nodiscard]] bool append(small_string& ss, const char str[N]) noexcept {
     return append(ss, std::string_view(str));
 }
 
 template<typename T, typename U, typename... Args>
-[[nodiscard]] bool append(small_string& ss, T&& t, U&& u, Args&&... args) {
+[[nodiscard]] bool append(small_string& ss, T&& t, U&& u, Args&&... args) noexcept {
     if (!append(ss, std::forward<T>(t))) {
         return false;
     }
     return append(ss, std::forward<U>(u), std::forward<Args>(args)...);
 }
 
-void truncate_end(small_string& ss);
+void truncate_end(small_string& ss) noexcept;
 
 struct expression {
     small_string data;
     bool         failed = false;
 
     template<typename T>
-    void append(T&& value) {
+    void append(T&& value) noexcept {
         using TD = std::decay_t<T>;
         if constexpr (std::is_integral_v<TD>) {
             if constexpr (std::is_signed_v<TD>) {
@@ -190,7 +218,7 @@ struct expression {
 
 #define EXPR_OPERATOR(OP, INVERSE_OP)                                                              \
     template<typename T>                                                                           \
-    expression& operator OP(const T& value) {                                                      \
+    expression& operator OP(const T& value) noexcept {                                             \
         if (!data.empty()) {                                                                       \
             append(" " #INVERSE_OP " ");                                                           \
         }                                                                                          \
@@ -213,49 +241,60 @@ struct expression {
 // --------------
 
 namespace testing {
-struct registry {
+class registry {
     std::array<impl::test_case, max_test_cases> test_list;
     std::size_t                                 test_count = 0;
 
+public:
     bool verbose = false;
 
-    impl::proxy<std::tuple<>> add(std::string_view name, std::string_view tags) {
+    impl::proxy<std::tuple<>> add(std::string_view name, std::string_view tags) noexcept {
         return {this, name, tags};
     }
 
     template<typename T>
-    impl::proxy<T> add_with_types(std::string_view name, std::string_view tags) {
+    impl::proxy<T> add_with_types(std::string_view name, std::string_view tags) noexcept {
         return {this, name, tags};
     }
 
     void register_test(
-        std::string_view name, std::string_view tags, std::string_view type, impl::test_ptr func);
+        std::string_view name,
+        std::string_view tags,
+        std::string_view type,
+        impl::test_ptr   func) noexcept;
 
     template<typename... Args, typename F>
-    void register_type_tests(std::string_view name, std::string_view tags, const F& func) {
+    void register_type_tests(std::string_view name, std::string_view tags, const F& func) noexcept {
         (register_test(name, tags, impl::get_type_name<Args>(), impl::to_test_case_ptr<Args>(func)),
          ...);
     }
 
     void print_location(
-        const impl::test_case& current_case, const char* filename, int line_number) const;
+        const impl::test_case& current_case, const char* filename, int line_number) const noexcept;
 
-    void print_failure() const;
-    void print_skip() const;
-    void print_details(std::string_view message) const;
+    void print_failure() const noexcept;
+    void print_skip() const noexcept;
+    void print_details(std::string_view message) const noexcept;
     void print_details_expr(
-        std::string_view check, std::string_view exp_str, const impl::expression& exp) const;
+        std::string_view        check,
+        std::string_view        exp_str,
+        const impl::expression& exp) const noexcept;
 
-    void run(impl::test_case& t);
-    void set_state(impl::test_case& t, impl::test_state s);
+    void run(impl::test_case& t) noexcept;
+    void set_state(impl::test_case& t, impl::test_state s) noexcept;
 
-    bool run_all_tests();
-    bool run_tests_matching_name(std::string_view name);
-    bool run_tests_with_tag(std::string_view tag);
+    bool run_all_tests() noexcept;
+    bool run_tests_matching_name(std::string_view name) noexcept;
+    bool run_tests_with_tag(std::string_view tag) noexcept;
 
-    void list_all_tests() const;
-    void list_all_tags() const;
-    void list_tests_with_tag(std::string_view tag) const;
+    void list_all_tests() const noexcept;
+    void list_all_tags() const noexcept;
+    void list_tests_with_tag(std::string_view tag) const noexcept;
+
+    impl::test_case*       begin() noexcept;
+    impl::test_case*       end() noexcept;
+    const impl::test_case* begin() const noexcept;
+    const impl::test_case* end() const noexcept;
 };
 
 extern registry tests;
@@ -267,7 +306,7 @@ extern registry tests;
 namespace testing::impl {
 template<typename... Args>
 template<typename F>
-const char* proxy<std::tuple<Args...>>::operator=(const F& func) {
+const char* proxy<std::tuple<Args...>>::operator=(const F& func) noexcept {
     if constexpr (sizeof...(Args) > 0) {
         tests->template register_type_tests<Args...>(name, tags, func);
     } else {

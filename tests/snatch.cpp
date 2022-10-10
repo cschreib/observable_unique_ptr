@@ -5,6 +5,18 @@
 #include <cstring>
 #include <set>
 
+namespace testing::impl::color {
+const char* error_start      = "\x1b[1;31m";
+const char* warning_start    = "\x1b[1;33m";
+const char* status_start     = "\x1b[1;36m";
+const char* fail_start       = "\x1b[1;31m";
+const char* skipped_start    = "\x1b[1;33m";
+const char* pass_start       = "\x1b[1;32m";
+const char* highlight1_start = "\x1b[1;35m";
+const char* highlight2_start = "\x1b[1;36m";
+const char* reset            = "\x1b[0m";
+} // namespace testing::impl::color
+
 namespace {
 using namespace testing;
 using namespace testing::impl;
@@ -16,8 +28,7 @@ bool run_tests(registry& r, F&& predicate) {
     std::size_t fail_count      = 0;
     std::size_t assertion_count = 0;
 
-    for (std::size_t i = 0; i < r.test_count; ++i) {
-        test_case& t = r.test_list[i];
+    for (test_case& t : r) {
         if (!predicate(t)) {
             continue;
         }
@@ -48,8 +59,7 @@ bool run_tests(registry& r, F&& predicate) {
 
 template<typename F>
 void list_tests(const registry& r, F&& predicate) {
-    for (std::size_t i = 0; i < r.test_count; ++i) {
-        const auto& t = r.test_list[i];
+    for (const test_case& t : r) {
         if (!predicate(t)) {
             continue;
         }
@@ -99,7 +109,7 @@ make_full_name(std::array<char, max_test_name_length>& buffer, const test_case& 
 }
 
 template<typename T>
-constexpr const char* get_format_code() {
+constexpr const char* get_format_code() noexcept {
     if constexpr (std::is_same_v<T, const void*>) {
         return "%p";
     } else if constexpr (std::is_same_v<T, std::size_t>) {
@@ -116,106 +126,72 @@ constexpr const char* get_format_code() {
 }
 
 template<typename T>
-bool append_fmt(small_string& ss, T value) {
-    const std::size_t length =
-        std::snprintf(ss.data.data() + ss.data_length, 0, get_format_code<T>(), value);
+bool append_fmt(small_string& ss, T value) noexcept {
+    const std::size_t length = std::snprintf(ss.end(), 0, get_format_code<T>(), value);
 
     const bool could_fit = length <= ss.available();
 
-    std::snprintf(ss.data.data() + ss.data_length, ss.available(), get_format_code<T>(), value);
-    ss.data_length = std::min(ss.data_length + length, ss.data.size());
+    const std::size_t offset     = ss.length();
+    const std::size_t prev_space = ss.available();
+    ss.resize(std::min(ss.length() + length, ss.capacity()));
+    std::snprintf(ss.begin() + offset, prev_space, get_format_code<T>(), value);
 
     return could_fit;
 }
 } // namespace
 
-namespace testing::impl::color {
-const char* error_start      = "\x1b[1;31m";
-const char* warning_start    = "\x1b[1;33m";
-const char* status_start     = "\x1b[1;36m";
-const char* fail_start       = "\x1b[1;31m";
-const char* skipped_start    = "\x1b[1;33m";
-const char* pass_start       = "\x1b[1;32m";
-const char* highlight1_start = "\x1b[1;35m";
-const char* highlight2_start = "\x1b[1;36m";
-const char* reset            = "\x1b[0m";
-} // namespace testing::impl::color
-
 namespace testing::impl {
-std::string_view small_string::str() const {
-    return std::string_view(data.data(), data_length);
-}
-
-std::size_t small_string::available() const {
-    return data.size() - length();
-}
-
-std::size_t small_string::size() const {
-    return data_length;
-}
-
-std::size_t small_string::length() const {
-    return data_length;
-}
-
-bool small_string::empty() const {
-    return data_length == 0;
-}
-
-void small_string::clear() {
-    data_length = 0;
-}
-
-bool append(small_string& ss, std::string_view str) {
+bool append(small_string& ss, std::string_view str) noexcept {
     const bool        could_fit  = str.length() <= ss.available();
     const std::size_t copy_count = std::min(str.length(), ss.available());
 
-    std::memcpy(ss.data.data() + ss.data_length, str.data(), copy_count);
-    ss.data_length += copy_count;
+    const std::size_t offset = ss.length();
+    ss.grow(copy_count);
+    std::memcpy(ss.begin() + offset, str.data(), copy_count);
 
     return could_fit;
 }
 
-bool append(small_string& ss, const void* ptr) {
+bool append(small_string& ss, const void* ptr) noexcept {
     return append_fmt(ss, ptr);
 }
 
-bool append(small_string& ss, std::nullptr_t) {
+bool append(small_string& ss, std::nullptr_t) noexcept {
     return append(ss, "nullptr");
 }
 
-bool append(small_string& ss, std::size_t i) {
+bool append(small_string& ss, std::size_t i) noexcept {
     return append_fmt(ss, i);
 }
 
-bool append(small_string& ss, std::ptrdiff_t i) {
+bool append(small_string& ss, std::ptrdiff_t i) noexcept {
     return append_fmt(ss, i);
 }
 
-bool append(small_string& ss, float f) {
+bool append(small_string& ss, float f) noexcept {
     return append_fmt(ss, f);
 }
 
-bool append(small_string& ss, double d) {
+bool append(small_string& ss, double d) noexcept {
     return append_fmt(ss, d);
 }
 
-bool append(small_string& ss, bool value) {
+bool append(small_string& ss, bool value) noexcept {
     return append(ss, value ? "true" : "false");
 }
 
-bool append(small_string& ss, const std::string& str) {
+bool append(small_string& ss, const std::string& str) noexcept {
     return append(ss, std::string_view(str));
 }
 
-void truncate_end(small_string& ss) {
+void truncate_end(small_string& ss) noexcept {
     std::size_t num_dots     = 3;
-    std::size_t final_length = std::min(ss.data.size(), ss.data_length + num_dots);
+    std::size_t final_length = std::min(ss.capacity(), ss.length() + num_dots);
     std::size_t offset       = final_length >= num_dots ? final_length - num_dots : 0;
     num_dots                 = final_length - offset;
 
-    std::memcpy(ss.data.data() + offset, "...", num_dots);
-    ss.data_length = final_length;
+    ss.resize(final_length);
+    std::memcpy(ss.begin() + offset, "...", num_dots);
 }
 
 } // namespace testing::impl
@@ -242,7 +218,7 @@ with_what_contains::with_what_contains(std::string_view pattern) noexcept :
 
 namespace testing {
 void registry::register_test(
-    std::string_view name, std::string_view tags, std::string_view type, test_ptr func) {
+    std::string_view name, std::string_view tags, std::string_view type, test_ptr func) noexcept {
 
     if (test_count == max_test_cases) {
         std::printf(
@@ -266,7 +242,7 @@ void registry::register_test(
 }
 
 void registry::print_location(
-    const test_case& current_case, const char* filename, int line_number) const {
+    const test_case& current_case, const char* filename, int line_number) const noexcept {
 
     std::printf(
         "running test case \"%s%.*s%s\"\n"
@@ -277,21 +253,21 @@ void registry::print_location(
         static_cast<int>(current_case.type.length()), current_case.type.data(), color::reset);
 }
 
-void registry::print_failure() const {
+void registry::print_failure() const noexcept {
     std::printf("%sfailed:%s ", color::fail_start, color::reset);
 }
-void registry::print_skip() const {
+void registry::print_skip() const noexcept {
     std::printf("%sskipped:%s ", color::skipped_start, color::reset);
 }
 
-void registry::print_details(std::string_view message) const {
+void registry::print_details(std::string_view message) const noexcept {
     std::printf(
         "          %s%.*s%s\n", color::highlight2_start, static_cast<int>(message.length()),
         message.data(), color::reset);
 }
 
 void registry::print_details_expr(
-    std::string_view check, std::string_view exp_str, const expression& exp) const {
+    std::string_view check, std::string_view exp_str, const expression& exp) const noexcept {
     std::printf(
         "          %s%.*s(%.*s)%s", color::highlight2_start, static_cast<int>(check.length()),
         check.data(), static_cast<int>(exp_str.length()), exp_str.data(), color::reset);
@@ -305,7 +281,7 @@ void registry::print_details_expr(
     }
 }
 
-void registry::run(test_case& t) {
+void registry::run(test_case& t) noexcept {
     if (verbose) {
         std::printf("%sstarting:%s %s", color::status_start, color::reset, color::highlight1_start);
         if (!t.type.empty()) {
@@ -351,18 +327,18 @@ void registry::run(test_case& t) {
     }
 }
 
-void registry::set_state(test_case& t, test_state s) {
+void registry::set_state(test_case& t, test_state s) noexcept {
     if (static_cast<std::underlying_type_t<test_state>>(t.state) <
         static_cast<std::underlying_type_t<test_state>>(s)) {
         t.state = s;
     }
 }
 
-bool registry::run_all_tests() {
+bool registry::run_all_tests() noexcept {
     return run_tests(*this, [](const test_case&) { return true; });
 }
 
-bool registry::run_tests_matching_name(std::string_view name) {
+bool registry::run_tests_matching_name(std::string_view name) noexcept {
     std::array<char, max_test_name_length> buffer;
     return run_tests(*this, [&](const test_case& t) {
         std::string_view v = make_full_name(buffer, t);
@@ -372,7 +348,7 @@ bool registry::run_tests_matching_name(std::string_view name) {
     });
 }
 
-bool registry::run_tests_with_tag(std::string_view tag) {
+bool registry::run_tests_with_tag(std::string_view tag) noexcept {
     return run_tests(*this, [&](const test_case& t) {
         bool selected = false;
         for_each_tag(t.tags, [&](std::string_view v) {
@@ -384,7 +360,7 @@ bool registry::run_tests_with_tag(std::string_view tag) {
     });
 }
 
-void registry::list_all_tags() const {
+void registry::list_all_tags() const noexcept {
     std::set<std::string_view> tags;
     for (std::size_t i = 0; i < test_count; ++i) {
         const auto& t = test_list[i];
@@ -397,11 +373,11 @@ void registry::list_all_tags() const {
     }
 }
 
-void registry::list_all_tests() const {
+void registry::list_all_tests() const noexcept {
     list_tests(*this, [](const test_case&) { return true; });
 }
 
-void registry::list_tests_with_tag(std::string_view tag) const {
+void registry::list_tests_with_tag(std::string_view tag) const noexcept {
     list_tests(*this, [&](const test_case& t) {
         bool selected = false;
         for_each_tag(t.tags, [&](std::string_view v) {
@@ -411,6 +387,22 @@ void registry::list_tests_with_tag(std::string_view tag) const {
         });
         return selected;
     });
+}
+
+impl::test_case* registry::begin() noexcept {
+    return test_list.begin();
+}
+
+impl::test_case* registry::end() noexcept {
+    return test_list.begin() + test_count;
+}
+
+const impl::test_case* registry::begin() const noexcept {
+    return test_list.begin();
+}
+
+const impl::test_case* registry::end() const noexcept {
+    return test_list.begin() + test_count;
 }
 
 registry tests;
