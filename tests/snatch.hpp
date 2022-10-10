@@ -37,7 +37,7 @@ constexpr std::size_t max_test_name_length = SNATCH_MAX_TEST_NAME_LENGTH;
 // ---------------------
 
 namespace testing {
-struct registry;
+class registry;
 }
 
 // Implementation details.
@@ -68,7 +68,14 @@ constexpr std::string_view get_type_name() noexcept {
 
     return function.substr(start, size);
 }
+} // namespace testing::impl
 
+namespace testing {
+template<typename T>
+constexpr std::string_view type_name = impl::get_type_name<T>();
+}
+
+namespace testing::impl {
 template<typename T>
 struct proxy;
 
