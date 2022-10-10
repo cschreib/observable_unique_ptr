@@ -29,14 +29,11 @@ TEMPLATE_LIST_TEST_CASE("observer from this", "[observer_from_this]", owner_type
                             std::remove_cv_t<const_obs_type>, get_object<TestType>>) == true);
                 }
 
-                CHECK(instances == 1);
-                if constexpr (has_stateful_deleter<TestType>) {
-                    CHECK(instances_deleter == 1);
-                }
                 CHECK(optr.expired() == false);
                 CHECK(optr_const.expired() == false);
                 CHECK(optr.get() == raw_ptr);
                 CHECK(optr_const.get() == craw_ptr);
+                CHECK_INSTANCES(1, 1);
             };
 
             if constexpr (has_eoft_multi_base<TestType>) {
@@ -54,12 +51,7 @@ TEMPLATE_LIST_TEST_CASE("observer from this", "[observer_from_this]", owner_type
             }
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -91,20 +83,12 @@ TEMPLATE_LIST_TEST_CASE(
                         "observer_from_this() called with uninitialized control block"});
             }
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 0);
-            }
+            CHECK_INSTANCES(1, 0);
 
             delete orig_ptr;
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -134,18 +118,10 @@ TEMPLATE_LIST_TEST_CASE("observer from this no owner stack", "[observer_from_thi
                         "observer_from_this() called with uninitialized control block"});
             }
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 0);
-            }
+            CHECK_INSTANCES(1, 0);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -163,14 +139,11 @@ TEMPLATE_LIST_TEST_CASE(
                 auto optr  = make_observer_from_this<TestType>(orig_ptr);
                 auto coptr = make_const_observer_from_this<TestType>(orig_ptr);
 
-                CHECK(instances == 1);
-                if constexpr (has_stateful_deleter<TestType>) {
-                    CHECK(instances_deleter == 1);
-                }
                 CHECK(optr.expired() == false);
                 CHECK(optr.get() == ptr.get());
                 CHECK(coptr.expired() == false);
                 CHECK(coptr.get() == orig_ptr);
+                CHECK_INSTANCES(1, 1);
             } else {
                 REQUIRE_THROWS_MATCHES(
                     (make_observer_from_this<TestType>(orig_ptr)), oup::bad_observer_from_this,
@@ -184,12 +157,7 @@ TEMPLATE_LIST_TEST_CASE(
             }
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -204,20 +172,12 @@ TEMPLATE_LIST_TEST_CASE(
 
             base_observer_ptr<TestType> optr = make_observer_from_this<TestType>(orig_ptr);
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == false);
             CHECK(optr.get() == ptr.get());
+            CHECK_INSTANCES(1, 1);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -230,29 +190,18 @@ TEMPLATE_LIST_TEST_CASE(
             TestType ptr  = make_pointer_deleter_1<TestType>();
             auto     optr = make_observer_from_this<TestType>(ptr.get());
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == false);
             CHECK(optr.get() == ptr.get());
+            CHECK_INSTANCES(1, 1);
 
             ptr.reset();
 
-            CHECK(instances == 0);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == true);
             CHECK(optr.get() == nullptr);
+            CHECK_INSTANCES(0, 1);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -265,29 +214,18 @@ TEMPLATE_LIST_TEST_CASE(
             TestType ptr  = make_pointer_deleter_1<TestType>();
             auto     optr = make_observer_from_this<TestType>(ptr.get());
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == false);
             CHECK(optr.get() == ptr.get());
+            CHECK_INSTANCES(1, 1);
 
             ptr.reset(make_instance<TestType>());
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == true);
             CHECK(optr.get() == nullptr);
+            CHECK_INSTANCES(1, 1);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -300,38 +238,24 @@ TEMPLATE_LIST_TEST_CASE(
             TestType ptr  = make_pointer_deleter_1<TestType>();
             auto     optr = make_observer_from_this<TestType>(ptr.get());
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == false);
             CHECK(optr.get() == ptr.get());
+            CHECK_INSTANCES(1, 1);
 
             auto* raw_ptr = ptr.release();
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == false);
             CHECK(optr.get() == raw_ptr);
+            CHECK_INSTANCES(1, 1);
 
             delete raw_ptr;
 
-            CHECK(instances == 0);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == true);
             CHECK(optr.get() == nullptr);
+            CHECK_INSTANCES(0, 1);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -346,47 +270,30 @@ TEMPLATE_LIST_TEST_CASE(
             TestType ptr  = make_pointer_deleter_1<TestType>();
             auto     optr = make_observer_from_this<TestType>(ptr.get());
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == false);
             CHECK(optr.get() == ptr.get());
+            CHECK_INSTANCES(1, 1);
 
             auto* raw_ptr = ptr.release();
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == false);
             CHECK(optr.get() == raw_ptr);
+            CHECK_INSTANCES(1, 1);
 
             ptr.reset(raw_ptr);
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == false);
             CHECK(optr.get() == raw_ptr);
+            CHECK_INSTANCES(1, 1);
 
             ptr.reset();
 
-            CHECK(instances == 0);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == true);
             CHECK(optr.get() == nullptr);
+            CHECK_INSTANCES(0, 1);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -402,22 +309,14 @@ TEMPLATE_LIST_TEST_CASE(
             auto optr  = make_observer_from_this<TestType>(ptr2.get());
             auto coptr = make_const_observer_from_this<TestType>(ptr2.get());
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == false);
             CHECK(optr.get() == ptr2.get());
             CHECK(coptr.expired() == false);
             CHECK(coptr.get() == ptr2.get());
+            CHECK_INSTANCES(1, 1);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -434,36 +333,29 @@ TEMPLATE_LIST_TEST_CASE(
             auto optr  = make_observer_from_this<TestType>(ptr2.get());
             auto coptr = make_const_observer_from_this<TestType>(ptr2.get());
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
             CHECK(optr.expired() == false);
             CHECK(optr.get() == ptr2.get());
             CHECK(coptr.expired() == false);
             CHECK(coptr.get() == ptr2.get());
+            CHECK_INSTANCES(1, 1);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
 TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
+    using base       = test_object_observer_from_this_unique;
+    using deriv      = test_object_observer_from_this_multi_unique;
+    using ptr_base   = oup::observable_unique_ptr<base>;
+    using ptr_deriv  = oup::observable_unique_ptr<deriv>;
+    using eoft_base  = oup::enable_observer_from_this_unique<base>;
+    using eoft_deriv = oup::enable_observer_from_this_unique<deriv>;
+    using TestType   = ptr_deriv;
+
     memory_tracker mem_track;
 
     {
-        using base       = test_object_observer_from_this_unique;
-        using deriv      = test_object_observer_from_this_multi_unique;
-        using ptr_base   = oup::observable_unique_ptr<base>;
-        using ptr_deriv  = oup::observable_unique_ptr<deriv>;
-        using eoft_base  = oup::enable_observer_from_this_unique<base>;
-        using eoft_deriv = oup::enable_observer_from_this_unique<deriv>;
-
         deriv*    raw_ptr_deriv = new deriv;
         base*     raw_ptr_base  = raw_ptr_deriv;
         ptr_deriv ptr(raw_ptr_deriv);
@@ -471,16 +363,14 @@ TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
         observer_ptr<ptr_base>  optr_base  = ptr->eoft_base::observer_from_this();
         observer_ptr<ptr_deriv> optr_deriv = ptr->eoft_deriv::observer_from_this();
 
-        CHECK(instances == 1);
         CHECK(optr_base.expired() == false);
         CHECK(optr_deriv.expired() == false);
         CHECK(optr_base.get() == raw_ptr_base);
         CHECK(optr_deriv.get() == raw_ptr_deriv);
+        CHECK_INSTANCES(1, 1);
     }
 
-    CHECK(instances == 0);
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer from this in constructor", "[observer_from_this]", owner_types) {
@@ -493,10 +383,7 @@ TEMPLATE_LIST_TEST_CASE("observer from this in constructor", "[observer_from_thi
             next_test_object_constructor_calls_observer_from_this = false;
             CHECK(ptr->self == ptr.get());
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
+            CHECK_INSTANCES(1, 1);
         } else {
             next_test_object_constructor_calls_observer_from_this = true;
             REQUIRE_THROWS_MATCHES(
@@ -506,11 +393,6 @@ TEMPLATE_LIST_TEST_CASE("observer from this in constructor", "[observer_from_thi
             next_test_object_constructor_calls_observer_from_this = false;
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };

@@ -7,21 +7,13 @@ TEMPLATE_LIST_TEST_CASE("observer default constructor", "[construction],[observe
 
     {
         observer_ptr<TestType> ptr;
-        CHECK(instances == 0);
+
         CHECK(ptr.get() == nullptr);
         CHECK(ptr.expired() == true);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
+        CHECK_INSTANCES(0, 0);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer nullptr constructor", "[construction],[observer]", owner_types) {
@@ -29,19 +21,11 @@ TEMPLATE_LIST_TEST_CASE("observer nullptr constructor", "[construction],[observe
 
     {
         observer_ptr<TestType> ptr(nullptr);
-        CHECK(instances == 0);
+
         CHECK(ptr.get() == nullptr);
         CHECK(ptr.expired() == true);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
+        CHECK_INSTANCES(0, 0);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };

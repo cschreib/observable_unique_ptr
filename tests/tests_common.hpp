@@ -590,3 +590,27 @@ using owner_types = std::tuple<
     oup::observable_sealed_ptr<test_object_observer_owner>
     >;
 // clang-format on
+
+#define CHECK_INSTANCES(TEST_OBJECTS, TEST_DELETER)                                                \
+    do {                                                                                           \
+        CHECK(instances == (TEST_OBJECTS));                                                        \
+        if constexpr (has_stateful_deleter<TestType>) {                                            \
+            CHECK(instances_deleter == (TEST_DELETER));                                            \
+        }                                                                                          \
+    } while (0)
+
+#define CHECK_INSTANCES_DERIVED(TEST_OBJECTS, TEST_DERIVED, TEST_DELETER)                          \
+    do {                                                                                           \
+        CHECK(instances == (TEST_OBJECTS));                                                        \
+        CHECK(instances_derived == (TEST_DERIVED));                                                \
+        if constexpr (has_stateful_deleter<TestType>) {                                            \
+            CHECK(instances_deleter == (TEST_DELETER));                                            \
+        }                                                                                          \
+    } while (0)
+
+#define CHECK_NO_LEAKS                                                                             \
+    do {                                                                                           \
+        CHECK_INSTANCES_DERIVED(0, 0, 0);                                                          \
+        CHECK(mem_track.allocated() == 0u);                                                        \
+        CHECK(mem_track.double_delete() == 0u);                                                    \
+    } while (0)

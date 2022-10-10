@@ -11,29 +11,18 @@ TEMPLATE_LIST_TEST_CASE(
         observer_ptr<TestType> ptr_orig{ptr_owner};
         {
             observer_ptr<TestType> ptr(ptr_orig);
+
             CHECK(ptr.get() != nullptr);
             CHECK(ptr.expired() == false);
             CHECK(ptr_orig.get() != nullptr);
             CHECK(ptr_orig.expired() == false);
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
+            CHECK_INSTANCES(1, 1);
         }
 
-        CHECK(instances == 1);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(1, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -44,27 +33,16 @@ TEMPLATE_LIST_TEST_CASE(
         observer_ptr<TestType> ptr_orig;
         {
             observer_ptr<TestType> ptr(ptr_orig);
+
             CHECK(ptr.get() == nullptr);
             CHECK(ptr.expired() == true);
-            CHECK(instances == 0);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 0);
-            }
+            CHECK_INSTANCES(0, 0);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
+        CHECK_INSTANCES(0, 0);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -79,29 +57,18 @@ TEMPLATE_LIST_TEST_CASE(
             observer_ptr<TestType> ptr_orig{ptr_owner};
             {
                 base_observer_ptr<TestType> ptr{ptr_orig};
+
                 CHECK(ptr.get() == ptr_owner.get());
                 CHECK(ptr.expired() == false);
                 CHECK(ptr_orig.get() == ptr_owner.get());
                 CHECK(ptr_orig.expired() == false);
-                CHECK(instances == 1);
-                if constexpr (has_stateful_deleter<TestType>) {
-                    CHECK(instances_deleter == 1);
-                }
+                CHECK_INSTANCES(1, 1);
             }
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
+            CHECK_INSTANCES(1, 1);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -116,29 +83,18 @@ TEMPLATE_LIST_TEST_CASE(
             observer_ptr<TestType> ptr_orig;
             {
                 base_observer_ptr<TestType> ptr{ptr_orig};
+
                 CHECK(ptr.get() == nullptr);
                 CHECK(ptr.expired() == true);
                 CHECK(ptr_orig.get() == nullptr);
                 CHECK(ptr_orig.expired() == true);
-                CHECK(instances == 0);
-                if constexpr (has_stateful_deleter<TestType>) {
-                    CHECK(instances_deleter == 0);
-                }
+                CHECK_INSTANCES(0, 0);
             }
 
-            CHECK(instances == 0);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 0);
-            }
+            CHECK_INSTANCES(0, 0);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -155,29 +111,18 @@ TEMPLATE_LIST_TEST_CASE(
             {
                 observer_ptr<TestType> ptr{
                     ptr_orig, static_cast<get_object<TestType>*>(ptr_orig.get())};
+
                 CHECK(ptr.get() == static_cast<get_object<TestType>*>(ptr_owner.get()));
                 CHECK(ptr.expired() == false);
                 CHECK(ptr_orig.get() == ptr_owner.get());
                 CHECK(ptr_orig.expired() == false);
-                CHECK(instances == 1);
-                if constexpr (has_stateful_deleter<TestType>) {
-                    CHECK(instances_deleter == 1);
-                }
+                CHECK_INSTANCES(1, 1);
             }
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
+            CHECK_INSTANCES(1, 1);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -192,29 +137,18 @@ TEMPLATE_LIST_TEST_CASE(
             base_observer_ptr<TestType> ptr_orig;
             {
                 observer_ptr<TestType> ptr{ptr_orig, static_cast<get_object<TestType>*>(nullptr)};
+
                 CHECK(ptr.get() == nullptr);
                 CHECK(ptr.expired() == true);
                 CHECK(ptr_orig.get() == nullptr);
                 CHECK(ptr_orig.expired() == true);
-                CHECK(instances == 0);
-                if constexpr (has_stateful_deleter<TestType>) {
-                    CHECK(instances_deleter == 0);
-                }
+                CHECK_INSTANCES(0, 0);
             }
 
-            CHECK(instances == 0);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 0);
-            }
+            CHECK_INSTANCES(0, 0);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -230,29 +164,18 @@ TEMPLATE_LIST_TEST_CASE(
             base_observer_ptr<TestType> ptr_orig{ptr_owner};
             {
                 observer_ptr<TestType> ptr{ptr_orig, static_cast<get_object<TestType>*>(nullptr)};
+
                 CHECK(ptr.get() == nullptr);
                 CHECK(ptr.expired() == true);
                 CHECK(ptr_orig.get() == ptr_owner.get());
                 CHECK(ptr_orig.expired() == false);
-                CHECK(instances == 1);
-                if constexpr (has_stateful_deleter<TestType>) {
-                    CHECK(instances_deleter == 1);
-                }
+                CHECK_INSTANCES(1, 1);
             }
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
+            CHECK_INSTANCES(1, 1);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -267,27 +190,16 @@ TEMPLATE_LIST_TEST_CASE(
         observer_ptr<TestType> ptr_orig{ptr_owner};
         {
             state_observer_ptr<TestType> ptr{ptr_orig, &ptr_owner->state_};
+
             CHECK(ptr.get() == &ptr_owner->state_);
             CHECK(ptr.expired() == false);
             CHECK(ptr_orig.get() == ptr_owner.get());
             CHECK(ptr_orig.expired() == false);
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
+            CHECK_INSTANCES(1, 1);
         }
 
-        CHECK(instances == 1);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(1, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };

@@ -11,27 +11,18 @@ TEMPLATE_LIST_TEST_CASE(
         {
             TestType ptr = make_empty_pointer_deleter_2<TestType>();
             ptr          = std::move(ptr_orig);
-            CHECK(instances == 1);
+
             CHECK(ptr.get() != nullptr);
             if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 2);
                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
+            CHECK_INSTANCES(1, 2);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(0, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -43,27 +34,18 @@ TEMPLATE_LIST_TEST_CASE(
         {
             TestType ptr = make_pointer_deleter_2<TestType>();
             ptr          = std::move(ptr_orig);
-            CHECK(instances == 0);
+
             CHECK(ptr.get() == nullptr);
             if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 2);
                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
+            CHECK_INSTANCES(0, 2);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(0, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -75,27 +57,18 @@ TEMPLATE_LIST_TEST_CASE(
         {
             TestType ptr = make_empty_pointer_deleter_2<TestType>();
             ptr          = std::move(ptr_orig);
-            CHECK(instances == 0);
+
             CHECK(ptr.get() == nullptr);
             if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 2);
                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
+            CHECK_INSTANCES(0, 2);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(0, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -108,27 +81,18 @@ TEMPLATE_LIST_TEST_CASE(
         {
             TestType ptr = make_pointer_deleter_1<TestType>();
             ptr          = std::move(ptr_orig);
-            CHECK(instances == 1);
+
             CHECK(ptr.get() == raw_ptr_orig);
             if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 2);
                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
+            CHECK_INSTANCES(1, 2);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(0, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -142,27 +106,18 @@ TEMPLATE_LIST_TEST_CASE(
         {
             base_ptr<TestType> ptr = make_empty_pointer_deleter_2<base_ptr<TestType>>();
             ptr                    = std::move(ptr_orig);
-            CHECK(instances == 1);
+
             CHECK(ptr.get() != nullptr);
             if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 2);
                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
+            CHECK_INSTANCES(1, 2);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(0, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -176,27 +131,18 @@ TEMPLATE_LIST_TEST_CASE(
         {
             base_ptr<TestType> ptr = make_pointer_deleter_2<base_ptr<TestType>>();
             ptr                    = std::move(ptr_orig);
-            CHECK(instances == 0);
+
             CHECK(ptr.get() == nullptr);
             if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 2);
                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
+            CHECK_INSTANCES(0, 2);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(0, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -210,27 +156,18 @@ TEMPLATE_LIST_TEST_CASE(
         {
             base_ptr<TestType> ptr = make_empty_pointer_deleter_2<base_ptr<TestType>>();
             ptr                    = std::move(ptr_orig);
-            CHECK(instances == 0);
+
             CHECK(ptr.get() == nullptr);
             if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 2);
                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
+            CHECK_INSTANCES(0, 2);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(0, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -245,27 +182,18 @@ TEMPLATE_LIST_TEST_CASE(
         {
             base_ptr<TestType> ptr = make_pointer_deleter_1<base_ptr<TestType>>();
             ptr                    = std::move(ptr_orig);
-            CHECK(instances == 1);
+
             CHECK(ptr.get() == raw_ptr_orig);
             if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 2);
                 CHECK(ptr.get_deleter().state_ == test_deleter::state::special_init_1);
             }
+            CHECK_INSTANCES(1, 2);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(0, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -275,21 +203,15 @@ TEMPLATE_LIST_TEST_CASE(
     {
         TestType ptr = make_pointer_deleter_1<TestType>();
         ptr          = std::move(ptr);
-        CHECK(instances == 0);
+
         CHECK(ptr.get() == nullptr);
         if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
             CHECK(ptr.get_deleter().state_ == test_deleter::state::empty);
         }
+        CHECK_INSTANCES(0, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -299,19 +221,13 @@ TEMPLATE_LIST_TEST_CASE(
     {
         TestType ptr = make_empty_pointer_deleter_1<TestType>();
         ptr          = std::move(ptr);
-        CHECK(instances == 0);
+
         CHECK(ptr.get() == nullptr);
         if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
             CHECK(ptr.get_deleter().state_ == test_deleter::state::empty);
         }
+        CHECK_INSTANCES(0, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };

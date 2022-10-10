@@ -12,29 +12,18 @@ TEMPLATE_LIST_TEST_CASE(
         {
             observer_ptr<TestType> optr;
             optr = std::move(optr_orig);
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
+
             CHECK(optr.get() == ptr_orig.get());
             CHECK(optr_orig.get() == nullptr);
             CHECK(optr.expired() == false);
             CHECK(optr_orig.expired() == true);
+            CHECK_INSTANCES(1, 1);
         }
 
-        CHECK(instances == 1);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(1, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -47,29 +36,18 @@ TEMPLATE_LIST_TEST_CASE(
             TestType               ptr = make_pointer_deleter_1<TestType>();
             observer_ptr<TestType> optr{ptr};
             optr = std::move(optr_orig);
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
+
             CHECK(optr.get() == nullptr);
             CHECK(optr_orig.get() == nullptr);
             CHECK(optr.expired() == true);
             CHECK(optr_orig.expired() == true);
+            CHECK_INSTANCES(1, 1);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
+        CHECK_INSTANCES(0, 0);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -81,29 +59,18 @@ TEMPLATE_LIST_TEST_CASE(
         {
             observer_ptr<TestType> optr;
             optr = std::move(optr_orig);
-            CHECK(instances == 0);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 0);
-            }
+
             CHECK(optr.get() == nullptr);
             CHECK(optr_orig.get() == nullptr);
             CHECK(optr.expired() == true);
             CHECK(optr_orig.expired() == true);
+            CHECK_INSTANCES(0, 0);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
+        CHECK_INSTANCES(0, 0);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -117,29 +84,18 @@ TEMPLATE_LIST_TEST_CASE(
             TestType               ptr = make_pointer_deleter_1<TestType>();
             observer_ptr<TestType> optr{ptr};
             optr = std::move(optr_orig);
-            CHECK(instances == 2);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 2);
-            }
+
             CHECK(optr.get() == ptr_orig.get());
             CHECK(optr_orig.get() == nullptr);
             CHECK(optr.expired() == false);
             CHECK(optr_orig.expired() == true);
+            CHECK_INSTANCES(2, 2);
         }
 
-        CHECK(instances == 1);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(1, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -155,29 +111,18 @@ TEMPLATE_LIST_TEST_CASE(
             {
                 base_observer_ptr<TestType> optr;
                 optr = std::move(optr_orig);
-                CHECK(instances == 1);
-                if constexpr (has_stateful_deleter<TestType>) {
-                    CHECK(instances_deleter == 1);
-                }
+
                 CHECK(optr.get() == ptr_orig.get());
                 CHECK(optr_orig.get() == nullptr);
                 CHECK(optr.expired() == false);
                 CHECK(optr_orig.expired() == true);
+                CHECK_INSTANCES(1, 1);
             }
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
+            CHECK_INSTANCES(1, 1);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -194,29 +139,18 @@ TEMPLATE_LIST_TEST_CASE(
                 TestType                    ptr = make_pointer_deleter_1<TestType>();
                 base_observer_ptr<TestType> optr{ptr};
                 optr = std::move(optr_orig);
-                CHECK(instances == 1);
-                if constexpr (has_stateful_deleter<TestType>) {
-                    CHECK(instances_deleter == 1);
-                }
+
                 CHECK(optr.get() == nullptr);
                 CHECK(optr_orig.get() == nullptr);
                 CHECK(optr.expired() == true);
                 CHECK(optr_orig.expired() == true);
+                CHECK_INSTANCES(1, 1);
             }
 
-            CHECK(instances == 0);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 0);
-            }
+            CHECK_INSTANCES(0, 0);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -232,29 +166,18 @@ TEMPLATE_LIST_TEST_CASE(
             {
                 base_observer_ptr<TestType> optr;
                 optr = std::move(optr_orig);
-                CHECK(instances == 0);
-                if constexpr (has_stateful_deleter<TestType>) {
-                    CHECK(instances_deleter == 0);
-                }
+
                 CHECK(optr.get() == nullptr);
                 CHECK(optr_orig.get() == nullptr);
                 CHECK(optr.expired() == true);
                 CHECK(optr_orig.expired() == true);
+                CHECK_INSTANCES(0, 0);
             }
 
-            CHECK(instances == 0);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 0);
-            }
+            CHECK_INSTANCES(0, 0);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -272,29 +195,18 @@ TEMPLATE_LIST_TEST_CASE(
                 TestType                    ptr = make_pointer_deleter_1<TestType>();
                 base_observer_ptr<TestType> optr{ptr};
                 optr = std::move(optr_orig);
-                CHECK(instances == 2);
-                if constexpr (has_stateful_deleter<TestType>) {
-                    CHECK(instances_deleter == 2);
-                }
+
                 CHECK(optr.get() == ptr_orig.get());
                 CHECK(optr_orig.get() == nullptr);
                 CHECK(optr.expired() == false);
                 CHECK(optr_orig.expired() == true);
+                CHECK_INSTANCES(2, 2);
             }
 
-            CHECK(instances == 1);
-            if constexpr (has_stateful_deleter<TestType>) {
-                CHECK(instances_deleter == 1);
-            }
+            CHECK_INSTANCES(1, 1);
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -308,21 +220,12 @@ TEMPLATE_LIST_TEST_CASE(
         TestType               ptr = make_pointer_deleter_1<TestType>();
         observer_ptr<TestType> optr{ptr};
         optr = std::move(optr);
-        CHECK(instances == 1);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
         CHECK(optr.get() == nullptr);
         CHECK(optr.expired() == true);
+        CHECK_INSTANCES(1, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -334,19 +237,10 @@ TEMPLATE_LIST_TEST_CASE(
     {
         observer_ptr<TestType> optr;
         optr = std::move(optr);
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
         CHECK(optr.get() == nullptr);
         CHECK(optr.expired() == true);
+        CHECK_INSTANCES(0, 0);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };

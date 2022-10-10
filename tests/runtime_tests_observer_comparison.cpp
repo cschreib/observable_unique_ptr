@@ -9,19 +9,14 @@ TEMPLATE_LIST_TEST_CASE(
     {
         TestType               ptr = make_pointer_deleter_1<TestType>();
         observer_ptr<TestType> optr{ptr};
+
         CHECK(optr != nullptr);
         CHECK(!(optr == nullptr));
         CHECK(nullptr != optr);
         CHECK(!(nullptr == optr));
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -30,19 +25,14 @@ TEMPLATE_LIST_TEST_CASE(
 
     {
         observer_ptr<TestType> optr;
+
         CHECK(optr == nullptr);
         CHECK(!(optr != nullptr));
         CHECK(nullptr == optr);
         CHECK(!(nullptr != optr));
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -52,19 +42,14 @@ TEMPLATE_LIST_TEST_CASE(
     {
         observer_ptr<TestType> optr1;
         observer_ptr<TestType> optr2;
+
         CHECK(optr1 == optr2);
         CHECK(optr2 == optr1);
         CHECK(!(optr1 != optr2));
         CHECK(!(optr2 != optr1));
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -75,19 +60,14 @@ TEMPLATE_LIST_TEST_CASE(
         observer_ptr<TestType> optr1;
         TestType               ptr2 = make_pointer_deleter_2<TestType>();
         observer_ptr<TestType> optr2{ptr2};
+
         CHECK(optr1 != optr2);
         CHECK(optr2 != optr1);
         CHECK(!(optr1 == optr2));
         CHECK(!(optr2 == optr1));
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -101,19 +81,14 @@ TEMPLATE_LIST_TEST_CASE(
         observer_ptr<TestType> optr1{ptr1};
         TestType               ptr2 = make_pointer_deleter_2<TestType>();
         observer_ptr<TestType> optr2{ptr2};
+
         CHECK(optr1 != optr2);
         CHECK(optr2 != optr1);
         CHECK(!(optr1 == optr2));
         CHECK(!(optr2 == optr1));
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -124,19 +99,14 @@ TEMPLATE_LIST_TEST_CASE(
         TestType               ptr = make_pointer_deleter_1<TestType>();
         observer_ptr<TestType> optr1{ptr};
         observer_ptr<TestType> optr2{ptr};
+
         CHECK(optr1 == optr2);
         CHECK(optr2 == optr1);
         CHECK(!(optr1 != optr2));
         CHECK(!(optr2 != optr1));
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -151,19 +121,14 @@ TEMPLATE_LIST_TEST_CASE(
             observer_ptr<TestType>      optr1{ptr1};
             TestType                    ptr2 = make_pointer_deleter_2<TestType>();
             base_observer_ptr<TestType> optr2{ptr2};
+
             CHECK(optr1 != optr2);
             CHECK(optr2 != optr1);
             CHECK(!(optr1 == optr2));
             CHECK(!(optr2 == optr1));
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };
 
@@ -178,18 +143,13 @@ TEMPLATE_LIST_TEST_CASE(
             TestType                    ptr = make_pointer_deleter_1<TestType>();
             observer_ptr<TestType>      optr1{ptr};
             base_observer_ptr<TestType> optr2{ptr};
+
             CHECK(optr1 == optr2);
             CHECK(optr2 == optr1);
             CHECK(!(optr1 != optr2));
             CHECK(!(optr2 != optr1));
         }
 
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
-
-        CHECK(mem_track.allocated() == 0u);
-        CHECK(mem_track.double_delete() == 0u);
+        CHECK_NO_LEAKS;
     }
 };

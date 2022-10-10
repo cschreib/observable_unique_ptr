@@ -15,19 +15,10 @@ TEMPLATE_LIST_TEST_CASE("observer reset to null", "[reset],[observer]", owner_ty
         optr.reset();
         CHECK(optr.get() == nullptr);
         CHECK(optr.expired() == true);
-        CHECK(instances == 1);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(1, 1);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer swap empty vs empty", "[swap],[observer]", owner_types) {
@@ -37,23 +28,14 @@ TEMPLATE_LIST_TEST_CASE("observer swap empty vs empty", "[swap],[observer]", own
         observer_ptr<TestType> optr1;
         observer_ptr<TestType> optr2;
         optr2.swap(optr1);
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
+        CHECK_INSTANCES(0, 0);
         CHECK(optr1.get() == nullptr);
         CHECK(optr2.get() == nullptr);
         CHECK(optr1.expired() == true);
         CHECK(optr2.expired() == true);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer swap valid vs empty", "[swap],[observer]", owner_types) {
@@ -64,10 +46,7 @@ TEMPLATE_LIST_TEST_CASE("observer swap valid vs empty", "[swap],[observer]", own
         observer_ptr<TestType> optr1{ptr1};
         observer_ptr<TestType> optr2;
         optr2.swap(optr1);
-        CHECK(instances == 1);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(1, 1);
         CHECK(optr1.get() == nullptr);
         CHECK(optr2.get() != nullptr);
         CHECK(optr2.get() == ptr1.get());
@@ -75,13 +54,7 @@ TEMPLATE_LIST_TEST_CASE("observer swap valid vs empty", "[swap],[observer]", own
         CHECK(optr2.expired() == false);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer swap empty vs valid", "[swap],[observer]", owner_types) {
@@ -92,10 +65,7 @@ TEMPLATE_LIST_TEST_CASE("observer swap empty vs valid", "[swap],[observer]", own
         observer_ptr<TestType> optr1;
         observer_ptr<TestType> optr2{ptr2};
         optr2.swap(optr1);
-        CHECK(instances == 1);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(1, 1);
         CHECK(optr1.get() != nullptr);
         CHECK(optr1.get() == ptr2.get());
         CHECK(optr2.get() == nullptr);
@@ -103,13 +73,7 @@ TEMPLATE_LIST_TEST_CASE("observer swap empty vs valid", "[swap],[observer]", own
         CHECK(optr2.expired() == true);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer swap valid vs valid", "[swap],[observer]", owner_types) {
@@ -121,10 +85,7 @@ TEMPLATE_LIST_TEST_CASE("observer swap valid vs valid", "[swap],[observer]", own
         observer_ptr<TestType> optr1{ptr1};
         observer_ptr<TestType> optr2{ptr2};
         optr2.swap(optr1);
-        CHECK(instances == 2);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 2);
-        }
+        CHECK_INSTANCES(2, 2);
         CHECK(optr1.get() != ptr1.get());
         CHECK(optr1.get() == ptr2.get());
         CHECK(optr2.get() != ptr2.get());
@@ -133,13 +94,7 @@ TEMPLATE_LIST_TEST_CASE("observer swap valid vs valid", "[swap],[observer]", own
         CHECK(optr2.expired() == false);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE(
@@ -151,23 +106,14 @@ TEMPLATE_LIST_TEST_CASE(
         observer_ptr<TestType> optr1{ptr};
         observer_ptr<TestType> optr2{ptr};
         optr2.swap(optr1);
-        CHECK(instances == 1);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(1, 1);
         CHECK(optr1.get() == ptr.get());
         CHECK(optr2.get() == ptr.get());
         CHECK(optr1.expired() == false);
         CHECK(optr2.expired() == false);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer swap self vs self empty", "[swap],[observer]", owner_types) {
@@ -176,21 +122,12 @@ TEMPLATE_LIST_TEST_CASE("observer swap self vs self empty", "[swap],[observer]",
     {
         observer_ptr<TestType> optr;
         optr.swap(optr);
-        CHECK(instances == 0);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 0);
-        }
+        CHECK_INSTANCES(0, 0);
         CHECK(optr.get() == nullptr);
         CHECK(optr.expired() == true);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer swap self vs self valid", "[swap],[observer]", owner_types) {
@@ -200,21 +137,12 @@ TEMPLATE_LIST_TEST_CASE("observer swap self vs self valid", "[swap],[observer]",
         TestType               ptr = make_pointer_deleter_1<TestType>();
         observer_ptr<TestType> optr{ptr};
         optr.swap(optr);
-        CHECK(instances == 1);
-        if constexpr (has_stateful_deleter<TestType>) {
-            CHECK(instances_deleter == 1);
-        }
+        CHECK_INSTANCES(1, 1);
         CHECK(optr.get() == ptr.get());
         CHECK(optr.expired() == false);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer dereference valid", "[dereference],[observer]", owner_types) {
@@ -227,13 +155,7 @@ TEMPLATE_LIST_TEST_CASE("observer dereference valid", "[dereference],[observer]"
         CHECK((*optr).state_ == test_object::state::default_init);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer get valid", "[get],[observer]", owner_types) {
@@ -246,13 +168,7 @@ TEMPLATE_LIST_TEST_CASE("observer get valid", "[get],[observer]", owner_types) {
         CHECK(optr.get()->state_ == test_object::state::default_init);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer get empty", "[get],[observer]", owner_types) {
@@ -263,13 +179,7 @@ TEMPLATE_LIST_TEST_CASE("observer get empty", "[get],[observer]", owner_types) {
         CHECK(optr.get() == nullptr);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer raw_get valid", "[raw_get],[observer]", owner_types) {
@@ -282,13 +192,7 @@ TEMPLATE_LIST_TEST_CASE("observer raw_get valid", "[raw_get],[observer]", owner_
         CHECK(optr.raw_get()->state_ == test_object::state::default_init);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer raw_get empty", "[raw_get],[observer]", owner_types) {
@@ -299,13 +203,7 @@ TEMPLATE_LIST_TEST_CASE("observer raw_get empty", "[raw_get],[observer]", owner_
         CHECK(optr.raw_get() == nullptr);
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer operator bool valid", "[bool],[observer]", owner_types) {
@@ -320,13 +218,7 @@ TEMPLATE_LIST_TEST_CASE("observer operator bool valid", "[bool],[observer]", own
         }
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
 
 TEMPLATE_LIST_TEST_CASE("observer operator bool empty", "[bool],[observer]", owner_types) {
@@ -339,11 +231,5 @@ TEMPLATE_LIST_TEST_CASE("observer operator bool empty", "[bool],[observer]", own
         }
     }
 
-    CHECK(instances == 0);
-    if constexpr (has_stateful_deleter<TestType>) {
-        CHECK(instances_deleter == 0);
-    }
-
-    CHECK(mem_track.allocated() == 0u);
-    CHECK(mem_track.double_delete() == 0u);
+    CHECK_NO_LEAKS;
 };
