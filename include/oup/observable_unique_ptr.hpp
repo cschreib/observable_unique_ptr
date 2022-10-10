@@ -1751,7 +1751,7 @@ basic_observer_ptr<U, Policy> const_pointer_cast(basic_observer_ptr<T, Policy>&&
 template<typename U, typename T, typename D, typename P>
 basic_observable_ptr<U, D, P> dynamic_pointer_cast(basic_observable_ptr<T, D, P>&& ptr) {
     if (ptr == nullptr) {
-        return basic_observable_ptr<U, D, P>{};
+        return basic_observable_ptr<U, D, P>{nullptr, std::move(ptr.get_deleter())};
     }
 
     U& casted_object = dynamic_cast<U&>(*ptr.get());
