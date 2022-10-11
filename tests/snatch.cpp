@@ -390,19 +390,19 @@ void registry::list_tests_with_tag(std::string_view tag) const noexcept {
 }
 
 impl::test_case* registry::begin() noexcept {
-    return test_list.begin();
+    return &*test_list.begin();
 }
 
 impl::test_case* registry::end() noexcept {
-    return test_list.begin() + test_count;
+    return &*test_list.begin() + test_count;
 }
 
 const impl::test_case* registry::begin() const noexcept {
-    return test_list.begin();
+    return &*test_list.begin();
 }
 
 const impl::test_case* registry::end() const noexcept {
-    return test_list.begin() + test_count;
+    return &*test_list.begin() + test_count;
 }
 
 registry tests;
