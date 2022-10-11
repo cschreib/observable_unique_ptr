@@ -2,7 +2,7 @@
 #include "testing.hpp"
 #include "tests_common.hpp"
 
-TEMPLATE_LIST_TEST_CASE("observer static_cast move from valid", "[cast],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer static_cast copy from valid", "[cast],[observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -10,11 +10,11 @@ TEMPLATE_LIST_TEST_CASE("observer static_cast move from valid", "[cast],[observe
             TestType               ptr1    = make_pointer_deleter_1<TestType>();
             observer_ptr<TestType> optr1   = ptr1;
             get_object<TestType>*  raw_ptr = ptr1.get();
-            auto                   optr2   = oup::static_pointer_cast<cast_type>(std::move(optr1));
+            auto                   optr2   = oup::static_pointer_cast<cast_type>(optr1);
 
             using return_type = std::remove_cv_t<decltype(optr2)>;
 
-            CHECK(optr1.get() == nullptr);
+            CHECK(optr1.get() == raw_ptr);
             CHECK(optr2.get() == raw_ptr);
             CHECK(testing::type_name<return_type> == testing::type_name<expected_return_type>);
             CHECK_INSTANCES(1, 1);
@@ -30,14 +30,14 @@ TEMPLATE_LIST_TEST_CASE("observer static_cast move from valid", "[cast],[observe
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer static_cast move from empty", "[cast],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer static_cast copy from empty", "[cast],[observer]", owner_types) {
     memory_tracker mem_track;
 
     {
         auto run_test = [&]<typename cast_type, typename expected_return_type>() {
             TestType               ptr1  = make_empty_pointer_deleter_1<TestType>();
             observer_ptr<TestType> optr1 = ptr1;
-            auto                   optr2 = oup::static_pointer_cast<cast_type>(std::move(optr1));
+            auto                   optr2 = oup::static_pointer_cast<cast_type>(optr1);
 
             using return_type = std::remove_cv_t<decltype(optr2)>;
 
@@ -57,7 +57,7 @@ TEMPLATE_LIST_TEST_CASE("observer static_cast move from empty", "[cast],[observe
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer const_cast move from valid", "[cast],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer const_cast copy from valid", "[cast],[observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -65,11 +65,11 @@ TEMPLATE_LIST_TEST_CASE("observer const_cast move from valid", "[cast],[observer
             TestType               ptr1    = make_pointer_deleter_1<TestType>();
             observer_ptr<TestType> optr1   = ptr1;
             get_object<TestType>*  raw_ptr = ptr1.get();
-            auto                   optr2   = oup::const_pointer_cast<cast_type>(std::move(optr1));
+            auto                   optr2   = oup::const_pointer_cast<cast_type>(optr1);
 
             using return_type = std::remove_cv_t<decltype(optr2)>;
 
-            CHECK(optr1.get() == nullptr);
+            CHECK(optr1.get() == raw_ptr);
             CHECK(optr2.get() == raw_ptr);
             CHECK(testing::type_name<return_type> == testing::type_name<expected_return_type>);
             CHECK_INSTANCES(1, 1);
@@ -83,14 +83,14 @@ TEMPLATE_LIST_TEST_CASE("observer const_cast move from valid", "[cast],[observer
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer const_cast move from empty", "[cast],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer const_cast copy from empty", "[cast],[observer]", owner_types) {
     memory_tracker mem_track;
 
     {
         auto run_test = [&]<typename cast_type, typename expected_return_type>() {
             TestType               ptr1  = make_empty_pointer_deleter_1<TestType>();
             observer_ptr<TestType> optr1 = ptr1;
-            auto                   optr2 = oup::const_pointer_cast<cast_type>(std::move(optr1));
+            auto                   optr2 = oup::const_pointer_cast<cast_type>(optr1);
 
             using return_type = std::remove_cv_t<decltype(optr2)>;
 
@@ -108,7 +108,7 @@ TEMPLATE_LIST_TEST_CASE("observer const_cast move from empty", "[cast],[observer
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer dynamic_cast move from valid", "[cast],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer dynamic_cast copy from valid", "[cast],[observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -117,11 +117,11 @@ TEMPLATE_LIST_TEST_CASE("observer dynamic_cast move from valid", "[cast],[observ
                 TestType                 ptr0    = make_pointer_deleter_1<TestType>();
                 get_object<TestType>*    raw_ptr = ptr0.get();
                 observer_ptr<start_type> optr1   = ptr0;
-                auto optr2 = oup::dynamic_pointer_cast<cast_type>(std::move(optr1));
+                auto                     optr2   = oup::dynamic_pointer_cast<cast_type>(optr1);
 
                 using return_type = std::remove_cv_t<decltype(optr2)>;
 
-                CHECK(optr1.get() == nullptr);
+                CHECK(optr1.get() == raw_ptr);
                 CHECK(optr2.get() == raw_ptr);
                 CHECK(testing::type_name<return_type> == testing::type_name<expected_return_type>);
                 CHECK_INSTANCES(1, 1);
@@ -141,7 +141,7 @@ TEMPLATE_LIST_TEST_CASE("observer dynamic_cast move from valid", "[cast],[observ
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer dynamic_cast move from empty", "[cast],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer dynamic_cast copy from empty", "[cast],[observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -150,7 +150,7 @@ TEMPLATE_LIST_TEST_CASE("observer dynamic_cast move from empty", "[cast],[observ
                 TestType                 ptr0    = make_empty_pointer_deleter_1<TestType>();
                 get_object<TestType>*    raw_ptr = ptr0.get();
                 observer_ptr<start_type> optr1   = ptr0;
-                auto optr2 = oup::dynamic_pointer_cast<cast_type>(std::move(optr1));
+                auto                     optr2   = oup::dynamic_pointer_cast<cast_type>(optr1);
 
                 using return_type = std::remove_cv_t<decltype(optr2)>;
 
@@ -175,7 +175,7 @@ TEMPLATE_LIST_TEST_CASE("observer dynamic_cast move from empty", "[cast],[observ
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer dynamic_cast move from invalid", "[cast],[observer]", owner_types) {
+    "observer dynamic_cast copy from invalid", "[cast],[observer]", owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;
 
@@ -183,13 +183,13 @@ TEMPLATE_LIST_TEST_CASE(
             TestType                    ptr0    = make_pointer_deleter_1<TestType>();
             get_object<TestType>*       raw_ptr = ptr0.get();
             base_observer_ptr<TestType> optr1   = ptr0;
-            auto optr2 = oup::dynamic_pointer_cast<test_object_dead_end>(std::move(optr1));
+            auto optr2 = oup::dynamic_pointer_cast<test_object_dead_end>(optr1);
 
             using return_type = std::remove_cv_t<decltype(optr2)>;
             using expected_return_type =
                 oup::basic_observer_ptr<test_object_dead_end, get_observer_policy<TestType>>;
 
-            CHECK(optr1.get() == nullptr);
+            CHECK(optr1.get() == raw_ptr);
             CHECK(optr2.get() == nullptr);
             CHECK(testing::type_name<return_type> == testing::type_name<expected_return_type>);
             CHECK_INSTANCES(1, 1);

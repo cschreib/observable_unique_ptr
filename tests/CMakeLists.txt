@@ -35,6 +35,7 @@ set(RUNTIME_TEST_FILES
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_assignment_copy.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_assignment_move.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_comparison.cpp
+  ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_cast_copy.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_cast_move.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_observer_from_this.cpp)
 
