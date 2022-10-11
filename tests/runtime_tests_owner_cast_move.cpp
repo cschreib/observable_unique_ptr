@@ -2,6 +2,9 @@
 #include "testing.hpp"
 #include "tests_common.hpp"
 
+// For std::bad_cast
+#include <typeinfo>
+
 TEMPLATE_LIST_TEST_CASE("owner static_cast move from valid", "[cast],[owner]", owner_types) {
     memory_tracker mem_track;
 
