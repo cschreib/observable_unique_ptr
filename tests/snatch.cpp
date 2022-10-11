@@ -46,11 +46,11 @@ bool run_tests(registry& r, F&& predicate) {
     std::printf("==========================================\n");
     if (success) {
         std::printf(
-            "%ssuccess:%s all tests passed (%ld test cases, %ld assertions)\n", color::pass_start,
+            "%ssuccess:%s all tests passed (%zu test cases, %zu assertions)\n", color::pass_start,
             color::reset, run_count, assertion_count);
     } else {
         std::printf(
-            "%serror:%s some tests failed (%ld out of %ld test cases, %ld assertions)\n",
+            "%serror:%s some tests failed (%zu out of %zu test cases, %zu assertions)\n",
             color::fail_start, color::reset, fail_count, run_count, assertion_count);
     }
 
@@ -119,7 +119,7 @@ constexpr const char* get_format_code() noexcept {
     } else if constexpr (std::is_same_v<T, float>) {
         return "%f";
     } else if constexpr (std::is_same_v<T, double>) {
-        return "%d";
+        return "%lf";
     } else {
         static_assert(std::is_same_v<T, T>, "unsupported type");
     }
@@ -223,7 +223,7 @@ void registry::register_test(
     if (test_count == max_test_cases) {
         std::printf(
             "%serror:%s max number of test cases reached; "
-            "please increase 'max_test_cases' (currently %ld)\n.",
+            "please increase 'max_test_cases' (currently %zu)\n.",
             color::error_start, color::reset, max_test_cases);
         std::terminate();
     }
@@ -233,7 +233,7 @@ void registry::register_test(
     if (get_full_name_length(test_list[test_count]) > max_test_name_length) {
         std::printf(
             "%serror:%s max length of test name reached; "
-            "please increase 'max_test_name_length' (currently %ld)\n.",
+            "please increase 'max_test_name_length' (currently %zu)\n.",
             color::error_start, color::reset, max_test_name_length);
         std::terminate();
     }
