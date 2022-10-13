@@ -16,7 +16,7 @@ TEMPLATE_LIST_TEST_CASE("observer static_cast move from valid", "[cast],[observe
 
             CHECK(optr1.get() == nullptr);
             CHECK(optr2.get() == raw_ptr);
-            CHECK(testing::type_name<return_type> == testing::type_name<expected_return_type>);
+            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
             CHECK_INSTANCES(1, 1);
         };
 
@@ -43,7 +43,7 @@ TEMPLATE_LIST_TEST_CASE("observer static_cast move from empty", "[cast],[observe
 
             CHECK(optr1.get() == nullptr);
             CHECK(optr2.get() == nullptr);
-            CHECK(testing::type_name<return_type> == testing::type_name<expected_return_type>);
+            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
             CHECK_INSTANCES(0, 1);
         };
 
@@ -71,7 +71,7 @@ TEMPLATE_LIST_TEST_CASE("observer const_cast move from valid", "[cast],[observer
 
             CHECK(optr1.get() == nullptr);
             CHECK(optr2.get() == raw_ptr);
-            CHECK(testing::type_name<return_type> == testing::type_name<expected_return_type>);
+            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
             CHECK_INSTANCES(1, 1);
         };
 
@@ -96,7 +96,7 @@ TEMPLATE_LIST_TEST_CASE("observer const_cast move from empty", "[cast],[observer
 
             CHECK(optr1.get() == nullptr);
             CHECK(optr2.get() == nullptr);
-            CHECK(testing::type_name<return_type> == testing::type_name<expected_return_type>);
+            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
             CHECK_INSTANCES(0, 1);
         };
 
@@ -123,7 +123,7 @@ TEMPLATE_LIST_TEST_CASE("observer dynamic_cast move from valid", "[cast],[observ
 
                 CHECK(optr1.get() == nullptr);
                 CHECK(optr2.get() == raw_ptr);
-                CHECK(testing::type_name<return_type> == testing::type_name<expected_return_type>);
+                CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
                 CHECK_INSTANCES(1, 1);
             };
 
@@ -156,7 +156,7 @@ TEMPLATE_LIST_TEST_CASE("observer dynamic_cast move from empty", "[cast],[observ
 
                 CHECK(optr1.get() == nullptr);
                 CHECK(optr2.get() == nullptr);
-                CHECK(testing::type_name<return_type> == testing::type_name<expected_return_type>);
+                CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
                 CHECK_INSTANCES(0, 1);
             };
 
@@ -191,7 +191,7 @@ TEMPLATE_LIST_TEST_CASE(
 
             CHECK(optr1.get() == nullptr);
             CHECK(optr2.get() == nullptr);
-            CHECK(testing::type_name<return_type> == testing::type_name<expected_return_type>);
+            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
             CHECK_INSTANCES(1, 1);
         }
 

@@ -1,5 +1,6 @@
 #include "snatch/snatch.hpp"
 
+#include <algorithm> // for std::sort
 #include <cstdio> // for std::printf
 #include <cstring> // for std::memcpy
 
@@ -10,7 +11,7 @@
 #    define SNATCH_WITH_CXXOPTS 0
 #endif
 
-namespace testing::impl::color {
+namespace snatch::impl::color {
 const char* error_start      = "\x1b[1;31m";
 const char* warning_start    = "\x1b[1;33m";
 const char* status_start     = "\x1b[1;36m";
@@ -20,11 +21,11 @@ const char* pass_start       = "\x1b[1;32m";
 const char* highlight1_start = "\x1b[1;35m";
 const char* highlight2_start = "\x1b[1;36m";
 const char* reset            = "\x1b[0m";
-} // namespace testing::impl::color
+} // namespace snatch::impl::color
 
 namespace {
-using namespace testing;
-using namespace testing::impl;
+using namespace snatch;
+using namespace snatch::impl;
 
 template<typename F>
 bool run_tests(registry& r, F&& predicate) {
@@ -145,7 +146,7 @@ bool append_fmt(basic_small_string& ss, T value) noexcept {
 }
 } // namespace
 
-namespace testing::impl {
+namespace snatch::impl {
 [[noreturn]] void terminate_with(std::string_view msg) noexcept {
     std::printf(
         "terminate called with message: %.*s\n", static_cast<int>(msg.length()), msg.data());
@@ -191,10 +192,6 @@ bool append(basic_small_string& ss, bool value) noexcept {
     return append(ss, value ? "true" : "false");
 }
 
-bool append(basic_small_string& ss, const std::string& str) noexcept {
-    return append(ss, std::string_view(str));
-}
-
 void truncate_end(basic_small_string& ss) noexcept {
     std::size_t num_dots     = 3;
     std::size_t final_length = std::min(ss.capacity(), ss.size() + num_dots);
@@ -205,9 +202,9 @@ void truncate_end(basic_small_string& ss) noexcept {
     std::memcpy(ss.begin() + offset, "...", num_dots);
 }
 
-} // namespace testing::impl
+} // namespace snatch::impl
 
-namespace testing::matchers {
+namespace snatch::matchers {
 contains_substring::contains_substring(std::string_view pattern) noexcept : pattern(pattern) {}
 
 bool contains_substring::match(std::string_view message) const noexcept {
@@ -225,9 +222,9 @@ std::string_view contains_substring::describe_fail(std::string_view message) con
 
 with_what_contains::with_what_contains(std::string_view pattern) noexcept :
     contains_substring(pattern) {}
-} // namespace testing::matchers
+} // namespace snatch::matchers
 
-namespace testing {
+namespace snatch {
 void registry::register_test(
     std::string_view name, std::string_view tags, std::string_view type, test_ptr func) noexcept {
 
@@ -311,15 +308,15 @@ void registry::run(test_case& t) noexcept {
     } catch (const test_state& s) {
         t.state = s;
     } catch (const std::exception& e) {
-        testing::tests.print_failure();
-        testing::tests.print_location(t, __FILE__, __LINE__);
-        testing::tests.print_details("unhandled std::exception caught; message:");
-        testing::tests.print_details(e.what());
+        print_failure();
+        print_location(t, __FILE__, __LINE__);
+        print_details("unhandled std::exception caught; message:");
+        print_details(e.what());
         t.state = test_state::failed;
     } catch (...) {
-        testing::tests.print_failure();
-        testing::tests.print_location(t, __FILE__, __LINE__);
-        testing::tests.print_details("unhandled unknown exception caught");
+        print_failure();
+        print_location(t, __FILE__, __LINE__);
+        print_details("unhandled unknown exception caught");
         t.state = test_state::failed;
     }
 
@@ -427,7 +424,7 @@ const impl::test_case* registry::end() const noexcept {
 }
 
 registry tests;
-} // namespace testing
+} // namespace snatch
 
 #if SNATCH_DEFINE_MAIN
 #    if SNATCH_WITH_CXXOPTS
@@ -459,41 +456,41 @@ int main(int argc, char* argv[]) {
     }
 
     if (result.count("list-tests") > 0) {
-        testing::tests.list_all_tests();
+        snatch::tests.list_all_tests();
         return 0;
     }
 
     if (result.count("list-tests-with-tag") > 0) {
-        testing::tests.list_tests_with_tag(result["list-tests-with-tag"].as<std::string>());
+        snatch::tests.list_tests_with_tag(result["list-tests-with-tag"].as<std::string>());
         return 0;
     }
 
     if (result.count("list-tags") > 0) {
-        testing::tests.list_all_tags();
+        snatch::tests.list_all_tags();
         return 0;
     }
 
     if (result.count("verbose") > 0) {
-        testing::tests.verbose = true;
+        snatch::tests.verbose = true;
     }
 
     bool success = true;
     if (result.count("tests") > 0) {
         if (result.count("tags") > 0) {
-            success = testing::tests.run_tests_with_tag(result["tests"].as<std::string>());
+            success = snatch::tests.run_tests_with_tag(result["tests"].as<std::string>());
         } else {
-            success = testing::tests.run_tests_matching_name(result["tests"].as<std::string>());
+            success = snatch::tests.run_tests_matching_name(result["tests"].as<std::string>());
         }
     } else {
-        success = testing::tests.run_all_tests();
+        success = snatch::tests.run_all_tests();
     }
 
     return success ? 0 : 1;
 #    else
     if (argc > 1) {
-        return testing::tests.run_tests_matching_name(argv[1]);
+        return snatch::tests.run_tests_matching_name(argv[1]);
     } else {
-        return testing::tests.run_all_tests() ? 0 : 1;
+        return snatch::tests.run_all_tests() ? 0 : 1;
     }
 #    endif
 }
