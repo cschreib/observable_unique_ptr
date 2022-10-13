@@ -15,7 +15,7 @@ struct test_object {
 
     test_object();
     explicit test_object(state s);
-    virtual ~test_object();
+    virtual ~test_object() noexcept;
 
     test_object(const test_object&) = delete;
     test_object(test_object&&)      = delete;
