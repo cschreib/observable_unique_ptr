@@ -41,14 +41,14 @@ void scramble(void* ptr, std::size_t size) {
 void* allocate(std::size_t size, bool array, std::align_val_t align) {
     if (memory_tracking && num_allocations == max_allocations) {
         if constexpr (debug_alloc) {
-            std::printf("alloc   %ld failed\n", size);
+            std::printf("alloc   %zu failed\n", size);
         }
         throw std::bad_alloc();
     }
 
     if (force_next_allocation_failure) {
         if constexpr (debug_alloc) {
-            std::printf("alloc   %ld failed\n", size);
+            std::printf("alloc   %zu failed\n", size);
         }
         force_next_allocation_failure = false;
         throw std::bad_alloc();
@@ -69,13 +69,13 @@ void* allocate(std::size_t size, bool array, std::align_val_t align) {
 
     if (!p) {
         if constexpr (debug_alloc) {
-            std::printf("alloc   %ld failed\n", size);
+            std::printf("alloc   %zu failed\n", size);
         }
         throw std::bad_alloc();
     }
 
     if constexpr (debug_alloc) {
-        std::printf("alloc   %ld -> %p\n", size, p);
+        std::printf("alloc   %zu -> %p\n", size, p);
     }
 
     if constexpr (scramble_alloc) {
