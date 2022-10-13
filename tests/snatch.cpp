@@ -1,9 +1,14 @@
-#include "snatch.hpp"
+#include "snatch/snatch.hpp"
 
-#include "cxxopts.hpp"
+#include <cstdio> // for std::printf
+#include <cstring> // for std::memcpy
 
-#include <cstring>
-#include <set>
+#if !defined(SNATCH_DEFINE_MAIN)
+#    define SNATCH_DEFINE_MAIN 1
+#endif
+#if !defined(SNATCH_WITH_CXXOPTS)
+#    define SNATCH_WITH_CXXOPTS 0
+#endif
 
 namespace testing::impl::color {
 const char* error_start      = "\x1b[1;31m";
@@ -126,14 +131,14 @@ constexpr const char* get_format_code() noexcept {
 }
 
 template<typename T>
-bool append_fmt(small_string& ss, T value) noexcept {
+bool append_fmt(basic_small_string& ss, T value) noexcept {
     const std::size_t length = std::snprintf(ss.end(), 0, get_format_code<T>(), value);
 
     const bool could_fit = length <= ss.available();
 
-    const std::size_t offset     = ss.length();
+    const std::size_t offset     = ss.size();
     const std::size_t prev_space = ss.available();
-    ss.resize(std::min(ss.length() + length, ss.capacity()));
+    ss.resize(std::min(ss.size() + length, ss.capacity()));
     std::snprintf(ss.begin() + offset, prev_space, get_format_code<T>(), value);
 
     return could_fit;
@@ -141,52 +146,58 @@ bool append_fmt(small_string& ss, T value) noexcept {
 } // namespace
 
 namespace testing::impl {
-bool append(small_string& ss, std::string_view str) noexcept {
-    const bool        could_fit  = str.length() <= ss.available();
-    const std::size_t copy_count = std::min(str.length(), ss.available());
+[[noreturn]] void terminate_with(std::string_view msg) noexcept {
+    std::printf(
+        "terminate called with message: %.*s\n", static_cast<int>(msg.length()), msg.data());
+    std::terminate();
+}
 
-    const std::size_t offset = ss.length();
+bool append(basic_small_string& ss, std::string_view str) noexcept {
+    const bool        could_fit  = str.size() <= ss.available();
+    const std::size_t copy_count = std::min(str.size(), ss.available());
+
+    const std::size_t offset = ss.size();
     ss.grow(copy_count);
     std::memcpy(ss.begin() + offset, str.data(), copy_count);
 
     return could_fit;
 }
 
-bool append(small_string& ss, const void* ptr) noexcept {
+bool append(basic_small_string& ss, const void* ptr) noexcept {
     return append_fmt(ss, ptr);
 }
 
-bool append(small_string& ss, std::nullptr_t) noexcept {
+bool append(basic_small_string& ss, std::nullptr_t) noexcept {
     return append(ss, "nullptr");
 }
 
-bool append(small_string& ss, std::size_t i) noexcept {
+bool append(basic_small_string& ss, std::size_t i) noexcept {
     return append_fmt(ss, i);
 }
 
-bool append(small_string& ss, std::ptrdiff_t i) noexcept {
+bool append(basic_small_string& ss, std::ptrdiff_t i) noexcept {
     return append_fmt(ss, i);
 }
 
-bool append(small_string& ss, float f) noexcept {
+bool append(basic_small_string& ss, float f) noexcept {
     return append_fmt(ss, f);
 }
 
-bool append(small_string& ss, double d) noexcept {
+bool append(basic_small_string& ss, double d) noexcept {
     return append_fmt(ss, d);
 }
 
-bool append(small_string& ss, bool value) noexcept {
+bool append(basic_small_string& ss, bool value) noexcept {
     return append(ss, value ? "true" : "false");
 }
 
-bool append(small_string& ss, const std::string& str) noexcept {
+bool append(basic_small_string& ss, const std::string& str) noexcept {
     return append(ss, std::string_view(str));
 }
 
-void truncate_end(small_string& ss) noexcept {
+void truncate_end(basic_small_string& ss) noexcept {
     std::size_t num_dots     = 3;
-    std::size_t final_length = std::min(ss.capacity(), ss.length() + num_dots);
+    std::size_t final_length = std::min(ss.capacity(), ss.size() + num_dots);
     std::size_t offset       = final_length >= num_dots ? final_length - num_dots : 0;
     num_dots                 = final_length - offset;
 
@@ -220,7 +231,7 @@ namespace testing {
 void registry::register_test(
     std::string_view name, std::string_view tags, std::string_view type, test_ptr func) noexcept {
 
-    if (test_count == max_test_cases) {
+    if (test_list.size() == test_list.capacity()) {
         std::printf(
             "%serror:%s max number of test cases reached; "
             "please increase 'max_test_cases' (currently %zu)\n.",
@@ -228,17 +239,15 @@ void registry::register_test(
         std::terminate();
     }
 
-    test_list[test_count] = test_case{name, tags, type, func};
+    test_list.push_back(test_case{name, tags, type, func});
 
-    if (get_full_name_length(test_list[test_count]) > max_test_name_length) {
+    if (get_full_name_length(test_list.back()) > max_test_name_length) {
         std::printf(
             "%serror:%s max length of test name reached; "
             "please increase 'max_test_name_length' (currently %zu)\n.",
             color::error_start, color::reset, max_test_name_length);
         std::terminate();
     }
-
-    ++test_count;
 }
 
 void registry::print_location(
@@ -361,12 +370,24 @@ bool registry::run_tests_with_tag(std::string_view tag) noexcept {
 }
 
 void registry::list_all_tags() const noexcept {
-    std::set<std::string_view> tags;
-    for (std::size_t i = 0; i < test_count; ++i) {
-        const auto& t = test_list[i];
+    impl::small_vector<std::string_view, max_unique_tags> tags;
+    for (const auto& t : test_list) {
+        for_each_tag(t.tags, [&](std::string_view v) {
+            if (std::find(tags.begin(), tags.end(), v) == tags.end()) {
+                if (tags.size() == tags.capacity()) {
+                    std::printf(
+                        "%serror:%s max number of tags reached; "
+                        "please increase 'max_unique_tags' (currently %zu)\n.",
+                        color::error_start, color::reset, max_unique_tags);
+                    std::terminate();
+                }
 
-        for_each_tag(t.tags, [&](std::string_view v) { tags.insert(v); });
+                tags.push_back(v);
+            }
+        });
     }
+
+    std::sort(tags.begin(), tags.end());
 
     for (auto c : tags) {
         std::printf("%.*s\n", static_cast<int>(c.length()), c.data());
@@ -390,25 +411,31 @@ void registry::list_tests_with_tag(std::string_view tag) const noexcept {
 }
 
 impl::test_case* registry::begin() noexcept {
-    return &*test_list.begin();
+    return test_list.begin();
 }
 
 impl::test_case* registry::end() noexcept {
-    return &*test_list.begin() + test_count;
+    return test_list.end();
 }
 
 const impl::test_case* registry::begin() const noexcept {
-    return &*test_list.begin();
+    return test_list.begin();
 }
 
 const impl::test_case* registry::end() const noexcept {
-    return &*test_list.begin() + test_count;
+    return test_list.end();
 }
 
 registry tests;
 } // namespace testing
 
+#if SNATCH_DEFINE_MAIN
+#    if SNATCH_WITH_CXXOPTS
+#        include "cxxopts.hpp"
+#    endif
+
 int main(int argc, char* argv[]) {
+#    if SNATCH_WITH_CXXOPTS
     cxxopts::Options options(argv[0], "Snatch test runner");
 
     // clang-format off
@@ -462,4 +489,13 @@ int main(int argc, char* argv[]) {
     }
 
     return success ? 0 : 1;
+#    else
+    if (argc > 1) {
+        return testing::tests.run_tests_matching_name(argv[1]);
+    } else {
+        return testing::tests.run_all_tests() ? 0 : 1;
+    }
+#    endif
 }
+
+#endif

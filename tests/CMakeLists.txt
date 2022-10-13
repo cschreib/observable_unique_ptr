@@ -42,6 +42,9 @@ set(RUNTIME_TEST_FILES
 add_executable(oup_runtime_tests ${RUNTIME_TEST_FILES})
 target_link_libraries(oup_runtime_tests PRIVATE oup::oup)
 add_platform_definitions(oup_runtime_tests)
+target_compile_definitions(oup_runtime_tests PUBLIC
+  SNATCH_DEFINE_MAIN=1
+  SNATCH_WITH_CXXOPTS=1)
 
 add_custom_target(oup_runtime_tests_run
   COMMAND oup_runtime_tests
