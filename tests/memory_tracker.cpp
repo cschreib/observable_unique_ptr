@@ -141,7 +141,7 @@ void* operator new(std::size_t size) {
     return allocate(size, false, std::align_val_t{0});
 }
 
-void* operator new[](size_t size) {
+void* operator new[](std::size_t size) {
     return allocate(size, true, std::align_val_t{0});
 }
 
@@ -149,7 +149,7 @@ void* operator new(std::size_t size, std::align_val_t al) {
     return allocate(size, false, al);
 }
 
-void* operator new[](size_t size, std::align_val_t al) {
+void* operator new[](std::size_t size, std::align_val_t al) {
     return allocate(size, true, al);
 }
 
@@ -161,11 +161,11 @@ void operator delete[](void* p) noexcept {
     deallocate(p, true, std::align_val_t{0});
 }
 
-void operator delete(void* p, size_t size) noexcept {
+void operator delete(void* p, std::size_t) noexcept {
     deallocate(p, false, std::align_val_t{0});
 }
 
-void operator delete[](void* p, size_t size) noexcept {
+void operator delete[](void* p, std::size_t) noexcept {
     deallocate(p, true, std::align_val_t{0});
 }
 
