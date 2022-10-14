@@ -568,18 +568,22 @@ struct with_what_contains : private contains_substring {
 #    define WARNING_PUSH _Pragma("clang diagnostic push")
 #    define WARNING_POP _Pragma("clang diagnostic pop")
 #    define WARNING_DISABLE_PARENTHESES do {} while (0)
+#    define WARNING_DISABLE_CONSTANT_COMPARISON do {} while (0)
 #elif defined(__GNUC__)
 #    define WARNING_PUSH _Pragma("GCC diagnostic push")
 #    define WARNING_POP _Pragma("GCC diagnostic pop")
 #    define WARNING_DISABLE_PARENTHESES _Pragma("GCC diagnostic ignored \"-Wparentheses\"")
+#    define WARNING_DISABLE_CONSTANT_COMPARISON do {} while (0)
 #elif defined(_MSC_VER)
-#    define WARNING_PUSH do {} while (0)
-#    define WARNING_POP do {} while (0)
+#    define WARNING_PUSH do {} _Pragma("warning(push)")
+#    define WARNING_POP do {} _Pragma("warning(pop)")
 #    define WARNING_DISABLE_PARENTHESES do {} while (0)
+#    define WARNING_DISABLE_CONSTANT_COMPARISON _Pragma("warning(disable: 4127)")
 #else
 #    define WARNING_PUSH do {} while (0)
 #    define WARNING_POP do {} while (0)
 #    define WARNING_DISABLE_PARENTHESES do {} while (0)
+#    define WARNING_DISABLE_CONSTANT_COMPARISON do {} while (0)
 #endif
 // clang-format on
 
@@ -596,31 +600,33 @@ struct with_what_contains : private contains_substring {
 #define REQUIRE(EXP)                                                                               \
     do {                                                                                           \
         ++CURRENT_CASE.tests;                                                                      \
+        WARNING_PUSH;                                                                              \
+        WARNING_DISABLE_PARENTHESES;                                                               \
+        WARNING_DISABLE_CONSTANT_COMPARISON;                                                       \
         if (!(EXP)) {                                                                              \
-            WARNING_PUSH;                                                                          \
-            WARNING_DISABLE_PARENTHESES;                                                           \
             const auto EXP2 = TESTING_EXPR(EXP);                                                   \
-            WARNING_POP;                                                                           \
             snatch::tests.print_failure();                                                         \
             snatch::tests.print_location(CURRENT_CASE, __FILE__, __LINE__);                        \
             snatch::tests.print_details_expr("REQUIRE", #EXP, EXP2);                               \
             throw snatch::impl::test_state::failed;                                                \
         }                                                                                          \
+        WARNING_POP;                                                                               \
     } while (0)
 
 #define CHECK(EXP)                                                                                 \
     do {                                                                                           \
         ++CURRENT_CASE.tests;                                                                      \
+        WARNING_PUSH;                                                                              \
+        WARNING_DISABLE_PARENTHESES;                                                               \
+        WARNING_DISABLE_CONSTANT_COMPARISON;                                                       \
         if (!(EXP)) {                                                                              \
-            WARNING_PUSH;                                                                          \
-            WARNING_DISABLE_PARENTHESES;                                                           \
             const auto EXP2 = TESTING_EXPR(EXP);                                                   \
-            WARNING_POP;                                                                           \
             snatch::tests.print_failure();                                                         \
             snatch::tests.print_location(CURRENT_CASE, __FILE__, __LINE__);                        \
             snatch::tests.print_details_expr("CHECK", #EXP, EXP2);                                 \
             snatch::tests.set_state(CURRENT_CASE, snatch::impl::test_state::failed);               \
         }                                                                                          \
+        WARNING_POP;                                                                               \
     } while (0)
 
 #define FAIL(MESSAGE)                                                                              \
