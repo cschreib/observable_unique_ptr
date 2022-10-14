@@ -628,3 +628,15 @@ using owner_types = std::tuple<
         CHECK(mem_track.allocated() == 0u);                                                        \
         CHECK(mem_track.double_delete() == 0u);                                                    \
     } while (0)
+
+// clang-format off
+#if defined(__clang__)
+#    define WARNING_DISABLE_SELF_ASSIGN _Pragma("clang diagnostic ignored \"-Wself-assign-overloaded\"")
+#elif defined(__GNUC__)
+#    define WARNING_DISABLE_SELF_ASSIGN do {} while (0)
+#elif defined(_MSC_VER)
+#    define WARNING_DISABLE_SELF_ASSIGN do {} while (0)
+#else
+#    define WARNING_DISABLE_SELF_ASSIGN do {} while (0)
+#endif
+// clang-format on

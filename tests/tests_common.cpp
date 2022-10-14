@@ -16,14 +16,14 @@ test_object::test_object() {
         next_test_object_constructor_throws = false;
 
         if constexpr (debug_instances) {
-            std::printf("%p creation throws\n", this);
+            std::printf("%p creation throws\n", static_cast<void*>(this));
         }
 
         throw throw_constructor{};
     }
 
     if constexpr (debug_instances) {
-        std::printf("%p created\n", this);
+        std::printf("%p created\n", static_cast<void*>(this));
     }
 
     ++instances;
@@ -34,14 +34,14 @@ test_object::test_object(state s) : state_(s) {
         next_test_object_constructor_throws = false;
 
         if constexpr (debug_instances) {
-            std::printf("%p creation throws\n", this);
+            std::printf("%p creation throws\n", static_cast<void*>(this));
         }
 
         throw throw_constructor{};
     }
 
     if constexpr (debug_instances) {
-        std::printf("%p created\n", this);
+        std::printf("%p created\n", static_cast<void*>(this));
     }
 
     ++instances;
@@ -49,7 +49,7 @@ test_object::test_object(state s) : state_(s) {
 
 test_object::~test_object() noexcept {
     if constexpr (debug_instances) {
-        std::printf("%p deleted\n", this);
+        std::printf("%p deleted\n", static_cast<void*>(this));
     }
 
     --instances;

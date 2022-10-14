@@ -219,7 +219,10 @@ TEMPLATE_LIST_TEST_CASE(
     {
         TestType               ptr = make_pointer_deleter_1<TestType>();
         observer_ptr<TestType> optr{ptr};
+        WARNING_PUSH;
+        WARNING_DISABLE_SELF_ASSIGN;
         optr = optr;
+        WARNING_POP;
 
         CHECK(optr.get() == ptr.get());
         CHECK(optr.expired() == false);
@@ -237,7 +240,10 @@ TEMPLATE_LIST_TEST_CASE(
 
     {
         observer_ptr<TestType> optr;
+        WARNING_PUSH;
+        WARNING_DISABLE_SELF_ASSIGN;
         optr = optr;
+        WARNING_POP;
 
         CHECK(optr.get() == nullptr);
         CHECK(optr.expired() == true);

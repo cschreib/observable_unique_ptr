@@ -147,10 +147,9 @@ TEMPLATE_LIST_TEST_CASE("observer dynamic_cast copy from empty", "[cast],[observ
     {
         auto run_test =
             [&]<typename start_type, typename cast_type, typename expected_return_type>() {
-                TestType                 ptr0    = make_empty_pointer_deleter_1<TestType>();
-                get_object<TestType>*    raw_ptr = ptr0.get();
-                observer_ptr<start_type> optr1   = ptr0;
-                auto                     optr2   = oup::dynamic_pointer_cast<cast_type>(optr1);
+                TestType                 ptr0  = make_empty_pointer_deleter_1<TestType>();
+                observer_ptr<start_type> optr1 = ptr0;
+                auto                     optr2 = oup::dynamic_pointer_cast<cast_type>(optr1);
 
                 using return_type = std::remove_cv_t<decltype(optr2)>;
 

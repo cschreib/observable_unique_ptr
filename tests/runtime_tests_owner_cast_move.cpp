@@ -158,10 +158,9 @@ TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from empty", "[cast],[owner]", 
     {
         auto run_test =
             [&]<typename start_type, typename cast_type, typename expected_return_type>() {
-                TestType              ptr0    = make_empty_pointer_deleter_1<TestType>();
-                get_object<TestType>* raw_ptr = ptr0.get();
-                start_type            ptr1    = std::move(ptr0);
-                auto                  ptr2 = oup::dynamic_pointer_cast<cast_type>(std::move(ptr1));
+                TestType   ptr0 = make_empty_pointer_deleter_1<TestType>();
+                start_type ptr1 = std::move(ptr0);
+                auto       ptr2 = oup::dynamic_pointer_cast<cast_type>(std::move(ptr1));
 
                 using return_type = std::remove_cv_t<decltype(ptr2)>;
 
