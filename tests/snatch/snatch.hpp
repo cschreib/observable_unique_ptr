@@ -556,18 +556,14 @@ struct with_what_contains : private contains_substring {
 };
 } // namespace snatch::matchers
 
-// Test macros.
-// ------------
-
-#define TESTING_CONCAT_IMPL(x, y) x##y
-#define TESTING_MACRO_CONCAT(x, y) TESTING_CONCAT_IMPL(x, y)
-#define TESTING_EXPR(x) snatch::impl::expression{} <= x
+// Compiler warning handling.
+// --------------------------
 
 // clang-format off
 #if defined(__clang__)
 #    define WARNING_PUSH _Pragma("clang diagnostic push")
 #    define WARNING_POP _Pragma("clang diagnostic pop")
-#    define WARNING_DISABLE_PARENTHESES do {} while (0)
+#    define WARNING_DISABLE_PARENTHESES _Pragma("clang diagnostic ignored \"-Wparentheses\"")
 #    define WARNING_DISABLE_CONSTANT_COMPARISON do {} while (0)
 #elif defined(__GNUC__)
 #    define WARNING_PUSH _Pragma("GCC diagnostic push")
@@ -586,6 +582,13 @@ struct with_what_contains : private contains_substring {
 #    define WARNING_DISABLE_CONSTANT_COMPARISON do {} while (0)
 #endif
 // clang-format on
+
+// Test macros.
+// ------------
+
+#define TESTING_CONCAT_IMPL(x, y) x##y
+#define TESTING_MACRO_CONCAT(x, y) TESTING_CONCAT_IMPL(x, y)
+#define TESTING_EXPR(x) snatch::impl::expression{} <= x
 
 #define TEST_CASE(NAME, TAGS)                                                                      \
     static const char* TESTING_MACRO_CONCAT(test_id_, __COUNTER__) =                               \
