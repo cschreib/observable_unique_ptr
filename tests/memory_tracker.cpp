@@ -161,6 +161,14 @@ void operator delete[](void* p) noexcept {
     deallocate(p, true, std::align_val_t{0});
 }
 
+void operator delete(void* p, size_t size) noexcept {
+    deallocate(p, false, std::align_val_t{0});
+}
+
+void operator delete[](void* p, size_t size) noexcept {
+    deallocate(p, true, std::align_val_t{0});
+}
+
 void operator delete(void* p, std::align_val_t al) noexcept {
     deallocate(p, false, al);
 }
