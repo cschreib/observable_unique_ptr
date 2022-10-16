@@ -3,7 +3,7 @@
 #include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer comparison valid vs nullptr", "[comparison],[observer]", owner_types) {
+    "observer comparison valid vs nullptr", "[comparison][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -20,7 +20,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer comparison empty vs nullptr", "[comparison],[observer]", owner_types) {
+    "observer comparison empty vs nullptr", "[comparison][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -36,7 +36,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer comparison empty vs empty", "[comparison],[observer]", owner_types) {
+    "observer comparison empty vs empty", "[comparison][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -53,7 +53,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer comparison empty vs valid", "[comparison],[observer]", owner_types) {
+    "observer comparison empty vs valid", "[comparison][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -72,7 +72,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer comparison valid vs valid different instance",
-    "[comparison],[observer]",
+    "[comparison][observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -92,7 +92,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer comparison valid vs valid same instance", "[comparison],[observer]", owner_types) {
+    "observer comparison valid vs valid same instance", "[comparison][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -111,7 +111,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer comparison valid vs valid different instance derived",
-    "[comparison],[observer]",
+    "[comparison][observer]",
     owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;
@@ -134,7 +134,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer comparison valid vs valid same instance derived",
-    "[comparison],[observer]",
+    "[comparison][observer]",
     owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;

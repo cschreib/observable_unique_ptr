@@ -2,7 +2,7 @@
 #include "testing.hpp"
 #include "tests_common.hpp"
 
-TEMPLATE_LIST_TEST_CASE("make observable", "[make_observable],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("make observable", "[make_observable][owner]", owner_types) {
     if constexpr (can_use_make_observable<TestType>) {
         memory_tracker mem_track;
 
@@ -26,8 +26,7 @@ TEMPLATE_LIST_TEST_CASE("make observable", "[make_observable],[owner]", owner_ty
     }
 };
 
-TEMPLATE_LIST_TEST_CASE(
-    "make observable with arguments", "[make_observable],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("make observable with arguments", "[make_observable][owner]", owner_types) {
     if constexpr (can_use_make_observable<TestType>) {
         memory_tracker mem_track;
 
@@ -53,7 +52,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "make observable throw in constructor", "[make_observable],[owner]", owner_types) {
+    "make observable throw in constructor", "[make_observable][owner]", owner_types) {
     if constexpr (can_use_make_observable<TestType>) {
         memory_tracker mem_track;
 
@@ -66,7 +65,7 @@ TEMPLATE_LIST_TEST_CASE(
     }
 };
 
-TEMPLATE_LIST_TEST_CASE("make observable bad alloc", "[make_observable],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("make observable bad alloc", "[make_observable][owner]", owner_types) {
     if constexpr (can_use_make_observable<TestType>) {
         memory_tracker mem_track;
 
@@ -78,7 +77,7 @@ TEMPLATE_LIST_TEST_CASE("make observable bad alloc", "[make_observable],[owner]"
     }
 };
 
-TEST_CASE("make observable unique", "[make_observable],[owner]") {
+TEST_CASE("make observable unique", "[make_observable][owner]") {
     using TestType = oup::observable_unique_ptr<test_object>;
     memory_tracker mem_track;
 
@@ -94,7 +93,7 @@ TEST_CASE("make observable unique", "[make_observable],[owner]") {
     CHECK_NO_LEAKS;
 };
 
-TEST_CASE("make observable sealed", "[make_observable],[owner]") {
+TEST_CASE("make observable sealed", "[make_observable][owner]") {
     using TestType = oup::observable_sealed_ptr<test_object>;
     memory_tracker mem_track;
 

@@ -2,7 +2,7 @@
 #include "testing.hpp"
 #include "tests_common.hpp"
 
-TEMPLATE_LIST_TEST_CASE("owner default constructor", "[construction],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner default constructor", "[construction][owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -18,7 +18,7 @@ TEMPLATE_LIST_TEST_CASE("owner default constructor", "[construction],[owner]", o
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("owner nullptr constructor", "[construction],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner nullptr constructor", "[construction][owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -34,7 +34,7 @@ TEMPLATE_LIST_TEST_CASE("owner nullptr constructor", "[construction],[owner]", o
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("owner move constructor", "[construction],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner move constructor", "[construction][owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -55,7 +55,7 @@ TEMPLATE_LIST_TEST_CASE("owner move constructor", "[construction],[owner]", owne
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("owner acquiring constructor", "[construction],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner acquiring constructor", "[construction][owner]", owner_types) {
     if constexpr (!must_use_make_observable<TestType>) {
         memory_tracker mem_track;
 
@@ -74,7 +74,7 @@ TEMPLATE_LIST_TEST_CASE("owner acquiring constructor", "[construction],[owner]",
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "owner acquiring constructor with deleter", "[construction],[owner]", owner_types) {
+    "owner acquiring constructor with deleter", "[construction][owner]", owner_types) {
     if constexpr (!must_use_make_observable<TestType> && has_stateful_deleter<TestType>) {
         memory_tracker mem_track;
 
@@ -93,7 +93,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "owner acquiring constructor bad alloc", "[construction],[owner]", owner_types) {
+    "owner acquiring constructor bad alloc", "[construction][owner]", owner_types) {
     if constexpr (!must_use_make_observable<TestType>) {
         memory_tracker mem_track;
 
@@ -111,7 +111,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "owner acquiring constructor bad alloc with deleter", "[construction],[owner]", owner_types) {
+    "owner acquiring constructor bad alloc with deleter", "[construction][owner]", owner_types) {
     if constexpr (!must_use_make_observable<TestType> && has_stateful_deleter<TestType>) {
         memory_tracker mem_track;
 
@@ -130,7 +130,7 @@ TEMPLATE_LIST_TEST_CASE(
     }
 };
 
-TEMPLATE_LIST_TEST_CASE("owner acquiring constructor null", "[construction],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner acquiring constructor null", "[construction][owner]", owner_types) {
     if constexpr (!must_use_make_observable<TestType>) {
         memory_tracker mem_track;
 
@@ -149,7 +149,7 @@ TEMPLATE_LIST_TEST_CASE("owner acquiring constructor null", "[construction],[own
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "owner implicit conversion constructor", "[construction],[owner]", owner_types) {
+    "owner implicit conversion constructor", "[construction][owner]", owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;
 
@@ -174,7 +174,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "owner explicit conversion constructor", "[construction],[owner]", owner_types) {
+    "owner explicit conversion constructor", "[construction][owner]", owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;
 
@@ -201,7 +201,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "owner explicit conversion constructor with custom deleter",
-    "[construction],[owner]",
+    "[construction][owner]",
     owner_types) {
     if constexpr (has_base<TestType> && has_stateful_deleter<TestType>) {
         memory_tracker mem_track;
@@ -229,7 +229,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "owner explicit conversion constructor with null", "[construction],[owner]", owner_types) {
+    "owner explicit conversion constructor with null", "[construction][owner]", owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;
 
@@ -255,7 +255,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "owner explicit conversion constructor with custom deleter with null",
-    "[construction],[owner]",
+    "[construction][owner]",
     owner_types) {
     if constexpr (has_base<TestType> && has_stateful_deleter<TestType>) {
         memory_tracker mem_track;

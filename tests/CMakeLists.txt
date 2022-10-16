@@ -33,7 +33,7 @@ include(FetchContent)
 
 FetchContent_Declare(snatch
                      GIT_REPOSITORY https://github.com/cschreib/snatch.git
-                     GIT_TAG        3fe53311beb01595e7502d3990dc5a1569b006b8)
+                     GIT_TAG        v0.1.0)
 FetchContent_MakeAvailable(snatch)
 
 set(RUNTIME_TEST_FILES

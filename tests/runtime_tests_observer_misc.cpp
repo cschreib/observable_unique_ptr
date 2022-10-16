@@ -2,11 +2,11 @@
 #include "testing.hpp"
 #include "tests_common.hpp"
 
-TEMPLATE_LIST_TEST_CASE("observer size", "[size],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer size", "[size][observer]", owner_types) {
     CHECK(sizeof(observer_ptr<TestType>) == 2 * sizeof(void*));
 };
 
-TEMPLATE_LIST_TEST_CASE("observer reset to null", "[reset],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer reset to null", "[reset][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -21,7 +21,7 @@ TEMPLATE_LIST_TEST_CASE("observer reset to null", "[reset],[observer]", owner_ty
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer swap empty vs empty", "[swap],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer swap empty vs empty", "[swap][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -38,7 +38,7 @@ TEMPLATE_LIST_TEST_CASE("observer swap empty vs empty", "[swap],[observer]", own
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer swap valid vs empty", "[swap],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer swap valid vs empty", "[swap][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -57,7 +57,7 @@ TEMPLATE_LIST_TEST_CASE("observer swap valid vs empty", "[swap],[observer]", own
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer swap empty vs valid", "[swap],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer swap empty vs valid", "[swap][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -76,7 +76,7 @@ TEMPLATE_LIST_TEST_CASE("observer swap empty vs valid", "[swap],[observer]", own
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer swap valid vs valid", "[swap],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer swap valid vs valid", "[swap][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -98,7 +98,7 @@ TEMPLATE_LIST_TEST_CASE("observer swap valid vs valid", "[swap],[observer]", own
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer swap valid vs valid same instance", "[swap],[observer]", owner_types) {
+    "observer swap valid vs valid same instance", "[swap][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -116,7 +116,7 @@ TEMPLATE_LIST_TEST_CASE(
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer swap self vs self empty", "[swap],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer swap self vs self empty", "[swap][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -130,7 +130,7 @@ TEMPLATE_LIST_TEST_CASE("observer swap self vs self empty", "[swap],[observer]",
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer swap self vs self valid", "[swap],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer swap self vs self valid", "[swap][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -145,7 +145,7 @@ TEMPLATE_LIST_TEST_CASE("observer swap self vs self valid", "[swap],[observer]",
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer dereference valid", "[dereference],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer dereference valid", "[dereference][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -158,7 +158,7 @@ TEMPLATE_LIST_TEST_CASE("observer dereference valid", "[dereference],[observer]"
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer get valid", "[get],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer get valid", "[get][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -171,7 +171,7 @@ TEMPLATE_LIST_TEST_CASE("observer get valid", "[get],[observer]", owner_types) {
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer get empty", "[get],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer get empty", "[get][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -182,7 +182,7 @@ TEMPLATE_LIST_TEST_CASE("observer get empty", "[get],[observer]", owner_types) {
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer raw_get valid", "[raw_get],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer raw_get valid", "[raw_get][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -195,7 +195,7 @@ TEMPLATE_LIST_TEST_CASE("observer raw_get valid", "[raw_get],[observer]", owner_
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer raw_get empty", "[raw_get],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer raw_get empty", "[raw_get][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -206,7 +206,7 @@ TEMPLATE_LIST_TEST_CASE("observer raw_get empty", "[raw_get],[observer]", owner_
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer operator bool valid", "[bool],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer operator bool valid", "[bool][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -221,7 +221,7 @@ TEMPLATE_LIST_TEST_CASE("observer operator bool valid", "[bool],[observer]", own
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer operator bool empty", "[bool],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer operator bool empty", "[bool][observer]", owner_types) {
     memory_tracker mem_track;
 
     {

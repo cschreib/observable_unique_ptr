@@ -4,7 +4,7 @@
 
 #include <vector>
 
-TEMPLATE_LIST_TEST_CASE("observer expiring scope", "[lifetime],[owner],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer expiring scope", "[lifetime][owner][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -27,7 +27,7 @@ TEMPLATE_LIST_TEST_CASE("observer expiring scope", "[lifetime],[owner],[observer
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer not expiring when owner moved", "[lifetime],[owner],[observer]", owner_types) {
+    "observer not expiring when owner moved", "[lifetime][owner][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -60,7 +60,7 @@ TEMPLATE_LIST_TEST_CASE(
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer expiring reset", "[lifetime],[owner],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer expiring reset", "[lifetime][owner][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -84,7 +84,7 @@ TEMPLATE_LIST_TEST_CASE("observer expiring reset", "[lifetime],[owner],[observer
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "release valid owner with observer", "[lifetime],[release],[owner],[observer]", owner_types) {
+    "release valid owner with observer", "[lifetime][release][owner][observer]", owner_types) {
     if constexpr (!is_sealed<TestType>) {
         memory_tracker mem_track;
 
@@ -129,7 +129,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "release valid owner with observer subobject",
-    "[lifetime],[release],[owner],[observer]",
+    "[lifetime][release][owner][observer]",
     owner_types) {
     if constexpr (!is_sealed<TestType>) {
         memory_tracker mem_track;
@@ -172,7 +172,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer get and raw get", "[lifetime],[get],[raw_get],[owner],[observer]", owner_types) {
+    "observer get and raw get", "[lifetime][get][raw_get][owner][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -199,7 +199,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "object owning observer pointer to itself",
-    "[lifetime],[cycles],[owner],[observer]",
+    "[lifetime][cycles][owner][observer]",
     owner_types) {
     if constexpr (is_cyclic<TestType>) {
         memory_tracker mem_track;
@@ -216,9 +216,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "object owning observer pointer to other",
-    "[lifetime],[cycles],[owner],[observer]",
-    owner_types) {
+    "object owning observer pointer to other", "[lifetime][cycles][owner][observer]", owner_types) {
     if constexpr (is_cyclic<TestType>) {
         memory_tracker mem_track;
 
@@ -237,7 +235,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "object owning observer pointer open chain",
-    "[lifetime],[cycles],[owner],[observer]",
+    "[lifetime][cycles][owner][observer]",
     owner_types) {
     if constexpr (is_cyclic<TestType>) {
         memory_tracker mem_track;
@@ -258,7 +256,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "object owning observer pointer open chain reversed",
-    "[lifetime],[cycles],[owner],[observer]",
+    "[lifetime][cycles][owner][observer]",
     owner_types) {
     if constexpr (is_cyclic<TestType>) {
         memory_tracker mem_track;
@@ -279,7 +277,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "object owning observer pointer closed chain interleaved",
-    "[lifetime],[cycles],[owner],[observer]",
+    "[lifetime][cycles][owner][observer]",
     owner_types) {
     if constexpr (is_cyclic<TestType>) {
         memory_tracker mem_track;
@@ -301,8 +299,7 @@ TEMPLATE_LIST_TEST_CASE(
     }
 };
 
-TEMPLATE_LIST_TEST_CASE(
-    "pointers in vector", "[lifetime],[array],[owner],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("pointers in vector", "[lifetime][array][owner][observer]", owner_types) {
     memory_tracker mem_track;
 
     {

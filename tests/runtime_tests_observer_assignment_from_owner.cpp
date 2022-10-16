@@ -4,7 +4,7 @@
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment operator valid to empty",
-    "[assignment],[observer]",
+    "[assignment][observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -27,7 +27,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment operator empty to valid",
-    "[assignment],[observer]",
+    "[assignment][observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -52,7 +52,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment operator empty to empty",
-    "[assignment],[observer]",
+    "[assignment][observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -76,7 +76,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment operator valid to valid",
-    "[assignment],[observer]",
+    "[assignment][observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -104,7 +104,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment converting operator valid to empty",
-    "[assignment],[observer]",
+    "[assignment][observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -129,7 +129,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment converting operator empty to valid",
-    "[assignment],[observer]",
+    "[assignment][observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -156,7 +156,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment converting operator empty to empty",
-    "[assignment],[observer]",
+    "[assignment][observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -182,7 +182,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment converting operator valid to valid",
-    "[assignment],[observer]",
+    "[assignment][observer]",
     owner_types) {
     memory_tracker mem_track;
 

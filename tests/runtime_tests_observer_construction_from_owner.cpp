@@ -3,9 +3,7 @@
 #include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer from empty owner constructor",
-    "[construction],[observer],[from_owner]",
-    owner_types) {
+    "observer from empty owner constructor", "[construction][observer][from_owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -25,9 +23,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer from valid owner constructor",
-    "[construction],[observer],[from_owner]",
-    owner_types) {
+    "observer from valid owner constructor", "[construction][observer][from_owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -48,7 +44,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from empty owner conversion constructor",
-    "[construction],[observer],[from_owner]",
+    "[construction][observer][from_owner]",
     owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;
@@ -72,7 +68,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from valid owner conversion constructor",
-    "[construction],[observer],[from_owner]",
+    "[construction][observer][from_owner]",
     owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;
@@ -96,7 +92,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from empty owner explicit conversion constructor",
-    "[construction],[observer],[from_owner]",
+    "[construction][observer][from_owner]",
     owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;
@@ -120,7 +116,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from valid owner explicit conversion constructor",
-    "[construction],[observer],[from_owner]",
+    "[construction][observer][from_owner]",
     owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;

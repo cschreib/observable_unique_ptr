@@ -3,7 +3,7 @@
 #include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer copy assignment operator valid to empty", "[assignment],[observer]", owner_types) {
+    "observer copy assignment operator valid to empty", "[assignment][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -27,7 +27,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer copy assignment operator empty to valid", "[assignment],[observer]", owner_types) {
+    "observer copy assignment operator empty to valid", "[assignment][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -51,7 +51,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer copy assignment operator empty to empty", "[assignment],[observer]", owner_types) {
+    "observer copy assignment operator empty to empty", "[assignment][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -74,7 +74,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer copy assignment operator valid to valid", "[assignment],[observer]", owner_types) {
+    "observer copy assignment operator valid to valid", "[assignment][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -100,7 +100,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer copy assignment converting operator valid to empty",
-    "[assignment],[observer]",
+    "[assignment][observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -128,7 +128,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer copy assignment converting operator empty to valid",
-    "[assignment],[observer]",
+    "[assignment][observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -156,7 +156,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer copy assignment converting operator empty to empty",
-    "[assignment],[observer]",
+    "[assignment][observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -183,7 +183,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer copy assignment converting operator valid to valid",
-    "[assignment],[observer]",
+    "[assignment][observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -211,9 +211,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer copy assignment operator self to self valid",
-    "[assignment],[observer]",
-    owner_types) {
+    "observer copy assignment operator self to self valid", "[assignment][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -233,9 +231,7 @@ TEMPLATE_LIST_TEST_CASE(
 };
 
 TEMPLATE_LIST_TEST_CASE(
-    "observer copy assignment operator self to self empty",
-    "[assignment],[observer]",
-    owner_types) {
+    "observer copy assignment operator self to self empty", "[assignment][observer]", owner_types) {
     memory_tracker mem_track;
 
     {

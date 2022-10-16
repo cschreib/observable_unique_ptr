@@ -5,7 +5,7 @@
 // For std::bad_cast
 #include <typeinfo>
 
-TEMPLATE_LIST_TEST_CASE("owner static_cast move from valid", "[cast],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner static_cast move from valid", "[cast][owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -35,7 +35,7 @@ TEMPLATE_LIST_TEST_CASE("owner static_cast move from valid", "[cast],[owner]", o
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("owner static_cast move from empty", "[cast],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner static_cast move from empty", "[cast][owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -64,7 +64,7 @@ TEMPLATE_LIST_TEST_CASE("owner static_cast move from empty", "[cast],[owner]", o
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("owner const_cast move from valid", "[cast],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner const_cast move from valid", "[cast][owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -92,7 +92,7 @@ TEMPLATE_LIST_TEST_CASE("owner const_cast move from valid", "[cast],[owner]", ow
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("owner const_cast move from empty", "[cast],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner const_cast move from empty", "[cast][owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -119,7 +119,7 @@ TEMPLATE_LIST_TEST_CASE("owner const_cast move from empty", "[cast],[owner]", ow
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from valid", "[cast],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from valid", "[cast][owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -152,7 +152,7 @@ TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from valid", "[cast],[owner]", 
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from empty", "[cast],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from empty", "[cast][owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -184,7 +184,7 @@ TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from empty", "[cast],[owner]", 
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from invalid", "[cast],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from invalid", "[cast][owner]", owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;
 

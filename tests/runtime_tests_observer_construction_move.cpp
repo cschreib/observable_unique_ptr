@@ -4,7 +4,7 @@
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from valid observer constructor",
-    "[construction],[observer],[from_observer]",
+    "[construction][observer][from_observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -28,7 +28,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from empty observer constructor",
-    "[construction],[observer],[from_observer]",
+    "[construction][observer][from_observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -51,7 +51,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from valid observer implicit conversion constructor",
-    "[construction],[observer],[from_observer]",
+    "[construction][observer][from_observer]",
     owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;
@@ -77,7 +77,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from empty observer implicit conversion constructor",
-    "[construction],[observer],[from_observer]",
+    "[construction][observer][from_observer]",
     owner_types) {
     memory_tracker mem_track;
 
@@ -101,7 +101,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from valid observer explicit conversion constructor",
-    "[construction],[observer],[from_observer]",
+    "[construction][observer][from_observer]",
     owner_types) {
 
     if constexpr (has_base<TestType>) {
@@ -130,7 +130,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from empty observer explicit conversion constructor",
-    "[construction],[observer],[from_observer]",
+    "[construction][observer][from_observer]",
     owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;
@@ -157,7 +157,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from valid observer explicit conversion constructor with null",
-    "[construction],[observer],[from_observer]",
+    "[construction][observer][from_observer]",
     owner_types) {
     if constexpr (has_base<TestType>) {
         memory_tracker mem_track;
@@ -185,7 +185,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from valid observer explicit conversion constructor subobject",
-    "[construction],[observer],[from_observer]",
+    "[construction][observer][from_observer]",
     owner_types) {
     memory_tracker mem_track;
 

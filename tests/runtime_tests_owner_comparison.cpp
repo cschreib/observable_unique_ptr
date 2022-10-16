@@ -2,7 +2,7 @@
 #include "testing.hpp"
 #include "tests_common.hpp"
 
-TEMPLATE_LIST_TEST_CASE("owner comparison valid vs nullptr", "[comparison],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner comparison valid vs nullptr", "[comparison][owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -17,7 +17,7 @@ TEMPLATE_LIST_TEST_CASE("owner comparison valid vs nullptr", "[comparison],[owne
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("owner comparison empty vs nullptr", "[comparison],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner comparison empty vs nullptr", "[comparison][owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -32,7 +32,7 @@ TEMPLATE_LIST_TEST_CASE("owner comparison empty vs nullptr", "[comparison],[owne
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("owner comparison empty vs empty", "[comparison],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner comparison empty vs empty", "[comparison][owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -48,7 +48,7 @@ TEMPLATE_LIST_TEST_CASE("owner comparison empty vs empty", "[comparison],[owner]
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("owner comparison empty vs valid", "[comparison],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner comparison empty vs valid", "[comparison][owner]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -64,7 +64,7 @@ TEMPLATE_LIST_TEST_CASE("owner comparison empty vs valid", "[comparison],[owner]
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("owner comparison valid vs valid", "[comparison],[owner]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("owner comparison valid vs valid", "[comparison][owner]", owner_types) {
     memory_tracker mem_track;
 
     {

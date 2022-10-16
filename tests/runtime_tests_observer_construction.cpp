@@ -2,7 +2,7 @@
 #include "testing.hpp"
 #include "tests_common.hpp"
 
-TEMPLATE_LIST_TEST_CASE("observer default constructor", "[construction],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer default constructor", "[construction][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
@@ -16,7 +16,7 @@ TEMPLATE_LIST_TEST_CASE("observer default constructor", "[construction],[observe
     CHECK_NO_LEAKS;
 };
 
-TEMPLATE_LIST_TEST_CASE("observer nullptr constructor", "[construction],[observer]", owner_types) {
+TEMPLATE_LIST_TEST_CASE("observer nullptr constructor", "[construction][observer]", owner_types) {
     memory_tracker mem_track;
 
     {
