@@ -27,166 +27,54 @@
 			[
 				{
 					"name": "clean",
-					"shell_cmd": "make -j12 clean"
+					"shell_cmd": "make -j12 clean",
 				},
 				{
 					"name": "install",
-					"shell_cmd": "make -j12 install"
+					"shell_cmd": "make -j12 install",
 				},
 				{
 					"name": "install/local",
-					"shell_cmd": "make -j12 install/local"
+					"shell_cmd": "make -j12 install/local",
 				},
 				{
 					"name": "install/strip",
-					"shell_cmd": "make -j12 install/strip"
+					"shell_cmd": "make -j12 install/strip",
 				},
 				{
 					"name": "list_install_components",
-					"shell_cmd": "make -j12 list_install_components"
+					"shell_cmd": "make -j12 list_install_components",
 				},
 				{
 					"name": "rebuild_cache",
-					"shell_cmd": "make -j12 rebuild_cache"
+					"shell_cmd": "make -j12 rebuild_cache",
 				},
 				{
 					"name": "test",
-					"shell_cmd": "make -j12 test"
+					"shell_cmd": "make -j12 test",
 				},
 				{
-					"name": "Continuous",
-					"shell_cmd": "make -j12 Continuous"
+					"name": "oup_runtime_tests_run",
+					"shell_cmd": "make -j12 oup_runtime_tests_run",
 				},
 				{
-					"name": "ContinuousBuild",
-					"shell_cmd": "make -j12 ContinuousBuild"
-				},
-				{
-					"name": "ContinuousConfigure",
-					"shell_cmd": "make -j12 ContinuousConfigure"
-				},
-				{
-					"name": "ContinuousCoverage",
-					"shell_cmd": "make -j12 ContinuousCoverage"
-				},
-				{
-					"name": "ContinuousMemCheck",
-					"shell_cmd": "make -j12 ContinuousMemCheck"
-				},
-				{
-					"name": "ContinuousStart",
-					"shell_cmd": "make -j12 ContinuousStart"
-				},
-				{
-					"name": "ContinuousSubmit",
-					"shell_cmd": "make -j12 ContinuousSubmit"
-				},
-				{
-					"name": "ContinuousTest",
-					"shell_cmd": "make -j12 ContinuousTest"
-				},
-				{
-					"name": "ContinuousUpdate",
-					"shell_cmd": "make -j12 ContinuousUpdate"
-				},
-				{
-					"name": "Experimental",
-					"shell_cmd": "make -j12 Experimental"
-				},
-				{
-					"name": "ExperimentalBuild",
-					"shell_cmd": "make -j12 ExperimentalBuild"
-				},
-				{
-					"name": "ExperimentalConfigure",
-					"shell_cmd": "make -j12 ExperimentalConfigure"
-				},
-				{
-					"name": "ExperimentalCoverage",
-					"shell_cmd": "make -j12 ExperimentalCoverage"
-				},
-				{
-					"name": "ExperimentalMemCheck",
-					"shell_cmd": "make -j12 ExperimentalMemCheck"
-				},
-				{
-					"name": "ExperimentalStart",
-					"shell_cmd": "make -j12 ExperimentalStart"
-				},
-				{
-					"name": "ExperimentalSubmit",
-					"shell_cmd": "make -j12 ExperimentalSubmit"
-				},
-				{
-					"name": "ExperimentalTest",
-					"shell_cmd": "make -j12 ExperimentalTest"
-				},
-				{
-					"name": "ExperimentalUpdate",
-					"shell_cmd": "make -j12 ExperimentalUpdate"
-				},
-				{
-					"name": "Nightly",
-					"shell_cmd": "make -j12 Nightly"
-				},
-				{
-					"name": "NightlyBuild",
-					"shell_cmd": "make -j12 NightlyBuild"
-				},
-				{
-					"name": "NightlyConfigure",
-					"shell_cmd": "make -j12 NightlyConfigure"
-				},
-				{
-					"name": "NightlyCoverage",
-					"shell_cmd": "make -j12 NightlyCoverage"
-				},
-				{
-					"name": "NightlyMemCheck",
-					"shell_cmd": "make -j12 NightlyMemCheck"
-				},
-				{
-					"name": "NightlyMemoryCheck",
-					"shell_cmd": "make -j12 NightlyMemoryCheck"
-				},
-				{
-					"name": "NightlyStart",
-					"shell_cmd": "make -j12 NightlyStart"
-				},
-				{
-					"name": "NightlySubmit",
-					"shell_cmd": "make -j12 NightlySubmit"
-				},
-				{
-					"name": "NightlyTest",
-					"shell_cmd": "make -j12 NightlyTest"
-				},
-				{
-					"name": "NightlyUpdate",
-					"shell_cmd": "make -j12 NightlyUpdate"
-				},
-				{
-					"name": "Catch2",
-					"shell_cmd": "make -j12 Catch2"
-				},
-				{
-					"name": "Catch2WithMain",
-					"shell_cmd": "make -j12 Catch2WithMain"
+					"name": "oup_runtime_tests",
+					"shell_cmd": "make -j12 oup_runtime_tests",
 				},
 				{
 					"name": "oup_size_benchmark",
-					"shell_cmd": "make -j12 oup_size_benchmark"
+					"shell_cmd": "make -j12 oup_size_benchmark",
 				},
 				{
 					"name": "oup_speed_benchmark",
 					"shell_cmd": "make -j12 oup_speed_benchmark"
 				},
 				{
-					"name": "oup_tests",
-					"shell_cmd": "make -j12 oup_tests"
-				}
+					"name": "snatch",
+					"shell_cmd": "make -j12 snatch"
+				},
 			],
-			"working_dir": "$folder/build"
+			"working_dir": "$folder/build",
 		}
 	],
 }

@@ -86,7 +86,7 @@ void do_report(const char* name, const R& which) {
 }
 
 double median(std::vector<double> v) {
-    const auto n = v.size() / 2;
+    const auto n = static_cast<std::ptrdiff_t>(v.size() / 2);
     std::nth_element(v.begin(), v.begin() + n, v.end());
     return *(v.begin() + n);
 }
@@ -172,7 +172,7 @@ int main() {
     std::cout << std::endl;
 
     std::cout << "|---|---|";
-    for (const auto& t : cols) {
+    for (const auto& t [[maybe_unused]] : cols) {
         std::cout << "---|";
     }
     std::cout << std::endl;
