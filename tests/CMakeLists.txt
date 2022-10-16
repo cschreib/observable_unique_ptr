@@ -29,8 +29,14 @@ function(add_platform_definitions TARGET)
     endif()
 endfunction()
 
+include(FetchContent)
+
+FetchContent_Declare(snatch
+                     GIT_REPOSITORY https://github.com/cschreib/snatch.git
+                     GIT_TAG        3fe53311beb01595e7502d3990dc5a1569b006b8)
+FetchContent_MakeAvailable(snatch)
+
 set(RUNTIME_TEST_FILES
-  ${PROJECT_SOURCE_DIR}/tests/snatch.cpp
   ${PROJECT_SOURCE_DIR}/tests/tests_common.cpp
   ${PROJECT_SOURCE_DIR}/tests/memory_tracker.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_misc.cpp
@@ -55,9 +61,8 @@ set(RUNTIME_TEST_FILES
 
 add_executable(oup_runtime_tests ${RUNTIME_TEST_FILES})
 target_link_libraries(oup_runtime_tests PRIVATE oup::oup)
+target_link_libraries(oup_runtime_tests PRIVATE snatch::snatch)
 add_platform_definitions(oup_runtime_tests)
-target_compile_definitions(oup_runtime_tests PUBLIC
-  SNATCH_DEFINE_MAIN=1)
 
 add_custom_target(oup_runtime_tests_run
   COMMAND oup_runtime_tests
