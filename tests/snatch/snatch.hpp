@@ -641,8 +641,8 @@ struct with_what_contains : private contains_substring {
 #    define WARNING_DISABLE_PARENTHESES _Pragma("GCC diagnostic ignored \"-Wparentheses\"")
 #    define WARNING_DISABLE_CONSTANT_COMPARISON do {} while (0)
 #elif defined(_MSC_VER)
-#    define WARNING_PUSH do {} _Pragma("warning(push)")
-#    define WARNING_POP do {} _Pragma("warning(pop)")
+#    define WARNING_PUSH _Pragma("warning(push)")
+#    define WARNING_POP _Pragma("warning(pop)")
 #    define WARNING_DISABLE_PARENTHESES do {} while (0)
 #    define WARNING_DISABLE_CONSTANT_COMPARISON _Pragma("warning(disable: 4127)")
 #else
