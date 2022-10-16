@@ -3,6 +3,7 @@
 #include <algorithm> // for std::sort
 #include <cstdio> // for std::printf
 #include <cstring> // for std::memcpy
+#include <optional> // for std::optional
 
 #if !defined(SNATCH_DEFINE_MAIN)
 #    define SNATCH_DEFINE_MAIN 1
