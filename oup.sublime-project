@@ -67,7 +67,7 @@
 				},
 				{
 					"name": "oup_speed_benchmark",
-					"shell_cmd": "make -j12 oup_speed_benchmark"
+					"shell_cmd": "make -j12 oup_speed_benchmark",
 				},
 				{
 					"name": "snatch",

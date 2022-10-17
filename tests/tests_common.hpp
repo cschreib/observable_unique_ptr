@@ -631,12 +631,12 @@ using owner_types = std::tuple<
 
 // clang-format off
 #if defined(__clang__)
-#    define WARNING_DISABLE_SELF_ASSIGN _Pragma("clang diagnostic ignored \"-Wself-assign-overloaded\"")
+#    define SNATCH_WARNING_DISABLE_SELF_ASSIGN _Pragma("clang diagnostic ignored \"-Wself-assign-overloaded\"")
 #elif defined(__GNUC__)
-#    define WARNING_DISABLE_SELF_ASSIGN do {} while (0)
+#    define SNATCH_WARNING_DISABLE_SELF_ASSIGN do {} while (0)
 #elif defined(_MSC_VER)
-#    define WARNING_DISABLE_SELF_ASSIGN do {} while (0)
+#    define SNATCH_WARNING_DISABLE_SELF_ASSIGN do {} while (0)
 #else
-#    define WARNING_DISABLE_SELF_ASSIGN do {} while (0)
+#    define SNATCH_WARNING_DISABLE_SELF_ASSIGN do {} while (0)
 #endif
 // clang-format on
