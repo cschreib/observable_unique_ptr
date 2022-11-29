@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <cstdlib>
 
 // Allocation tracker, to catch memory leaks and double delete
