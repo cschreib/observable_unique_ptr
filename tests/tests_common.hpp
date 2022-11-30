@@ -21,7 +21,7 @@ struct test_object {
     test_object(test_object&&)      = delete;
 
     test_object& operator=(const test_object&) = delete;
-    test_object& operator=(test_object&&) = delete;
+    test_object& operator=(test_object&&)      = delete;
 };
 
 template<typename O>
@@ -358,7 +358,7 @@ struct test_deleter {
     ~test_deleter() noexcept;
 
     test_deleter& operator=(const test_deleter&) = default;
-    test_deleter& operator                       =(test_deleter&& source) noexcept;
+    test_deleter& operator=(test_deleter&& source) noexcept;
 
     void operator()(test_object* ptr) noexcept;
     void operator()(const test_object* ptr) noexcept;
@@ -448,24 +448,24 @@ template<typename T>
 constexpr bool has_eoft_self_member = has_eoft<T> && !has_eoft_obs_member<T>;
 
 template<typename T>
-constexpr bool    eoft_constructor_takes_control_block =
-    has_eoft<T>&& get_policy<T>::eoft_constructor_takes_control_block;
+constexpr bool eoft_constructor_takes_control_block =
+    has_eoft<T> && get_policy<T>::eoft_constructor_takes_control_block;
 
 template<typename T>
-constexpr bool eoft_allocates = has_eoft<T>&&
-               oup::policy_queries<get_policy<T>>::eoft_constructor_allocates();
+constexpr bool eoft_allocates =
+    has_eoft<T> && oup::policy_queries<get_policy<T>>::eoft_constructor_allocates();
 
 template<typename T>
-constexpr bool eoft_always_has_block = has_eoft<T>&&
-               oup::policy_queries<get_policy<T>>::eoft_always_has_block();
+constexpr bool eoft_always_has_block =
+    has_eoft<T> && oup::policy_queries<get_policy<T>>::eoft_always_has_block();
 
 template<typename T>
 constexpr bool must_use_make_observable = is_sealed<T> || eoft_constructor_takes_control_block<T>;
 
 template<typename T>
-constexpr bool can_use_make_observable = (is_sealed<T> &&
-                                          std::is_same_v<get_deleter<T>, oup::placement_delete>) ||
-                                         std::is_same_v<get_deleter<T>, oup::default_delete>;
+constexpr bool can_use_make_observable =
+    (is_sealed<T> && std::is_same_v<get_deleter<T>, oup::placement_delete>) ||
+    std::is_same_v<get_deleter<T>, oup::default_delete>;
 
 template<typename T>
 constexpr bool has_base = std::is_base_of_v<test_object_derived, std::remove_cv_t<get_object<T>>>;

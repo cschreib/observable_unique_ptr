@@ -1,6 +1,8 @@
 #include "memory_tracker.hpp"
 
+#include <algorithm>
 #include <cstdio>
+#include <stdexcept>
 
 void*       allocations[max_allocations];
 void*       allocations_array[max_allocations];
