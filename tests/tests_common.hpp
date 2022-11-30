@@ -576,33 +576,32 @@ auto make_const_observer_from_this(const get_object<T>* ptr) {
 }
 
 // clang-format off
-using owner_types = std::tuple<
-    oup::observable_unique_ptr<test_object>,
-    oup::observable_sealed_ptr<test_object>,
-    oup::observable_unique_ptr<const test_object>,
-    oup::observable_sealed_ptr<const test_object>,
-    oup::observable_unique_ptr<test_object_derived>,
-    oup::observable_sealed_ptr<test_object_derived>,
-    oup::observable_unique_ptr<test_object, test_deleter>,
-    oup::observable_unique_ptr<test_object_derived, test_deleter>,
-    oup::observable_unique_ptr<test_object_observer_from_this_unique>,
-    oup::observable_sealed_ptr<test_object_observer_from_this_sealed>,
-    oup::basic_observable_ptr<test_object_observer_from_this_non_virtual_unique, oup::default_delete, unique_non_virtual_policy>,
-    oup::basic_observable_ptr<test_object_observer_from_this_maybe_no_block_unique, oup::default_delete, unique_maybe_no_block_policy>,
-    oup::basic_observable_ptr<test_object_observer_from_this_virtual_sealed, oup::placement_delete, sealed_virtual_policy>,
-    oup::observable_unique_ptr<const test_object_observer_from_this_unique>,
-    oup::observable_sealed_ptr<const test_object_observer_from_this_sealed>,
-    oup::observable_unique_ptr<test_object_observer_from_this_derived_unique>,
-    oup::observable_sealed_ptr<test_object_observer_from_this_derived_sealed>,
-    oup::observable_unique_ptr<test_object_observer_from_this_multi_unique>,
-    oup::observable_sealed_ptr<test_object_observer_from_this_multi_sealed>,
-    oup::observable_unique_ptr<test_object_observer_from_this_constructor_unique>,
-    oup::observable_sealed_ptr<test_object_observer_from_this_constructor_sealed>,
-    oup::observable_unique_ptr<test_object_observer_from_this_constructor_multi_unique>,
-    oup::observable_sealed_ptr<test_object_observer_from_this_constructor_multi_sealed>,
-    oup::observable_unique_ptr<test_object_observer_owner>,
+#define owner_types \
+    oup::observable_unique_ptr<test_object>, \
+    oup::observable_sealed_ptr<test_object>, \
+    oup::observable_unique_ptr<const test_object>, \
+    oup::observable_sealed_ptr<const test_object>, \
+    oup::observable_unique_ptr<test_object_derived>, \
+    oup::observable_sealed_ptr<test_object_derived>, \
+    oup::observable_unique_ptr<test_object, test_deleter>, \
+    oup::observable_unique_ptr<test_object_derived, test_deleter>, \
+    oup::observable_unique_ptr<test_object_observer_from_this_unique>, \
+    oup::observable_sealed_ptr<test_object_observer_from_this_sealed>, \
+    oup::basic_observable_ptr<test_object_observer_from_this_non_virtual_unique, oup::default_delete, unique_non_virtual_policy>, \
+    oup::basic_observable_ptr<test_object_observer_from_this_maybe_no_block_unique, oup::default_delete, unique_maybe_no_block_policy>, \
+    oup::basic_observable_ptr<test_object_observer_from_this_virtual_sealed, oup::placement_delete, sealed_virtual_policy>, \
+    oup::observable_unique_ptr<const test_object_observer_from_this_unique>, \
+    oup::observable_sealed_ptr<const test_object_observer_from_this_sealed>, \
+    oup::observable_unique_ptr<test_object_observer_from_this_derived_unique>, \
+    oup::observable_sealed_ptr<test_object_observer_from_this_derived_sealed>, \
+    oup::observable_unique_ptr<test_object_observer_from_this_multi_unique>, \
+    oup::observable_sealed_ptr<test_object_observer_from_this_multi_sealed>, \
+    oup::observable_unique_ptr<test_object_observer_from_this_constructor_unique>, \
+    oup::observable_sealed_ptr<test_object_observer_from_this_constructor_sealed>, \
+    oup::observable_unique_ptr<test_object_observer_from_this_constructor_multi_unique>, \
+    oup::observable_sealed_ptr<test_object_observer_from_this_constructor_multi_sealed>, \
+    oup::observable_unique_ptr<test_object_observer_owner>, \
     oup::observable_sealed_ptr<test_object_observer_owner>
-    >;
 // clang-format on
 
 #define CHECK_INSTANCES(TEST_OBJECTS, TEST_DELETER)                                                \

@@ -31,12 +31,13 @@ endfunction()
 
 include(FetchContent)
 
-FetchContent_Declare(snatch
-                     GIT_REPOSITORY https://github.com/cschreib/snatch.git
-                     GIT_TAG        v0.1.3)
-FetchContent_MakeAvailable(snatch)
+FetchContent_Declare(doctest
+                     GIT_REPOSITORY https://github.com/doctest/doctest.git
+                     GIT_TAG        v2.4.9)
+FetchContent_MakeAvailable(doctest)
 
 set(RUNTIME_TEST_FILES
+  ${PROJECT_SOURCE_DIR}/tests/testing.cpp
   ${PROJECT_SOURCE_DIR}/tests/tests_common.cpp
   ${PROJECT_SOURCE_DIR}/tests/memory_tracker.cpp
   ${PROJECT_SOURCE_DIR}/tests/runtime_tests_owner_misc.cpp
@@ -61,7 +62,7 @@ set(RUNTIME_TEST_FILES
 
 add_executable(oup_runtime_tests ${RUNTIME_TEST_FILES})
 target_link_libraries(oup_runtime_tests PRIVATE oup::oup)
-target_link_libraries(oup_runtime_tests PRIVATE snatch::snatch)
+target_link_libraries(oup_runtime_tests PRIVATE doctest::doctest)
 add_platform_definitions(oup_runtime_tests)
 
 add_custom_target(oup_runtime_tests_run

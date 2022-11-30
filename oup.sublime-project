@@ -58,6 +58,10 @@
 					"shell_cmd": "make -j12 oup_runtime_tests_run",
 				},
 				{
+					"name": "doctest_with_main",
+					"shell_cmd": "make -j12 doctest_with_main",
+				},
+				{
 					"name": "oup_runtime_tests",
 					"shell_cmd": "make -j12 oup_runtime_tests",
 				},
@@ -68,10 +72,6 @@
 				{
 					"name": "oup_speed_benchmark",
 					"shell_cmd": "make -j12 oup_speed_benchmark",
-				},
-				{
-					"name": "snatch",
-					"shell_cmd": "make -j12 snatch",
 				},
 			],
 			"working_dir": "$folder/build",
