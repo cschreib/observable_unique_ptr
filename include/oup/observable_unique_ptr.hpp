@@ -41,11 +41,11 @@ class ptr_and_deleter : private Deleter {
 public:
     explicit ptr_and_deleter(Deleter d, T* ptr) : Deleter(std::move(d)), data(ptr) {}
 
-    ptr_and_deleter()                       = default;
-    ptr_and_deleter(const ptr_and_deleter&) = default;
-    ptr_and_deleter(ptr_and_deleter&&)      = default;
+    ptr_and_deleter()                                  = default;
+    ptr_and_deleter(const ptr_and_deleter&)            = default;
+    ptr_and_deleter(ptr_and_deleter&&)                 = default;
     ptr_and_deleter& operator=(const ptr_and_deleter&) = default;
-    ptr_and_deleter& operator=(ptr_and_deleter&&) = default;
+    ptr_and_deleter& operator=(ptr_and_deleter&&)      = default;
 
     T*& pointer() {
         return data;
@@ -239,11 +239,11 @@ class basic_control_block final {
 
     control_block_storage_type storage = 1;
 
-    basic_control_block() noexcept                  = default;
-    basic_control_block(const basic_control_block&) = delete;
-    basic_control_block(basic_control_block&&)      = delete;
+    basic_control_block() noexcept                             = default;
+    basic_control_block(const basic_control_block&)            = delete;
+    basic_control_block(basic_control_block&&)                 = delete;
     basic_control_block& operator=(const basic_control_block&) = delete;
-    basic_control_block& operator=(basic_control_block&&) = delete;
+    basic_control_block& operator=(basic_control_block&&)      = delete;
 
     void push_ref() noexcept {
         ++storage;
@@ -296,10 +296,10 @@ struct enable_observer_from_this_base {
         block.push_ref();
     }
 
-    enable_observer_from_this_base(const enable_observer_from_this_base&) = delete;
-    enable_observer_from_this_base(enable_observer_from_this_base&&)      = delete;
+    enable_observer_from_this_base(const enable_observer_from_this_base&)            = delete;
+    enable_observer_from_this_base(enable_observer_from_this_base&&)                 = delete;
     enable_observer_from_this_base& operator=(const enable_observer_from_this_base&) = delete;
-    enable_observer_from_this_base& operator=(enable_observer_from_this_base&&) = delete;
+    enable_observer_from_this_base& operator=(enable_observer_from_this_base&&)      = delete;
 
     virtual ~enable_observer_from_this_base() noexcept {
         if (this_control_block) {
@@ -701,7 +701,7 @@ public:
     }
 
     // Non-copyable
-    basic_observable_ptr(const basic_observable_ptr&) = delete;
+    basic_observable_ptr(const basic_observable_ptr&)            = delete;
     basic_observable_ptr& operator=(const basic_observable_ptr&) = delete;
 
     /**

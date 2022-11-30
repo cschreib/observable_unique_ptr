@@ -37,7 +37,7 @@ template void use_object<std::weak_ptr<std::array<int, 65'536>>>(
 template void
 use_object<oup::observable_unique_ptr<int>>(oup::observable_unique_ptr<int>&) noexcept;
 template void
-              use_object<oup::observable_unique_ptr<float>>(oup::observable_unique_ptr<float>&) noexcept;
+use_object<oup::observable_unique_ptr<float>>(oup::observable_unique_ptr<float>&) noexcept;
 template void use_object<oup::observable_unique_ptr<std::string>>(
     oup::observable_unique_ptr<std::string>&) noexcept;
 template void use_object<oup::observable_unique_ptr<std::array<int, 65'536>>>(
@@ -46,7 +46,7 @@ template void use_object<oup::observable_unique_ptr<std::array<int, 65'536>>>(
 template void
 use_object<oup::observable_sealed_ptr<int>>(oup::observable_sealed_ptr<int>&) noexcept;
 template void
-              use_object<oup::observable_sealed_ptr<float>>(oup::observable_sealed_ptr<float>&) noexcept;
+use_object<oup::observable_sealed_ptr<float>>(oup::observable_sealed_ptr<float>&) noexcept;
 template void use_object<oup::observable_sealed_ptr<std::string>>(
     oup::observable_sealed_ptr<std::string>&) noexcept;
 template void use_object<oup::observable_sealed_ptr<std::array<int, 65'536>>>(
