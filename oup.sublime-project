@@ -58,6 +58,14 @@
 					"shell_cmd": "make -j12 oup_runtime_tests_run",
 				},
 				{
+					"name": "Catch2",
+					"shell_cmd": "make -j12 Catch2",
+				},
+				{
+					"name": "Catch2WithMain",
+					"shell_cmd": "make -j12 Catch2WithMain",
+				},
+				{
 					"name": "oup_runtime_tests",
 					"shell_cmd": "make -j12 oup_runtime_tests",
 				},
@@ -67,11 +75,7 @@
 				},
 				{
 					"name": "oup_speed_benchmark",
-					"shell_cmd": "make -j12 oup_speed_benchmark",
-				},
-				{
-					"name": "snatch",
-					"shell_cmd": "make -j12 snatch",
+					"shell_cmd": "make -j12 oup_speed_benchmark"
 				},
 			],
 			"working_dir": "$folder/build",

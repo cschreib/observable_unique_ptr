@@ -74,13 +74,13 @@ TEMPLATE_LIST_TEST_CASE(
             } else {
                 REQUIRE_THROWS_MATCHES(
                     (make_observer_from_this<TestType>(orig_ptr)), oup::bad_observer_from_this,
-                    snatch::matchers::with_what_contains{
-                        "observer_from_this() called with uninitialized control block"});
+                    Catch::Matchers::Message(
+                        "observer_from_this() called with uninitialized control block"));
                 REQUIRE_THROWS_MATCHES(
                     (make_const_observer_from_this<TestType>(orig_ptr)),
                     oup::bad_observer_from_this,
-                    snatch::matchers::with_what_contains{
-                        "observer_from_this() called with uninitialized control block"});
+                    Catch::Matchers::Message(
+                        "observer_from_this() called with uninitialized control block"));
             }
 
             CHECK_INSTANCES(1, 0);
@@ -110,12 +110,12 @@ TEMPLATE_LIST_TEST_CASE("observer from this no owner stack", "[observer_from_thi
             } else {
                 REQUIRE_THROWS_MATCHES(
                     (make_observer_from_this<TestType>(&obj)), oup::bad_observer_from_this,
-                    snatch::matchers::with_what_contains{
-                        "observer_from_this() called with uninitialized control block"});
+                    Catch::Matchers::Message(
+                        "observer_from_this() called with uninitialized control block"));
                 REQUIRE_THROWS_MATCHES(
                     (make_const_observer_from_this<TestType>(&obj)), oup::bad_observer_from_this,
-                    snatch::matchers::with_what_contains{
-                        "observer_from_this() called with uninitialized control block"});
+                    Catch::Matchers::Message(
+                        "observer_from_this() called with uninitialized control block"));
             }
 
             CHECK_INSTANCES(1, 0);
@@ -147,13 +147,13 @@ TEMPLATE_LIST_TEST_CASE(
             } else {
                 REQUIRE_THROWS_MATCHES(
                     (make_observer_from_this<TestType>(orig_ptr)), oup::bad_observer_from_this,
-                    snatch::matchers::with_what_contains{
-                        "observer_from_this() called with uninitialized control block"});
+                    Catch::Matchers::Message(
+                        "observer_from_this() called with uninitialized control block"));
                 REQUIRE_THROWS_MATCHES(
                     (make_const_observer_from_this<TestType>(orig_ptr)),
                     oup::bad_observer_from_this,
-                    snatch::matchers::with_what_contains{
-                        "observer_from_this() called with uninitialized control block"});
+                    Catch::Matchers::Message(
+                        "observer_from_this() called with uninitialized control block"));
             }
         }
 
@@ -388,8 +388,8 @@ TEMPLATE_LIST_TEST_CASE("observer from this in constructor", "[observer_from_thi
             next_test_object_constructor_calls_observer_from_this = true;
             REQUIRE_THROWS_MATCHES(
                 (make_pointer_deleter_1<TestType>()), oup::bad_observer_from_this,
-                snatch::matchers::with_what_contains{
-                    "observer_from_this() called with uninitialized control block"});
+                Catch::Matchers::Message(
+                    "observer_from_this() called with uninitialized control block"));
             next_test_object_constructor_calls_observer_from_this = false;
         }
 
