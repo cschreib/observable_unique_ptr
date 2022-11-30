@@ -1,6 +1,7 @@
 #include "oup/observable_unique_ptr.hpp"
 
 #include <exception>
+#include <tuple>
 
 struct throw_constructor : std::exception {};
 
