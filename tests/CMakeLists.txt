@@ -31,10 +31,12 @@ endfunction()
 
 include(FetchContent)
 
-FetchContent_Declare(snatch
-                     GIT_REPOSITORY https://github.com/cschreib/snatch.git
-                     GIT_TAG        v0.1.3)
-FetchContent_MakeAvailable(snatch)
+FetchContent_Declare(boost_ut
+                     GIT_REPOSITORY https://github.com/boost-ext/ut.git
+                     GIT_TAG        v1.1.9
+                     UPDATE_COMMAND git checkout .
+                     PATCH_COMMAND  git apply ${PROJECT_SOURCE_DIR}/tests/boost_ut_fix.patch)
+FetchContent_MakeAvailable(boost_ut)
 
 set(RUNTIME_TEST_FILES
   ${PROJECT_SOURCE_DIR}/tests/testing.cpp
@@ -62,8 +64,7 @@ set(RUNTIME_TEST_FILES
 
 add_executable(oup_runtime_tests ${RUNTIME_TEST_FILES})
 target_link_libraries(oup_runtime_tests PRIVATE oup::oup)
-# target_link_libraries(oup_runtime_tests PRIVATE snatch::snatch)
-target_include_directories(oup_runtime_tests PRIVATE "/home/cschreib/programming/ut/include")
+target_link_libraries(oup_runtime_tests PRIVATE Boost::ut)
 add_platform_definitions(oup_runtime_tests)
 
 add_custom_target(oup_runtime_tests_run

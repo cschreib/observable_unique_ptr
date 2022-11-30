@@ -1,0 +1,247 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b9e94ab..bd6bb6a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -61,61 +61,61 @@ else()
+   target_compile_features(ut INTERFACE cxx_std_17)
+ endif()
+ 
+-if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+-  if(WIN32) # clang-cl
+-    # FIXME: we should not export this pedantic options! CK
+-    target_compile_options(
+-      ut
+-      INTERFACE -Wall
+-                -Wextra
+-                # FIXME -Werror
+-                -Wno-c++98-c++11-c++14-c++17-compat-pedantic
+-                -Wno-c++98-c++11-compat
+-                -Wno-c++98-compat
+-                -Wno-c++98-compat-pedantic
+-                -Wno-c99-extensions
+-                -Wno-pedantic
+-    )
+-  else()
+-    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+-  endif()
+-elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+-  # FIXME: we should not export this pedantic options! CK
+-  target_compile_options(
+-    ut
+-    INTERFACE -Wall
+-              -Wextra
+-              # TODO: why not simpply -Wpedantic
+-              -Werror
+-              -Wcast-align
+-              #-Wcast-align=strict
+-              -Wcast-qual
+-              -Wdouble-promotion
+-              -Wduplicated-branches
+-              -Wduplicated-cond
+-              -Wlogical-op
+-              -Wmissing-declarations
+-              -Wmissing-include-dirs
+-              -Wnull-dereference
+-              -Wold-style-cast
+-              -Wpointer-arith
+-              -Wredundant-decls
+-              -Wsign-conversion
+-              -Wswitch-enum
+-              -Wtrampolines
+-              -Wunused-but-set-variable
+-              -Wunused-result
+-              -Wuseless-cast
+-              -Wzero-as-null-pointer-constant
+-              # FIXME
+-              -Wno-undef
+-              -Wno-missing-declarations
+-              -Wno-sign-conversion
+-              -Wno-float-equal
+-  )
+-elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+-  add_compile_options(/W4 /WX)
+-endif()
++# if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
++#   if(WIN32) # clang-cl
++#     # FIXME: we should not export this pedantic options! CK
++#     target_compile_options(
++#       ut
++#       INTERFACE -Wall
++#                 -Wextra
++#                 # FIXME -Werror
++#                 -Wno-c++98-c++11-c++14-c++17-compat-pedantic
++#                 -Wno-c++98-c++11-compat
++#                 -Wno-c++98-compat
++#                 -Wno-c++98-compat-pedantic
++#                 -Wno-c99-extensions
++#                 -Wno-pedantic
++#     )
++#   else()
++#     add_compile_options(-Wall -Wextra -Wpedantic -Werror)
++#   endif()
++# elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
++#   # FIXME: we should not export this pedantic options! CK
++#   target_compile_options(
++#     ut
++#     INTERFACE -Wall
++#               -Wextra
++#               # TODO: why not simpply -Wpedantic
++#               -Werror
++#               -Wcast-align
++#               #-Wcast-align=strict
++#               -Wcast-qual
++#               -Wdouble-promotion
++#               -Wduplicated-branches
++#               -Wduplicated-cond
++#               -Wlogical-op
++#               -Wmissing-declarations
++#               -Wmissing-include-dirs
++#               -Wnull-dereference
++#               -Wold-style-cast
++#               -Wpointer-arith
++#               -Wredundant-decls
++#               -Wsign-conversion
++#               -Wswitch-enum
++#               -Wtrampolines
++#               -Wunused-but-set-variable
++#               -Wunused-result
++#               -Wuseless-cast
++#               -Wzero-as-null-pointer-constant
++#               # FIXME
++#               -Wno-undef
++#               -Wno-missing-declarations
++#               -Wno-sign-conversion
++#               -Wno-float-equal
++#   )
++# elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
++#   add_compile_options(/W4 /WX)
++# endif()
+ 
+ add_custom_target(style)
+ add_custom_command(
+diff --git a/include/boost/ut.hpp b/include/boost/ut.hpp
+index 47faa56..5abb44c 100644
+--- a/include/boost/ut.hpp
++++ b/include/boost/ut.hpp
+@@ -671,8 +671,8 @@ struct eq_ : op {
+   [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
+   [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
+ 
+-  const TLhs lhs_{};
+-  const TRhs rhs_{};
++  const TLhs& lhs_{};
++  const TRhs& rhs_{};
+   const bool value_{};
+ };
+ 
+@@ -704,8 +704,8 @@ struct neq_ : op {
+   [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
+   [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
+ 
+-  const TLhs lhs_{};
+-  const TRhs rhs_{};
++  const TLhs& lhs_{};
++  const TRhs& rhs_{};
+   const bool value_{};
+ };
+ 
+@@ -727,8 +727,8 @@ struct gt_ : op {
+   [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
+   [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
+ 
+-  const TLhs lhs_{};
+-  const TRhs rhs_{};
++  const TLhs& lhs_{};
++  const TRhs& rhs_{};
+   const bool value_{};
+ };
+ 
+@@ -750,8 +750,8 @@ struct ge_ : op {
+   [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
+   [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
+ 
+-  const TLhs lhs_{};
+-  const TRhs rhs_{};
++  const TLhs& lhs_{};
++  const TRhs& rhs_{};
+   const bool value_{};
+ };
+ 
+@@ -774,8 +774,8 @@ struct lt_ : op {
+   [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
+ 
+  private:
+-  const TLhs lhs_{};
+-  const TRhs rhs_{};
++  const TLhs& lhs_{};
++  const TRhs& rhs_{};
+   const bool value_{};
+ };
+ 
+@@ -797,8 +797,8 @@ struct le_ : op {
+   [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
+   [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
+ 
+-  const TLhs lhs_{};
+-  const TRhs rhs_{};
++  const TLhs& lhs_{};
++  const TRhs& rhs_{};
+   const bool value_{};
+ };
+ 
+@@ -813,8 +813,8 @@ struct and_ : op {
+   [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
+   [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
+ 
+-  const TLhs lhs_{};
+-  const TRhs rhs_{};
++  const TLhs& lhs_{};
++  const TRhs& rhs_{};
+   const bool value_{};
+ };
+ 
+@@ -829,8 +829,8 @@ struct or_ : op {
+   [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
+   [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
+ 
+-  const TLhs lhs_{};
+-  const TRhs rhs_{};
++  const TLhs& lhs_{};
++  const TRhs& rhs_{};
+   const bool value_{};
+ };
+ 
+@@ -1532,7 +1532,7 @@ struct that_ {
+       return static_cast<bool>(t_);
+     }
+ 
+-    const T t_{};
++    const T& t_{};
+   };
+ 
+   template <class T>
+@@ -1846,19 +1846,19 @@ template <class F, class T,
+ template <
+     class F, template <class...> class T, class... Ts,
+     type_traits::requires_t<not type_traits::is_container_v<T<Ts...>>> = 0>
+-[[nodiscard]] constexpr auto operator|(const F& f, const T<Ts...>& t) {
+-  return [f, t](const auto name) {
++[[nodiscard]] constexpr auto operator|(const F& f, T<Ts...>&& t) {
++  return [f, &t](const auto name) {
+     apply(
+-        [f, name](const auto&... args) {
++        [f, name](auto&&... args) {
+           (detail::on<F>(events::test<F, Ts>{.type = "test",
+                                              .name = name,
+                                              .tag = {},
+                                              .location = {},
+-                                             .arg = args,
++                                             .arg = std::move(args),
+                                              .run = f}),
+            ...);
+         },
+-        t);
++        std::move(t));
+   };
+ }
+ 
