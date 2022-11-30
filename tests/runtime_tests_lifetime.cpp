@@ -2,6 +2,7 @@
 #include "testing.hpp"
 #include "tests_common.hpp"
 
+#include <algorithm>
 #include <vector>
 
 TEMPLATE_LIST_TEST_CASE("observer expiring scope", "[lifetime][owner][observer]", owner_types) {

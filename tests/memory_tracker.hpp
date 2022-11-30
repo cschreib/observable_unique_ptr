@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <new>
 
 // Allocation tracker, to catch memory leaks and double delete
 constexpr std::size_t max_allocations = 20'000;
