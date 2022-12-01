@@ -1,4 +1,5 @@
 #include "oup/observable_unique_ptr.hpp"
+#include "testing.hpp"
 
 #include <exception>
 
@@ -576,7 +577,7 @@ auto make_const_observer_from_this(const get_object<T>* ptr) {
 }
 
 // clang-format off
-using owner_types = std::tuple<
+using owner_types = snatch::type_list<
     oup::observable_unique_ptr<test_object>,
     oup::observable_sealed_ptr<test_object>,
     oup::observable_unique_ptr<const test_object>,
