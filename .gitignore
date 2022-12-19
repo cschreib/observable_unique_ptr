@@ -1,4 +1,5 @@
 build/
+build_wasm/
 build_clang/
 doc/html/
 oup.sublime-workspace
