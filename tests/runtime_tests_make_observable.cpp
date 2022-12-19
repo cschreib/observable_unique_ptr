@@ -10,9 +10,9 @@ TEMPLATE_LIST_TEST_CASE("make observable", "[make_observable][owner]", owner_typ
             TestType ptr = oup::make_observable<get_object<TestType>, get_policy<TestType>>();
 
             if constexpr (is_sealed<TestType>) {
-                CHECK(mem_track.allocated() == 1u);
+                CHECK_MAX_ALLOC(1u);
             } else {
-                CHECK(mem_track.allocated() == 2u);
+                CHECK_MAX_ALLOC(2u);
             }
             CHECK(ptr.get() != nullptr);
             CHECK(ptr->state_ == test_object::state::default_init);
@@ -35,9 +35,9 @@ TEMPLATE_LIST_TEST_CASE("make observable with arguments", "[make_observable][own
                 test_object::state::special_init);
 
             if constexpr (is_sealed<TestType>) {
-                CHECK(mem_track.allocated() == 1u);
+                CHECK_MAX_ALLOC(1u);
             } else {
-                CHECK(mem_track.allocated() == 2u);
+                CHECK_MAX_ALLOC(2u);
             }
             CHECK(ptr.get() != nullptr);
             CHECK(ptr->state_ == test_object::state::special_init);
@@ -84,7 +84,7 @@ TEST_CASE("make observable unique", "[make_observable][owner]") {
     {
         TestType ptr = oup::make_observable_unique<test_object>();
 
-        CHECK(mem_track.allocated() == 2u);
+        CHECK_MAX_ALLOC(2u);
         CHECK(ptr.get() != nullptr);
         CHECK(ptr->state_ == test_object::state::default_init);
         CHECK_INSTANCES(1, 1);
@@ -100,7 +100,7 @@ TEST_CASE("make observable sealed", "[make_observable][owner]") {
     {
         TestType ptr = oup::make_observable_sealed<test_object>();
 
-        CHECK(mem_track.allocated() == 1u);
+        CHECK_MAX_ALLOC(1u);
         CHECK(ptr.get() != nullptr);
         CHECK(ptr->state_ == test_object::state::default_init);
         CHECK_INSTANCES(1, 1);

@@ -630,6 +630,16 @@ using owner_types = snatch::type_list<
         CHECK(mem_track.double_delete() == 0u);                                                    \
     } while (0)
 
+#if defined(NDEBUG)
+// When not in debug (hence, assuming optimisations are turned on),
+// some compilers manage to optimise-out some heap allocations, so use a looser
+// check.
+#    define CHECK_MAX_ALLOC(MAX_ALLOC) CHECK(mem_track.allocated() <= MAX_ALLOC)
+#else
+// In debug, allocations must be exactly as expected.
+#    define CHECK_MAX_ALLOC(MAX_ALLOC) CHECK(mem_track.allocated() == MAX_ALLOC)
+#endif
+
 // clang-format off
 #if defined(__clang__)
 #    define SNATCH_WARNING_DISABLE_SELF_ASSIGN _Pragma("clang diagnostic ignored \"-Wself-assign-overloaded\"")
