@@ -3,7 +3,7 @@
 #include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE("observer default constructor", "[construction][observer]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         observer_ptr<TestType> ptr;
@@ -14,10 +14,10 @@ TEMPLATE_LIST_TEST_CASE("observer default constructor", "[construction][observer
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("observer nullptr constructor", "[construction][observer]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         observer_ptr<TestType> ptr(nullptr);
@@ -28,4 +28,4 @@ TEMPLATE_LIST_TEST_CASE("observer nullptr constructor", "[construction][observer
     }
 
     CHECK_NO_LEAKS;
-};
+}

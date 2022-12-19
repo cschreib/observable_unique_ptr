@@ -24,7 +24,7 @@ TEMPLATE_LIST_TEST_CASE("make observable", "[make_observable][owner]", owner_typ
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("make observable with arguments", "[make_observable][owner]", owner_types) {
     if constexpr (can_use_make_observable<TestType>) {
@@ -49,7 +49,7 @@ TEMPLATE_LIST_TEST_CASE("make observable with arguments", "[make_observable][own
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "make observable throw in constructor", "[make_observable][owner]", owner_types) {
@@ -63,7 +63,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("make observable bad alloc", "[make_observable][owner]", owner_types) {
     if constexpr (can_use_make_observable<TestType>) {
@@ -75,7 +75,7 @@ TEMPLATE_LIST_TEST_CASE("make observable bad alloc", "[make_observable][owner]",
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEST_CASE("make observable unique", "[make_observable][owner]") {
     using TestType = oup::observable_unique_ptr<test_object>;
@@ -91,7 +91,7 @@ TEST_CASE("make observable unique", "[make_observable][owner]") {
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEST_CASE("make observable sealed", "[make_observable][owner]") {
     using TestType = oup::observable_sealed_ptr<test_object>;
@@ -107,4 +107,4 @@ TEST_CASE("make observable sealed", "[make_observable][owner]") {
     }
 
     CHECK_NO_LEAKS;
-};
+}

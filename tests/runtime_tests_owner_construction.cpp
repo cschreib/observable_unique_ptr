@@ -3,7 +3,7 @@
 #include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE("owner default constructor", "[construction][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr;
@@ -16,10 +16,10 @@ TEMPLATE_LIST_TEST_CASE("owner default constructor", "[construction][owner]", ow
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("owner nullptr constructor", "[construction][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr(nullptr);
@@ -32,10 +32,10 @@ TEMPLATE_LIST_TEST_CASE("owner nullptr constructor", "[construction][owner]", ow
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("owner move constructor", "[construction][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr_orig = make_pointer_deleter_1<TestType>();
@@ -53,11 +53,11 @@ TEMPLATE_LIST_TEST_CASE("owner move constructor", "[construction][owner]", owner
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("owner acquiring constructor", "[construction][owner]", owner_types) {
     if constexpr (!must_use_make_observable<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr(make_instance<TestType>());
@@ -71,12 +71,12 @@ TEMPLATE_LIST_TEST_CASE("owner acquiring constructor", "[construction][owner]", 
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner acquiring constructor with deleter", "[construction][owner]", owner_types) {
     if constexpr (!must_use_make_observable<TestType> && has_stateful_deleter<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr(make_instance<TestType>(), make_deleter_instance_1<TestType>());
@@ -90,12 +90,12 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner acquiring constructor bad alloc", "[construction][owner]", owner_types) {
     if constexpr (!must_use_make_observable<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             auto* raw_ptr = make_instance<TestType>();
@@ -108,12 +108,12 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner acquiring constructor bad alloc with deleter", "[construction][owner]", owner_types) {
     if constexpr (!must_use_make_observable<TestType> && has_stateful_deleter<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             auto* raw_ptr = make_instance<TestType>();
@@ -128,11 +128,11 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("owner acquiring constructor null", "[construction][owner]", owner_types) {
     if constexpr (!must_use_make_observable<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr(static_cast<get_object<TestType>*>(nullptr));
@@ -146,12 +146,12 @@ TEMPLATE_LIST_TEST_CASE("owner acquiring constructor null", "[construction][owne
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner implicit conversion constructor", "[construction][owner]", owner_types) {
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr_orig = make_pointer_deleter_1<TestType>();
@@ -171,12 +171,12 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner explicit conversion constructor", "[construction][owner]", owner_types) {
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             base_ptr<TestType> ptr_orig = make_pointer_deleter_1<TestType>();
@@ -197,14 +197,14 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner explicit conversion constructor with custom deleter",
     "[construction][owner]",
     owner_types) {
     if constexpr (has_base<TestType> && has_stateful_deleter<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             base_ptr<TestType> ptr_orig = make_pointer_deleter_1<TestType>();
@@ -226,12 +226,12 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner explicit conversion constructor with null", "[construction][owner]", owner_types) {
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             base_ptr<TestType> ptr_orig = make_pointer_deleter_1<TestType>();
@@ -251,14 +251,14 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner explicit conversion constructor with custom deleter with null",
     "[construction][owner]",
     owner_types) {
     if constexpr (has_base<TestType> && has_stateful_deleter<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             base_ptr<TestType> ptr_orig = make_pointer_deleter_1<TestType>();
@@ -280,4 +280,4 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}

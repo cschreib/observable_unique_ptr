@@ -53,7 +53,7 @@ TEMPLATE_LIST_TEST_CASE("observer from this", "[observer_from_this]", owner_type
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this with no owner heap", "[observer_from_this]", owner_types) {
@@ -90,7 +90,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("observer from this no owner stack", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && !eoft_constructor_takes_control_block<TestType>) {
@@ -123,7 +123,7 @@ TEMPLATE_LIST_TEST_CASE("observer from this no owner stack", "[observer_from_thi
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this acquired into base owner as base", "[observer_from_this]", owner_types) {
@@ -159,7 +159,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this acquired into base owner as derived", "[observer_from_this]", owner_types) {
@@ -179,7 +179,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner reset to empty", "[observer_from_this]", owner_types) {
@@ -203,7 +203,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner reset to valid", "[observer_from_this]", owner_types) {
@@ -227,7 +227,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner release", "[observer_from_this]", owner_types) {
@@ -257,7 +257,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner release then reset to same",
@@ -295,7 +295,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner move", "[observer_from_this]", owner_types) {
@@ -318,7 +318,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner move assignment", "[observer_from_this]", owner_types) {
@@ -342,7 +342,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
     using base       = test_object_observer_from_this_unique;
@@ -371,7 +371,7 @@ TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("observer from this in constructor", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && has_eoft_self_member<TestType>) {
@@ -395,4 +395,4 @@ TEMPLATE_LIST_TEST_CASE("observer from this in constructor", "[observer_from_thi
 
         CHECK_NO_LEAKS;
     }
-};
+}

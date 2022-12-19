@@ -6,7 +6,7 @@ TEMPLATE_LIST_TEST_CASE(
     "observer move from valid observer constructor",
     "[construction][observer][from_observer]",
     owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType               ptr_owner = make_pointer_deleter_1<TestType>();
@@ -24,13 +24,13 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from empty observer constructor",
     "[construction][observer][from_observer]",
     owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         observer_ptr<TestType> ptr_orig;
@@ -47,14 +47,14 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from valid observer implicit conversion constructor",
     "[construction][observer][from_observer]",
     owner_types) {
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType               ptr_owner = make_pointer_deleter_1<TestType>();
@@ -73,13 +73,13 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from empty observer implicit conversion constructor",
     "[construction][observer][from_observer]",
     owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         observer_ptr<TestType> ptr_orig;
@@ -97,7 +97,7 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from valid observer explicit conversion constructor",
@@ -105,7 +105,7 @@ TEMPLATE_LIST_TEST_CASE(
     owner_types) {
 
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             base_ptr<TestType>          ptr_owner = make_pointer_deleter_1<TestType>();
@@ -126,14 +126,14 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from empty observer explicit conversion constructor",
     "[construction][observer][from_observer]",
     owner_types) {
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             base_observer_ptr<TestType> ptr_orig;
@@ -153,14 +153,14 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from valid observer explicit conversion constructor with null",
     "[construction][observer][from_observer]",
     owner_types) {
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             base_ptr<TestType>          ptr_owner = make_pointer_deleter_1<TestType>();
@@ -181,13 +181,13 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move from valid observer explicit conversion constructor subobject",
     "[construction][observer][from_observer]",
     owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType               ptr_owner = make_pointer_deleter_1<TestType>();
@@ -206,4 +206,4 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}

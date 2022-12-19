@@ -4,7 +4,7 @@
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment operator valid to empty", "[assignment][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr_orig = make_pointer_deleter_1<TestType>();
@@ -23,11 +23,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment operator empty to valid", "[assignment][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr_orig = make_empty_pointer_deleter_1<TestType>();
@@ -46,11 +46,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment operator empty to empty", "[assignment][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr_orig = make_empty_pointer_deleter_1<TestType>();
@@ -69,11 +69,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment operator valid to valid", "[assignment][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr_orig     = make_pointer_deleter_1<TestType>();
@@ -93,13 +93,13 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment converting operator valid to empty",
     "[assignment][owner]",
     owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr_orig = make_pointer_deleter_1<TestType>();
@@ -118,13 +118,13 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment converting operator empty to valid",
     "[assignment][owner]",
     owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr_orig = make_empty_pointer_deleter_1<TestType>();
@@ -143,13 +143,13 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment converting operator empty to empty",
     "[assignment][owner]",
     owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr_orig = make_empty_pointer_deleter_1<TestType>();
@@ -168,13 +168,13 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment converting operator valid to valid",
     "[assignment][owner]",
     owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr_orig     = make_pointer_deleter_1<TestType>();
@@ -194,11 +194,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment operator self to self valid", "[assignment][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr = make_pointer_deleter_1<TestType>();
@@ -212,11 +212,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "owner move assignment operator self to self empty", "[assignment][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr = make_empty_pointer_deleter_1<TestType>();
@@ -230,4 +230,4 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
