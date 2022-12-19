@@ -4,7 +4,7 @@
 
 TEMPLATE_LIST_TEST_CASE("observer from this", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType                    ptr      = make_pointer_deleter_1<TestType>();
@@ -58,7 +58,7 @@ TEMPLATE_LIST_TEST_CASE("observer from this", "[observer_from_this]", owner_type
 TEMPLATE_LIST_TEST_CASE(
     "observer from this with no owner heap", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && !must_use_make_observable<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             get_object<TestType>* orig_ptr = make_instance<TestType>();
@@ -94,7 +94,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE("observer from this no owner stack", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && !eoft_constructor_takes_control_block<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             get_object<TestType> obj;
@@ -128,7 +128,7 @@ TEMPLATE_LIST_TEST_CASE("observer from this no owner stack", "[observer_from_thi
 TEMPLATE_LIST_TEST_CASE(
     "observer from this acquired into base owner as base", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && !must_use_make_observable<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             get_object<TestType>*      orig_ptr      = make_instance<TestType>();
@@ -164,7 +164,7 @@ TEMPLATE_LIST_TEST_CASE(
 TEMPLATE_LIST_TEST_CASE(
     "observer from this acquired into base owner as derived", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && has_base<TestType> && !must_use_make_observable<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             get_object<TestType>* orig_ptr = make_instance<TestType>();
@@ -184,7 +184,7 @@ TEMPLATE_LIST_TEST_CASE(
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner reset to empty", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr  = make_pointer_deleter_1<TestType>();
@@ -208,7 +208,7 @@ TEMPLATE_LIST_TEST_CASE(
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner reset to valid", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && can_reset_to_new<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr  = make_pointer_deleter_1<TestType>();
@@ -232,7 +232,7 @@ TEMPLATE_LIST_TEST_CASE(
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner release", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && can_release<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr  = make_pointer_deleter_1<TestType>();
@@ -264,7 +264,7 @@ TEMPLATE_LIST_TEST_CASE(
     "[observer_from_this]",
     owner_types) {
     if constexpr (has_eoft<TestType> && can_release<TestType> && can_reset_to_new<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr  = make_pointer_deleter_1<TestType>();
@@ -300,7 +300,7 @@ TEMPLATE_LIST_TEST_CASE(
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner move", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr1 = make_pointer_deleter_1<TestType>();
@@ -323,7 +323,7 @@ TEMPLATE_LIST_TEST_CASE(
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner move assignment", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr1 = make_pointer_deleter_1<TestType>();
@@ -353,7 +353,7 @@ TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
     using eoft_deriv = oup::enable_observer_from_this_unique<deriv>;
     using TestType   = ptr_deriv;
 
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         deriv*    raw_ptr_deriv = new deriv;
@@ -375,7 +375,7 @@ TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
 
 TEMPLATE_LIST_TEST_CASE("observer from this in constructor", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && has_eoft_self_member<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         if constexpr (eoft_always_has_block<TestType>) {
             next_test_object_constructor_calls_observer_from_this = true;

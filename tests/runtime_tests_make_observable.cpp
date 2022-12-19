@@ -4,7 +4,7 @@
 
 TEMPLATE_LIST_TEST_CASE("make observable", "[make_observable][owner]", owner_types) {
     if constexpr (can_use_make_observable<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr = oup::make_observable<get_object<TestType>, get_policy<TestType>>();
@@ -28,7 +28,7 @@ TEMPLATE_LIST_TEST_CASE("make observable", "[make_observable][owner]", owner_typ
 
 TEMPLATE_LIST_TEST_CASE("make observable with arguments", "[make_observable][owner]", owner_types) {
     if constexpr (can_use_make_observable<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr = oup::make_observable<get_object<TestType>, get_policy<TestType>>(
@@ -54,7 +54,7 @@ TEMPLATE_LIST_TEST_CASE("make observable with arguments", "[make_observable][own
 TEMPLATE_LIST_TEST_CASE(
     "make observable throw in constructor", "[make_observable][owner]", owner_types) {
     if constexpr (can_use_make_observable<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         next_test_object_constructor_throws = true;
         REQUIRE_THROWS_AS(
@@ -67,7 +67,7 @@ TEMPLATE_LIST_TEST_CASE(
 
 TEMPLATE_LIST_TEST_CASE("make observable bad alloc", "[make_observable][owner]", owner_types) {
     if constexpr (can_use_make_observable<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         force_next_allocation_failure = true;
         REQUIRE_THROWS_AS(
@@ -79,7 +79,7 @@ TEMPLATE_LIST_TEST_CASE("make observable bad alloc", "[make_observable][owner]",
 
 TEST_CASE("make observable unique", "[make_observable][owner]") {
     using TestType = oup::observable_unique_ptr<test_object>;
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr = oup::make_observable_unique<test_object>();
@@ -95,7 +95,7 @@ TEST_CASE("make observable unique", "[make_observable][owner]") {
 
 TEST_CASE("make observable sealed", "[make_observable][owner]") {
     using TestType = oup::observable_sealed_ptr<test_object>;
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr = oup::make_observable_sealed<test_object>();

@@ -4,14 +4,14 @@
 #include <cstdio>
 #include <stdexcept>
 
-void*       allocations[max_allocations];
-void*       allocations_array[max_allocations];
-std::size_t allocations_bytes[max_allocations];
-std::size_t num_allocations               = 0u;
-std::size_t size_allocations              = 0u;
-std::size_t double_delete                 = 0u;
-bool        memory_tracking               = false;
-bool        force_next_allocation_failure = false;
+volatile void*       allocations[max_allocations];
+volatile void*       allocations_array[max_allocations];
+volatile std::size_t allocations_bytes[max_allocations];
+volatile std::size_t num_allocations               = 0u;
+volatile std::size_t size_allocations              = 0u;
+volatile std::size_t double_delete                 = 0u;
+volatile bool        memory_tracking               = false;
+volatile bool        force_next_allocation_failure = false;
 
 constexpr bool debug_alloc    = false;
 constexpr bool scramble_alloc = true;
@@ -93,8 +93,8 @@ void* allocate(std::size_t size, bool array, std::align_val_t align) {
 
         allocations_bytes[num_allocations] = size;
 
-        ++num_allocations;
-        size_allocations += size;
+        num_allocations  = num_allocations + 1u;
+        size_allocations = size_allocations + size;
     }
 
     return p;
@@ -110,21 +110,21 @@ void deallocate(void* p, bool array, std::align_val_t align [[maybe_unused]]) {
     }
 
     if (memory_tracking) {
-        bool   found            = false;
-        void** allocations_type = array ? allocations_array : allocations;
+        bool            found            = false;
+        volatile void** allocations_type = array ? allocations_array : allocations;
         for (std::size_t i = 0; i < num_allocations; ++i) {
             if (allocations_type[i] == p) {
                 std::swap(allocations_type[i], allocations_type[num_allocations - 1]);
                 std::swap(allocations_bytes[i], allocations_bytes[num_allocations - 1]);
-                --num_allocations;
-                size_allocations -= allocations_bytes[num_allocations - 1];
-                found = true;
+                num_allocations  = num_allocations - 1u;
+                size_allocations = size_allocations - allocations_bytes[num_allocations - 1];
+                found            = true;
                 break;
             }
         }
 
         if (!found) {
-            ++double_delete;
+            double_delete = double_delete + 1u;
         }
     }
 
@@ -188,11 +188,11 @@ memory_tracker::~memory_tracker() noexcept {
     ::memory_tracking = false;
 }
 
-std::size_t memory_tracker::allocated() const {
+std::size_t memory_tracker::allocated() const volatile {
     return ::num_allocations - initial_allocations;
 }
 
-std::size_t memory_tracker::double_delete() const {
+std::size_t memory_tracker::double_delete() const volatile {
     return ::double_delete - initial_double_delete;
 }
 
