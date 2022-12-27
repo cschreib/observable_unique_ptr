@@ -1,6 +1,5 @@
 #include "memory_tracker.hpp"
 #include "testing.hpp"
-#include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE(
     "observer copy constructor valid", "[construction][observer][from_observer]", owner_types) {

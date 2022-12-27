@@ -1,6 +1,5 @@
 #include "memory_tracker.hpp"
 #include "testing.hpp"
-#include "tests_common.hpp"
 
 // For std::bad_cast
 #include <typeinfo>
@@ -18,7 +17,7 @@ TEMPLATE_LIST_TEST_CASE("owner static_cast move from valid", "[cast][owner]", ow
 
             CHECK(ptr1.get() == nullptr);
             CHECK(ptr2.get() == raw_ptr);
-            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+            CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
             if constexpr (has_stateful_deleter<TestType>) {
                 CHECK(ptr2.get_deleter().state_ == test_deleter::state::special_init_1);
             }
@@ -47,7 +46,7 @@ TEMPLATE_LIST_TEST_CASE("owner static_cast move from empty", "[cast][owner]", ow
 
             CHECK(ptr1.get() == nullptr);
             CHECK(ptr2.get() == nullptr);
-            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+            CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
             if constexpr (has_stateful_deleter<TestType>) {
                 CHECK(ptr2.get_deleter().state_ == test_deleter::state::special_init_1);
             }
@@ -77,7 +76,7 @@ TEMPLATE_LIST_TEST_CASE("owner const_cast move from valid", "[cast][owner]", own
 
             CHECK(ptr1.get() == nullptr);
             CHECK(ptr2.get() == raw_ptr);
-            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+            CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
             if constexpr (has_stateful_deleter<TestType>) {
                 CHECK(ptr2.get_deleter().state_ == test_deleter::state::special_init_1);
             }
@@ -104,7 +103,7 @@ TEMPLATE_LIST_TEST_CASE("owner const_cast move from empty", "[cast][owner]", own
 
             CHECK(ptr1.get() == nullptr);
             CHECK(ptr2.get() == nullptr);
-            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+            CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
             if constexpr (has_stateful_deleter<TestType>) {
                 CHECK(ptr2.get_deleter().state_ == test_deleter::state::special_init_1);
             }
@@ -134,7 +133,7 @@ TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from valid", "[cast][owner]", o
 
                 CHECK(ptr1.get() == nullptr);
                 CHECK(ptr2.get() == raw_ptr);
-                CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+                CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
                 if constexpr (has_stateful_deleter<TestType>) {
                     CHECK(ptr2.get_deleter().state_ == test_deleter::state::special_init_1);
                 }
@@ -166,7 +165,7 @@ TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from empty", "[cast][owner]", o
 
                 CHECK(ptr1.get() == nullptr);
                 CHECK(ptr2.get() == nullptr);
-                CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+                CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
                 if constexpr (has_stateful_deleter<TestType>) {
                     CHECK(ptr2.get_deleter().state_ == test_deleter::state::special_init_1);
                 }

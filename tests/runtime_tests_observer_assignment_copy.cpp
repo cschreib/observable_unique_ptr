@@ -1,6 +1,5 @@
 #include "memory_tracker.hpp"
 #include "testing.hpp"
-#include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE(
     "observer copy assignment operator valid to empty", "[assignment][observer]", owner_types) {
@@ -217,10 +216,10 @@ TEMPLATE_LIST_TEST_CASE(
     {
         TestType               ptr = make_pointer_deleter_1<TestType>();
         observer_ptr<TestType> optr{ptr};
-        SNATCH_WARNING_PUSH;
-        SNATCH_WARNING_DISABLE_SELF_ASSIGN;
+        SNITCH_WARNING_PUSH;
+        SNITCH_WARNING_DISABLE_SELF_ASSIGN;
         optr = optr;
-        SNATCH_WARNING_POP;
+        SNITCH_WARNING_POP;
 
         CHECK(optr.get() == ptr.get());
         CHECK(optr.expired() == false);
@@ -236,10 +235,10 @@ TEMPLATE_LIST_TEST_CASE(
 
     {
         observer_ptr<TestType> optr;
-        SNATCH_WARNING_PUSH;
-        SNATCH_WARNING_DISABLE_SELF_ASSIGN;
+        SNITCH_WARNING_PUSH;
+        SNITCH_WARNING_DISABLE_SELF_ASSIGN;
         optr = optr;
-        SNATCH_WARNING_POP;
+        SNITCH_WARNING_POP;
 
         CHECK(optr.get() == nullptr);
         CHECK(optr.expired() == true);

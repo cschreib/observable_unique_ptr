@@ -1,6 +1,5 @@
 #include "memory_tracker.hpp"
 #include "testing.hpp"
-#include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE("owner default constructor", "[construction][owner]", owner_types) {
     volatile memory_tracker mem_track;

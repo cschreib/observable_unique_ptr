@@ -1,6 +1,5 @@
 #include "memory_tracker.hpp"
 #include "testing.hpp"
-#include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE("observer static_cast copy from valid", "[cast][observer]", owner_types) {
     volatile memory_tracker mem_track;
@@ -16,7 +15,7 @@ TEMPLATE_LIST_TEST_CASE("observer static_cast copy from valid", "[cast][observer
 
             CHECK(optr1.get() == raw_ptr);
             CHECK(optr2.get() == raw_ptr);
-            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+            CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
             CHECK_INSTANCES(1, 1);
         };
 
@@ -43,7 +42,7 @@ TEMPLATE_LIST_TEST_CASE("observer static_cast copy from empty", "[cast][observer
 
             CHECK(optr1.get() == nullptr);
             CHECK(optr2.get() == nullptr);
-            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+            CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
             CHECK_INSTANCES(0, 1);
         };
 
@@ -71,7 +70,7 @@ TEMPLATE_LIST_TEST_CASE("observer const_cast copy from valid", "[cast][observer]
 
             CHECK(optr1.get() == raw_ptr);
             CHECK(optr2.get() == raw_ptr);
-            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+            CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
             CHECK_INSTANCES(1, 1);
         };
 
@@ -96,7 +95,7 @@ TEMPLATE_LIST_TEST_CASE("observer const_cast copy from empty", "[cast][observer]
 
             CHECK(optr1.get() == nullptr);
             CHECK(optr2.get() == nullptr);
-            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+            CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
             CHECK_INSTANCES(0, 1);
         };
 
@@ -123,7 +122,7 @@ TEMPLATE_LIST_TEST_CASE("observer dynamic_cast copy from valid", "[cast][observe
 
                 CHECK(optr1.get() == raw_ptr);
                 CHECK(optr2.get() == raw_ptr);
-                CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+                CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
                 CHECK_INSTANCES(1, 1);
             };
 
@@ -155,7 +154,7 @@ TEMPLATE_LIST_TEST_CASE("observer dynamic_cast copy from empty", "[cast][observe
 
                 CHECK(optr1.get() == nullptr);
                 CHECK(optr2.get() == nullptr);
-                CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+                CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
                 CHECK_INSTANCES(0, 1);
             };
 
@@ -190,7 +189,7 @@ TEMPLATE_LIST_TEST_CASE(
 
             CHECK(optr1.get() == raw_ptr);
             CHECK(optr2.get() == nullptr);
-            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+            CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
             CHECK_INSTANCES(1, 1);
         }
 

@@ -70,8 +70,8 @@
 					"shell_cmd": "make -j12 oup_speed_benchmark",
 				},
 				{
-					"name": "snatch",
-					"shell_cmd": "make -j12 snatch",
+					"name": "snitch",
+					"shell_cmd": "make -j12 snitch",
 				},
 			],
 			"working_dir": "$folder/build",
