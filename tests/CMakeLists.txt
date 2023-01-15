@@ -32,6 +32,8 @@ endfunction()
 
 include(FetchContent)
 
+set(CMAKE_CXX_STANDARD 17) # enable C++17 in Catch2...
+
 FetchContent_Declare(catch2
                      GIT_REPOSITORY https://github.com/catchorg/Catch2.git
                      GIT_TAG        v3.2.0)
