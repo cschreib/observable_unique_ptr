@@ -1,10 +1,9 @@
 #include "memory_tracker.hpp"
 #include "testing.hpp"
-#include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move assignment operator valid to empty", "[assignment][observer]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType               ptr_orig = make_pointer_deleter_1<TestType>();
@@ -24,11 +23,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move assignment operator empty to valid", "[assignment][observer]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         observer_ptr<TestType> optr_orig;
@@ -48,11 +47,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move assignment operator empty to empty", "[assignment][observer]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         observer_ptr<TestType> optr_orig;
@@ -71,11 +70,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move assignment operator valid to valid", "[assignment][observer]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType               ptr_orig = make_pointer_deleter_1<TestType>();
@@ -96,13 +95,13 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move assignment converting operator valid to empty",
     "[assignment][observer]",
     owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     if constexpr (has_base<TestType>) {
         {
@@ -124,13 +123,13 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move assignment converting operator empty to valid",
     "[assignment][observer]",
     owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     if constexpr (has_base<TestType>) {
         {
@@ -152,13 +151,13 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move assignment converting operator empty to empty",
     "[assignment][observer]",
     owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     if constexpr (has_base<TestType>) {
         {
@@ -179,13 +178,13 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move assignment converting operator valid to valid",
     "[assignment][observer]",
     owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     if constexpr (has_base<TestType>) {
         {
@@ -208,11 +207,11 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move assignment operator self to self valid", "[assignment][observer]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType               ptr = make_pointer_deleter_1<TestType>();
@@ -224,11 +223,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer move assignment operator self to self empty", "[assignment][observer]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         observer_ptr<TestType> optr;
@@ -239,4 +238,4 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}

@@ -1,6 +1,5 @@
 #include "memory_tracker.hpp"
 #include "testing.hpp"
-#include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment operator valid to empty",
@@ -23,7 +22,7 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment operator empty to valid",
@@ -48,7 +47,7 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment operator empty to empty",
@@ -72,7 +71,7 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment operator valid to valid",
@@ -100,7 +99,7 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment converting operator valid to empty",
@@ -125,7 +124,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment converting operator empty to valid",
@@ -152,7 +151,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment converting operator empty to empty",
@@ -178,7 +177,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from owner assignment converting operator valid to valid",
@@ -208,4 +207,4 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}

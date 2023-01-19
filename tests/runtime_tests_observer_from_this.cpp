@@ -1,10 +1,9 @@
 #include "memory_tracker.hpp"
 #include "testing.hpp"
-#include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE("observer from this", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType                    ptr      = make_pointer_deleter_1<TestType>();
@@ -53,12 +52,12 @@ TEMPLATE_LIST_TEST_CASE("observer from this", "[observer_from_this]", owner_type
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this with no owner heap", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && !must_use_make_observable<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             get_object<TestType>* orig_ptr = make_instance<TestType>();
@@ -74,12 +73,12 @@ TEMPLATE_LIST_TEST_CASE(
             } else {
                 REQUIRE_THROWS_MATCHES(
                     (make_observer_from_this<TestType>(orig_ptr)), oup::bad_observer_from_this,
-                    snatch::matchers::with_what_contains{
+                    snitch::matchers::with_what_contains{
                         "observer_from_this() called with uninitialized control block"});
                 REQUIRE_THROWS_MATCHES(
                     (make_const_observer_from_this<TestType>(orig_ptr)),
                     oup::bad_observer_from_this,
-                    snatch::matchers::with_what_contains{
+                    snitch::matchers::with_what_contains{
                         "observer_from_this() called with uninitialized control block"});
             }
 
@@ -90,11 +89,11 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("observer from this no owner stack", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && !eoft_constructor_takes_control_block<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             get_object<TestType> obj;
@@ -110,11 +109,11 @@ TEMPLATE_LIST_TEST_CASE("observer from this no owner stack", "[observer_from_thi
             } else {
                 REQUIRE_THROWS_MATCHES(
                     (make_observer_from_this<TestType>(&obj)), oup::bad_observer_from_this,
-                    snatch::matchers::with_what_contains{
+                    snitch::matchers::with_what_contains{
                         "observer_from_this() called with uninitialized control block"});
                 REQUIRE_THROWS_MATCHES(
                     (make_const_observer_from_this<TestType>(&obj)), oup::bad_observer_from_this,
-                    snatch::matchers::with_what_contains{
+                    snitch::matchers::with_what_contains{
                         "observer_from_this() called with uninitialized control block"});
             }
 
@@ -123,12 +122,12 @@ TEMPLATE_LIST_TEST_CASE("observer from this no owner stack", "[observer_from_thi
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this acquired into base owner as base", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && !must_use_make_observable<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             get_object<TestType>*      orig_ptr      = make_instance<TestType>();
@@ -147,24 +146,24 @@ TEMPLATE_LIST_TEST_CASE(
             } else {
                 REQUIRE_THROWS_MATCHES(
                     (make_observer_from_this<TestType>(orig_ptr)), oup::bad_observer_from_this,
-                    snatch::matchers::with_what_contains{
+                    snitch::matchers::with_what_contains{
                         "observer_from_this() called with uninitialized control block"});
                 REQUIRE_THROWS_MATCHES(
                     (make_const_observer_from_this<TestType>(orig_ptr)),
                     oup::bad_observer_from_this,
-                    snatch::matchers::with_what_contains{
+                    snitch::matchers::with_what_contains{
                         "observer_from_this() called with uninitialized control block"});
             }
         }
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this acquired into base owner as derived", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && has_base<TestType> && !must_use_make_observable<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             get_object<TestType>* orig_ptr = make_instance<TestType>();
@@ -179,12 +178,12 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner reset to empty", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr  = make_pointer_deleter_1<TestType>();
@@ -203,12 +202,12 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner reset to valid", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && can_reset_to_new<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr  = make_pointer_deleter_1<TestType>();
@@ -227,12 +226,12 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner release", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && can_release<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr  = make_pointer_deleter_1<TestType>();
@@ -257,14 +256,14 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner release then reset to same",
     "[observer_from_this]",
     owner_types) {
     if constexpr (has_eoft<TestType> && can_release<TestType> && can_reset_to_new<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr  = make_pointer_deleter_1<TestType>();
@@ -295,12 +294,12 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner move", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr1 = make_pointer_deleter_1<TestType>();
@@ -318,12 +317,12 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from this after owner move assignment", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr1 = make_pointer_deleter_1<TestType>();
@@ -342,7 +341,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
     using base       = test_object_observer_from_this_unique;
@@ -353,7 +352,7 @@ TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
     using eoft_deriv = oup::enable_observer_from_this_unique<deriv>;
     using TestType   = ptr_deriv;
 
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         deriv*    raw_ptr_deriv = new deriv;
@@ -371,11 +370,11 @@ TEST_CASE("observer from this multiple inheritance", "[observer_from_this]") {
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("observer from this in constructor", "[observer_from_this]", owner_types) {
     if constexpr (has_eoft<TestType> && has_eoft_self_member<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         if constexpr (eoft_always_has_block<TestType>) {
             next_test_object_constructor_calls_observer_from_this = true;
@@ -388,11 +387,11 @@ TEMPLATE_LIST_TEST_CASE("observer from this in constructor", "[observer_from_thi
             next_test_object_constructor_calls_observer_from_this = true;
             REQUIRE_THROWS_MATCHES(
                 (make_pointer_deleter_1<TestType>()), oup::bad_observer_from_this,
-                snatch::matchers::with_what_contains{
+                snitch::matchers::with_what_contains{
                     "observer_from_this() called with uninitialized control block"});
             next_test_object_constructor_calls_observer_from_this = false;
         }
 
         CHECK_NO_LEAKS;
     }
-};
+}

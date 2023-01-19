@@ -1,12 +1,11 @@
 #include "memory_tracker.hpp"
 #include "testing.hpp"
-#include "tests_common.hpp"
 
 // For std::bad_cast
 #include <typeinfo>
 
 TEMPLATE_LIST_TEST_CASE("owner static_cast move from valid", "[cast][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         auto run_test = [&]<typename cast_type, typename expected_return_type>() {
@@ -18,7 +17,7 @@ TEMPLATE_LIST_TEST_CASE("owner static_cast move from valid", "[cast][owner]", ow
 
             CHECK(ptr1.get() == nullptr);
             CHECK(ptr2.get() == raw_ptr);
-            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+            CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
             if constexpr (has_stateful_deleter<TestType>) {
                 CHECK(ptr2.get_deleter().state_ == test_deleter::state::special_init_1);
             }
@@ -33,10 +32,10 @@ TEMPLATE_LIST_TEST_CASE("owner static_cast move from valid", "[cast][owner]", ow
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("owner static_cast move from empty", "[cast][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         auto run_test = [&]<typename cast_type, typename expected_return_type>() {
@@ -47,7 +46,7 @@ TEMPLATE_LIST_TEST_CASE("owner static_cast move from empty", "[cast][owner]", ow
 
             CHECK(ptr1.get() == nullptr);
             CHECK(ptr2.get() == nullptr);
-            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+            CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
             if constexpr (has_stateful_deleter<TestType>) {
                 CHECK(ptr2.get_deleter().state_ == test_deleter::state::special_init_1);
             }
@@ -62,10 +61,10 @@ TEMPLATE_LIST_TEST_CASE("owner static_cast move from empty", "[cast][owner]", ow
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("owner const_cast move from valid", "[cast][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         auto run_test = [&]<typename cast_type, typename expected_return_type>() {
@@ -77,7 +76,7 @@ TEMPLATE_LIST_TEST_CASE("owner const_cast move from valid", "[cast][owner]", own
 
             CHECK(ptr1.get() == nullptr);
             CHECK(ptr2.get() == raw_ptr);
-            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+            CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
             if constexpr (has_stateful_deleter<TestType>) {
                 CHECK(ptr2.get_deleter().state_ == test_deleter::state::special_init_1);
             }
@@ -90,10 +89,10 @@ TEMPLATE_LIST_TEST_CASE("owner const_cast move from valid", "[cast][owner]", own
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("owner const_cast move from empty", "[cast][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         auto run_test = [&]<typename cast_type, typename expected_return_type>() {
@@ -104,7 +103,7 @@ TEMPLATE_LIST_TEST_CASE("owner const_cast move from empty", "[cast][owner]", own
 
             CHECK(ptr1.get() == nullptr);
             CHECK(ptr2.get() == nullptr);
-            CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+            CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
             if constexpr (has_stateful_deleter<TestType>) {
                 CHECK(ptr2.get_deleter().state_ == test_deleter::state::special_init_1);
             }
@@ -117,10 +116,10 @@ TEMPLATE_LIST_TEST_CASE("owner const_cast move from empty", "[cast][owner]", own
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from valid", "[cast][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         auto run_test =
@@ -134,7 +133,7 @@ TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from valid", "[cast][owner]", o
 
                 CHECK(ptr1.get() == nullptr);
                 CHECK(ptr2.get() == raw_ptr);
-                CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+                CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
                 if constexpr (has_stateful_deleter<TestType>) {
                     CHECK(ptr2.get_deleter().state_ == test_deleter::state::special_init_1);
                 }
@@ -150,10 +149,10 @@ TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from valid", "[cast][owner]", o
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from empty", "[cast][owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         auto run_test =
@@ -166,7 +165,7 @@ TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from empty", "[cast][owner]", o
 
                 CHECK(ptr1.get() == nullptr);
                 CHECK(ptr2.get() == nullptr);
-                CHECK(snatch::type_name<return_type> == snatch::type_name<expected_return_type>);
+                CHECK(snitch::type_name<return_type> == snitch::type_name<expected_return_type>);
                 if constexpr (has_stateful_deleter<TestType>) {
                     CHECK(ptr2.get_deleter().state_ == test_deleter::state::special_init_1);
                 }
@@ -182,11 +181,11 @@ TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from empty", "[cast][owner]", o
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from invalid", "[cast][owner]", owner_types) {
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType              ptr0    = make_pointer_deleter_1<TestType>();
@@ -205,4 +204,4 @@ TEMPLATE_LIST_TEST_CASE("owner dynamic_cast move from invalid", "[cast][owner]",
 
         CHECK_NO_LEAKS;
     }
-};
+}

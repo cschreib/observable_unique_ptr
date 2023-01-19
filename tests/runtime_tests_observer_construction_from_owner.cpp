@@ -1,10 +1,9 @@
 #include "memory_tracker.hpp"
 #include "testing.hpp"
-#include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from empty owner constructor", "[construction][observer][from_owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr_owner;
@@ -20,11 +19,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from valid owner constructor", "[construction][observer][from_owner]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType ptr_owner = make_pointer_deleter_1<TestType>();
@@ -40,14 +39,14 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from empty owner conversion constructor",
     "[construction][observer][from_owner]",
     owner_types) {
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr_owner;
@@ -64,14 +63,14 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from valid owner conversion constructor",
     "[construction][observer][from_owner]",
     owner_types) {
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType ptr_owner = make_pointer_deleter_1<TestType>();
@@ -88,14 +87,14 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from empty owner explicit conversion constructor",
     "[construction][observer][from_owner]",
     owner_types) {
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             base_ptr<TestType> ptr_owner;
@@ -112,14 +111,14 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer from valid owner explicit conversion constructor",
     "[construction][observer][from_owner]",
     owner_types) {
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             base_ptr<TestType> ptr_owner = make_pointer_deleter_1<TestType>();
@@ -137,4 +136,4 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}

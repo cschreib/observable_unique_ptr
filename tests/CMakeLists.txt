@@ -31,10 +31,10 @@ endfunction()
 
 include(FetchContent)
 
-FetchContent_Declare(snatch
-                     GIT_REPOSITORY https://github.com/cschreib/snatch.git
-                     GIT_TAG        v0.1.3)
-FetchContent_MakeAvailable(snatch)
+FetchContent_Declare(snitch
+                     GIT_REPOSITORY https://github.com/cschreib/snitch.git
+                     GIT_TAG        v1.0.0)
+FetchContent_MakeAvailable(snitch)
 
 set(RUNTIME_TEST_FILES
   ${PROJECT_SOURCE_DIR}/tests/tests_common.cpp
@@ -61,7 +61,7 @@ set(RUNTIME_TEST_FILES
 
 add_executable(oup_runtime_tests ${RUNTIME_TEST_FILES})
 target_link_libraries(oup_runtime_tests PRIVATE oup::oup)
-target_link_libraries(oup_runtime_tests PRIVATE snatch::snatch)
+target_link_libraries(oup_runtime_tests PRIVATE snitch::snitch)
 add_platform_definitions(oup_runtime_tests)
 
 add_custom_target(oup_runtime_tests_run

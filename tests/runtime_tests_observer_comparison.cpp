@@ -1,10 +1,9 @@
 #include "memory_tracker.hpp"
 #include "testing.hpp"
-#include "tests_common.hpp"
 
 TEMPLATE_LIST_TEST_CASE(
     "observer comparison valid vs nullptr", "[comparison][observer]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType               ptr = make_pointer_deleter_1<TestType>();
@@ -17,11 +16,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer comparison empty vs nullptr", "[comparison][observer]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         observer_ptr<TestType> optr;
@@ -33,11 +32,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer comparison empty vs empty", "[comparison][observer]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         observer_ptr<TestType> optr1;
@@ -50,11 +49,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer comparison empty vs valid", "[comparison][observer]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         observer_ptr<TestType> optr1;
@@ -68,13 +67,13 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer comparison valid vs valid different instance",
     "[comparison][observer]",
     owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType               ptr1 = make_pointer_deleter_1<TestType>();
@@ -89,11 +88,11 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer comparison valid vs valid same instance", "[comparison][observer]", owner_types) {
-    memory_tracker mem_track;
+    volatile memory_tracker mem_track;
 
     {
         TestType               ptr = make_pointer_deleter_1<TestType>();
@@ -107,14 +106,14 @@ TEMPLATE_LIST_TEST_CASE(
     }
 
     CHECK_NO_LEAKS;
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer comparison valid vs valid different instance derived",
     "[comparison][observer]",
     owner_types) {
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType                    ptr1 = make_pointer_deleter_1<TestType>();
@@ -130,14 +129,14 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
 
 TEMPLATE_LIST_TEST_CASE(
     "observer comparison valid vs valid same instance derived",
     "[comparison][observer]",
     owner_types) {
     if constexpr (has_base<TestType>) {
-        memory_tracker mem_track;
+        volatile memory_tracker mem_track;
 
         {
             TestType                    ptr = make_pointer_deleter_1<TestType>();
@@ -152,4 +151,4 @@ TEMPLATE_LIST_TEST_CASE(
 
         CHECK_NO_LEAKS;
     }
-};
+}
