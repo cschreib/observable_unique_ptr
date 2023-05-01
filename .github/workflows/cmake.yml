@@ -1,9 +1,14 @@
 name: CI
 
-on: push
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
 
 env:
-  EM_VERSION: 2.0.34
+  EM_VERSION: 3.1.35
   EM_CACHE_FOLDER: 'emsdk-cache'
   CODECOV_TOKEN: '99959e57-0b92-48b4-bf55-559d43d41b58'
 
@@ -39,14 +44,14 @@ jobs:
     - name: Setup Emscripten cache
       if: matrix.platform.compiler == 'em++'
       id: cache-system-libraries
-      uses: actions/cache@v3.0.4
+      uses: actions/cache@v3.3.1
       with:
         path: ${{env.EM_CACHE_FOLDER}}
         key: ${{env.EM_VERSION}}-${{matrix.platform.name}}-${{matrix.build-type}}
 
     - name: Setup Emscripten
       if: matrix.platform.compiler == 'em++'
-      uses: mymindstorm/setup-emsdk@v11
+      uses: mymindstorm/setup-emsdk@v12
       with:
         version: ${{env.EM_VERSION}}
         actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
