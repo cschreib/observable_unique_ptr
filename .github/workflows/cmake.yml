@@ -3,7 +3,7 @@ name: CI
 on: push
 
 env:
-  EM_VERSION: 2.0.34
+  EM_VERSION: 3.1.35
   EM_CACHE_FOLDER: 'emsdk-cache'
   CODECOV_TOKEN: '99959e57-0b92-48b4-bf55-559d43d41b58'
 
