@@ -30,10 +30,9 @@ function(add_platform_definitions TARGET)
 endfunction()
 
 include(FetchContent)
-
 FetchContent_Declare(snitch
                      GIT_REPOSITORY https://github.com/cschreib/snitch.git
-                     GIT_TAG        v1.1.0)
+                     GIT_TAG        v1.3.2)
 FetchContent_MakeAvailable(snitch)
 
 set(RUNTIME_TEST_FILES
