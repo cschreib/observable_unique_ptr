@@ -33,7 +33,7 @@ include(FetchContent)
 
 FetchContent_Declare(snitch
                      GIT_REPOSITORY https://github.com/cschreib/snitch.git
-                     GIT_TAG        d6daed23afa8e474227249ef35255f45193535e6)
+                     GIT_TAG        8fa49424dd4b8f122be26c02c36491b0d3d2a39a)
 FetchContent_MakeAvailable(snitch)
 
 set(RUNTIME_TEST_FILES
