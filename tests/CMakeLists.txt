@@ -36,7 +36,7 @@ set(DOCTEST_NO_INSTALL ON)
 
 FetchContent_Declare(doctest
                      GIT_REPOSITORY https://github.com/doctest/doctest.git
-                     GIT_TAG        v2.4.9)
+                     GIT_TAG        v2.4.11)
 FetchContent_MakeAvailable(doctest)
 
 set(RUNTIME_TEST_FILES
