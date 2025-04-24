@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.8..3.31)
 
 # Setup main project
 project(oup LANGUAGES CXX VERSION 1.0)
