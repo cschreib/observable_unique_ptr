@@ -3,6 +3,7 @@ function(add_platform_definitions TARGET)
   if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
       target_compile_definitions(${TARGET} PRIVATE OUP_PLATFORM_WASM)
       target_compile_definitions(${TARGET} PRIVATE OUP_COMPILER_EMSCRIPTEN)
+      target_compile_definitions(${TARGET} PRIVATE OUP_COMPILER_LLVM)
   elseif (APPLE)
       target_compile_definitions(${TARGET} PRIVATE OUP_PLATFORM_OSX)
   elseif (UNIX)
@@ -22,6 +23,7 @@ function(add_platform_definitions TARGET)
       target_compile_options(${TARGET} PRIVATE -Wall)
       target_compile_options(${TARGET} PRIVATE -Wextra)
       target_compile_options(${TARGET} PRIVATE -Werror)
+      target_compile_definitions(${TARGET} PRIVATE OUP_COMPILER_LLVM)
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
       target_compile_options(${TARGET} PRIVATE /W4)
       target_compile_options(${TARGET} PRIVATE /WX)
@@ -30,10 +32,9 @@ function(add_platform_definitions TARGET)
 endfunction()
 
 include(FetchContent)
-
 FetchContent_Declare(snitch
                      GIT_REPOSITORY https://github.com/cschreib/snitch.git
-                     GIT_TAG        v1.1.0)
+                     GIT_TAG        v1.3.2)
 FetchContent_MakeAvailable(snitch)
 
 set(RUNTIME_TEST_FILES

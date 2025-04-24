@@ -1,4 +1,6 @@
-#include "snitch/snitch.hpp"
+#include "snitch/snitch_macros_check.hpp"
+#include "snitch/snitch_macros_exceptions.hpp"
+#include "snitch/snitch_macros_test_case.hpp"
 #include "tests_common.hpp"
 
 // clang-format off

@@ -101,7 +101,17 @@ TEMPLATE_LIST_TEST_CASE(
             if constexpr (eoft_allocates<TestType>) {
                 fail_next_allocation{}, TestType{raw_ptr};
             } else {
+#if !defined(OUP_COMPILER_LLVM) || !defined(NDEBUG)
                 REQUIRE_THROWS_AS((fail_next_allocation{}, TestType{raw_ptr}), std::bad_alloc);
+#else
+                // LLVM in Release mode is able to inline the allocation, bypassing our
+                // custom allocator that fails...
+                try {
+                    fail_next_allocation{}, TestType{raw_ptr};
+                } catch (const std::bad_alloc&) {
+                    // If it does throw, good. Else, ignore it.
+                }
+#endif
             }
         }
 
@@ -120,8 +130,18 @@ TEMPLATE_LIST_TEST_CASE(
             if constexpr (eoft_allocates<TestType>) {
                 fail_next_allocation{}, TestType{raw_ptr, deleter};
             } else {
+#if !defined(OUP_COMPILER_LLVM) || !defined(NDEBUG)
                 REQUIRE_THROWS_AS(
                     (fail_next_allocation{}, TestType{raw_ptr, deleter}), std::bad_alloc);
+#else
+                // LLVM in Release mode is able to inline the allocation, bypassing our
+                // custom allocator that fails...
+                try {
+                    fail_next_allocation{}, TestType{raw_ptr, deleter};
+                } catch (const std::bad_alloc&) {
+                    // If it does throw, good. Else, ignore it.
+                }
+#endif
             }
         }
 

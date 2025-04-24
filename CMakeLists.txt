@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.8..3.31)
 
 # Setup main project
-project(oup LANGUAGES CXX VERSION 1.0)
+project(oup LANGUAGES CXX VERSION 0.7.3)
 
 # Create library (header-only)
 add_library(oup INTERFACE)
