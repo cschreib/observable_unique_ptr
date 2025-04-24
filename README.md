@@ -59,8 +59,8 @@ int main() {
         auto owner_ptr = oup::make_observable_sealed<std::string>("hello");
 
         // A sealed pointer cannot be copied but it can be moved
-        // auto tmp_copied = owner_ptr; // error!
-        // auto tmp_moved = std::move(owner_ptr); // OK
+        // oup::observable_sealed_ptr<std::string> owner_copied = owner_ptr; // error!
+        // oup::observable_sealed_ptr<std::string> owner_moved = std::move(owner_ptr); // OK
 
         // Make the observer pointer point to the object
         obs_ptr = owner_ptr;
@@ -73,8 +73,8 @@ int main() {
         std::cout << *obs_ptr << std::endl;
 
         // An observer pointer can be copied and moved
-        // auto tmp_copied = obs_ptr; // OK
-        // auto tmp_moved = std::move(obs_ptr); // OK
+        // oup::observer_ptr<std::string> obs_copied = obs_ptr; // OK
+        // oup::observer_ptr<std::string> obs_moved = std::move(obs_ptr); // OK
     }
 
     // The sealed pointer has gone out of scope, the object is deleted,
