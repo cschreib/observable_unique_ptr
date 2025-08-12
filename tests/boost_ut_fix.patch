@@ -1,129 +1,8 @@
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index b9e94ab..bd6bb6a 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -61,61 +61,61 @@ else()
-   target_compile_features(ut INTERFACE cxx_std_17)
- endif()
- 
--if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
--  if(WIN32) # clang-cl
--    # FIXME: we should not export this pedantic options! CK
--    target_compile_options(
--      ut
--      INTERFACE -Wall
--                -Wextra
--                # FIXME -Werror
--                -Wno-c++98-c++11-c++14-c++17-compat-pedantic
--                -Wno-c++98-c++11-compat
--                -Wno-c++98-compat
--                -Wno-c++98-compat-pedantic
--                -Wno-c99-extensions
--                -Wno-pedantic
--    )
--  else()
--    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
--  endif()
--elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
--  # FIXME: we should not export this pedantic options! CK
--  target_compile_options(
--    ut
--    INTERFACE -Wall
--              -Wextra
--              # TODO: why not simpply -Wpedantic
--              -Werror
--              -Wcast-align
--              #-Wcast-align=strict
--              -Wcast-qual
--              -Wdouble-promotion
--              -Wduplicated-branches
--              -Wduplicated-cond
--              -Wlogical-op
--              -Wmissing-declarations
--              -Wmissing-include-dirs
--              -Wnull-dereference
--              -Wold-style-cast
--              -Wpointer-arith
--              -Wredundant-decls
--              -Wsign-conversion
--              -Wswitch-enum
--              -Wtrampolines
--              -Wunused-but-set-variable
--              -Wunused-result
--              -Wuseless-cast
--              -Wzero-as-null-pointer-constant
--              # FIXME
--              -Wno-undef
--              -Wno-missing-declarations
--              -Wno-sign-conversion
--              -Wno-float-equal
--  )
--elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
--  add_compile_options(/W4 /WX)
--endif()
-+# if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-+#   if(WIN32) # clang-cl
-+#     # FIXME: we should not export this pedantic options! CK
-+#     target_compile_options(
-+#       ut
-+#       INTERFACE -Wall
-+#                 -Wextra
-+#                 # FIXME -Werror
-+#                 -Wno-c++98-c++11-c++14-c++17-compat-pedantic
-+#                 -Wno-c++98-c++11-compat
-+#                 -Wno-c++98-compat
-+#                 -Wno-c++98-compat-pedantic
-+#                 -Wno-c99-extensions
-+#                 -Wno-pedantic
-+#     )
-+#   else()
-+#     add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-+#   endif()
-+# elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
-+#   # FIXME: we should not export this pedantic options! CK
-+#   target_compile_options(
-+#     ut
-+#     INTERFACE -Wall
-+#               -Wextra
-+#               # TODO: why not simpply -Wpedantic
-+#               -Werror
-+#               -Wcast-align
-+#               #-Wcast-align=strict
-+#               -Wcast-qual
-+#               -Wdouble-promotion
-+#               -Wduplicated-branches
-+#               -Wduplicated-cond
-+#               -Wlogical-op
-+#               -Wmissing-declarations
-+#               -Wmissing-include-dirs
-+#               -Wnull-dereference
-+#               -Wold-style-cast
-+#               -Wpointer-arith
-+#               -Wredundant-decls
-+#               -Wsign-conversion
-+#               -Wswitch-enum
-+#               -Wtrampolines
-+#               -Wunused-but-set-variable
-+#               -Wunused-result
-+#               -Wuseless-cast
-+#               -Wzero-as-null-pointer-constant
-+#               # FIXME
-+#               -Wno-undef
-+#               -Wno-missing-declarations
-+#               -Wno-sign-conversion
-+#               -Wno-float-equal
-+#   )
-+# elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-+#   add_compile_options(/W4 /WX)
-+# endif()
- 
- add_custom_target(style)
- add_custom_command(
 diff --git a/include/boost/ut.hpp b/include/boost/ut.hpp
-index 47faa56..5abb44c 100644
+index b39e964..828cfbf 100644
 --- a/include/boost/ut.hpp
 +++ b/include/boost/ut.hpp
-@@ -671,8 +671,8 @@ struct eq_ : op {
+@@ -1020,8 +1020,8 @@ struct eq_ : op {
    [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
    [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
  
@@ -134,7 +13,18 @@ index 47faa56..5abb44c 100644
    const bool value_{};
  };
  
-@@ -704,8 +704,8 @@ struct neq_ : op {
+@@ -1047,8 +1047,8 @@ struct approx_ : op {
+   [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
+   [[nodiscard]] constexpr auto epsilon() const { return get(epsilon_); }
+ 
+-  const TLhs lhs_{};
+-  const TRhs rhs_{};
++  const TLhs& lhs_{};
++  const TRhs& rhs_{};
+   const TEpsilon epsilon_{};
+   const bool value_{};
+ };
+@@ -1085,8 +1085,8 @@ struct neq_ : op {
    [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
    [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
  
@@ -145,7 +35,7 @@ index 47faa56..5abb44c 100644
    const bool value_{};
  };
  
-@@ -727,8 +727,8 @@ struct gt_ : op {
+@@ -1108,8 +1108,8 @@ struct gt_ : op {
    [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
    [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
  
@@ -156,7 +46,7 @@ index 47faa56..5abb44c 100644
    const bool value_{};
  };
  
-@@ -750,8 +750,8 @@ struct ge_ : op {
+@@ -1131,8 +1131,8 @@ struct ge_ : op {
    [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
    [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
  
@@ -167,7 +57,7 @@ index 47faa56..5abb44c 100644
    const bool value_{};
  };
  
-@@ -774,8 +774,8 @@ struct lt_ : op {
+@@ -1162,8 +1162,8 @@ struct lt_ : op {
    [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
  
   private:
@@ -178,7 +68,7 @@ index 47faa56..5abb44c 100644
    const bool value_{};
  };
  
-@@ -797,8 +797,8 @@ struct le_ : op {
+@@ -1185,8 +1185,8 @@ struct le_ : op {
    [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
    [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
  
@@ -189,7 +79,7 @@ index 47faa56..5abb44c 100644
    const bool value_{};
  };
  
-@@ -813,8 +813,8 @@ struct and_ : op {
+@@ -1201,8 +1201,8 @@ struct and_ : op {
    [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
    [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
  
@@ -200,7 +90,7 @@ index 47faa56..5abb44c 100644
    const bool value_{};
  };
  
-@@ -829,8 +829,8 @@ struct or_ : op {
+@@ -1217,8 +1217,8 @@ struct or_ : op {
    [[nodiscard]] constexpr auto lhs() const { return get(lhs_); }
    [[nodiscard]] constexpr auto rhs() const { return get(rhs_); }
  
@@ -211,7 +101,16 @@ index 47faa56..5abb44c 100644
    const bool value_{};
  };
  
-@@ -1532,7 +1532,7 @@ struct that_ {
+@@ -1230,7 +1230,7 @@ struct not_ : op {
+   [[nodiscard]] constexpr operator bool() const { return value_; }
+   [[nodiscard]] constexpr auto value() const { return get(t_); }
+ 
+-  const T t_{};
++  const T& t_{};
+   const bool value_{};
+ };
+ 
+@@ -2410,7 +2410,7 @@ struct that_ {
        return static_cast<bool>(t_);
      }
  
@@ -220,24 +119,33 @@ index 47faa56..5abb44c 100644
    };
  
    template <class T>
-@@ -1846,19 +1846,19 @@ template <class F, class T,
- template <
-     class F, template <class...> class T, class... Ts,
-     type_traits::requires_t<not type_traits::is_container_v<T<Ts...>>> = 0>
+@@ -2771,7 +2771,7 @@ template <class F, class T>
+ 
+ template <class F, template <class...> class T, class... Ts>
+   requires(!std::ranges::range<T<Ts...>>)
 -[[nodiscard]] constexpr auto operator|(const F& f, const T<Ts...>& t) {
--  return [f, t](const auto name) {
 +[[nodiscard]] constexpr auto operator|(const F& f, T<Ts...>&& t) {
-+  return [f, &t](const auto name) {
+   constexpr auto unique_name = []<class TArg>(std::string_view name,
+                                               const TArg& arg, int& counter) {
+     auto ret = std::string{name} + " (";
+@@ -2783,20 +2783,20 @@ template <class F, template <class...> class T, class... Ts>
+     return ret;
+   };
+ 
+-  return [f, t, unique_name](std::string_view type, std::string_view name) {
++  return [f, &t, unique_name](std::string_view type, std::string_view name) {
+     int counter = 1;
      apply(
--        [f, name](const auto&... args) {
-+        [f, name](auto&&... args) {
-           (detail::on<F>(events::test<F, Ts>{.type = "test",
-                                              .name = name,
-                                              .tag = {},
-                                              .location = {},
--                                             .arg = args,
-+                                             .arg = std::move(args),
-                                              .run = f}),
+-        [=, &counter](const auto&... args) {
++        [=, &counter](auto&&... args) {
+           (detail::on<F>(events::test<F, Ts>{
+                .type = type,
+                .name = unique_name.template operator()<Ts>(name, args, counter),
+                .tag = {},
+                .location = {},
+-               .arg = args,
++               .arg = std::move(args),
+                .run = f}),
             ...);
          },
 -        t);

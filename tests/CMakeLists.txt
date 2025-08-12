@@ -31,9 +31,10 @@ endfunction()
 
 include(FetchContent)
 
+set(BOOST_UT_DISABLE_MODULE ON)
 FetchContent_Declare(boost_ut
                      GIT_REPOSITORY https://github.com/boost-ext/ut.git
-                     GIT_TAG        v1.1.9
+                     GIT_TAG        v2.3.1
                      UPDATE_COMMAND git checkout .
                      PATCH_COMMAND  git apply ${PROJECT_SOURCE_DIR}/tests/boost_ut_fix.patch)
 FetchContent_MakeAvailable(boost_ut)
