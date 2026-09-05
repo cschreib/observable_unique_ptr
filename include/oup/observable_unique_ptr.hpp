@@ -1105,6 +1105,20 @@ public:
     }
 
     /**
+     * \brief Create an observer pointer from a temporary owning pointer (forbidden, deleted).
+     * \details The owning pointer would be deleted as soon as the constructor finishes,
+     * therefore the resulting observer pointer would always end up expired. This is most
+     * likely a mistake, hence not allowed.
+     */
+    template<
+        typename U,
+        typename D,
+        typename P,
+        typename enable = std::enable_if_t<
+            std::is_convertible_v<U*, T*> && std::is_same_v<Policy, typename P::observer_policy>>>
+    basic_observer_ptr(basic_observable_ptr<U, D, P>&&) = delete;
+
+    /**
      * \brief Create an observer pointer from an owning pointer of a different type.
      * \param manager The owner pointer to copy the observed data from
      * \param value The casted pointer value to observe
@@ -1123,6 +1137,20 @@ public:
             block->push_ref();
         }
     }
+
+    /**
+     * \brief Create an observer pointer from a temporary owning pointer (forbidden, deleted).
+     * \details The owning pointer would be deleted as soon as the constructor finishes,
+     * therefore the resulting observer pointer would always end up expired. This is most
+     * likely a mistake, hence not allowed.
+     */
+    template<
+        typename U,
+        typename D,
+        typename P,
+        typename enable = std::enable_if_t<
+            std::is_convertible_v<U*, T*> && std::is_same_v<Policy, typename P::observer_policy>>>
+    basic_observer_ptr(basic_observable_ptr<U, D, P>&&, T* value) = delete;
 
     /**
      * \brief Copy an existing @ref basic_observer_ptr instance
@@ -1227,6 +1255,18 @@ public:
 
         return *this;
     }
+
+    /**
+     * \brief Point to another temporary owning pointer (forbidden, deleted).
+     * \details The owning pointer would be deleted as soon as the assignment finishes,
+     * therefore the resulting observer pointer would always end up expired. This is most
+     * likely a mistake, hence not allowed.
+     */
+    template<
+        typename U,
+        typename D,
+        typename enable = std::enable_if_t<std::is_convertible_v<U*, T*>>>
+    basic_observer_ptr& operator=(basic_observable_ptr<U, D, Policy>&&) = delete;
 
     /**
      * \brief Copy an existing @ref basic_observer_ptr instance
